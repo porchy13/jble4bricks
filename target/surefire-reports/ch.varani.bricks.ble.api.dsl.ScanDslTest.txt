@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: ch.varani.bricks.ble.api.dsl.ScanDslTest
--------------------------------------------------------------------------------
-Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.140 s -- in ch.varani.bricks.ble.api.dsl.ScanDslTest

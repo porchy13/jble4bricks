@@ -1,7 +1,0 @@
-/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/ble-macos.dir
-/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/edit_cache.dir
-/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/rebuild_cache.dir
-/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/list_install_components.dir
-/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/install.dir
-/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/install/local.dir
-/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/install/strip.dir

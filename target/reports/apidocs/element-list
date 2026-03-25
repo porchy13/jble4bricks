@@ -1,9 +1,0 @@
-ch.varani.bricks.ble.api
-ch.varani.bricks.ble.api.dsl
-ch.varani.bricks.ble.device.buwizz
-ch.varani.bricks.ble.device.circuitcubes
-ch.varani.bricks.ble.device.fxbricks
-ch.varani.bricks.ble.device.lego
-ch.varani.bricks.ble.device.sbrick
-ch.varani.bricks.ble.impl.macos
-ch.varani.bricks.ble.util

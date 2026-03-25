@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: ch.varani.bricks.ble.api.dsl.CircuitCubesDslTest
--------------------------------------------------------------------------------
-Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.017 s -- in ch.varani.bricks.ble.api.dsl.CircuitCubesDslTest
