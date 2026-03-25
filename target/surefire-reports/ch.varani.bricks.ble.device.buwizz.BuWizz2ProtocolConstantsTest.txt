@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstantsTest
 -------------------------------------------------------------------------------
-Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstantsTest
+Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.019 s -- in ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstantsTest

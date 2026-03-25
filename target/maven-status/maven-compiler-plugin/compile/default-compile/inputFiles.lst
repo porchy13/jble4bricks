@@ -4,6 +4,16 @@
 /Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/BleScanner.java
 /Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/BleScannerFactory.java
 /Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/ScanCallback.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/BrickDsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/BuWizz2Dsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/BuWizz3Dsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/CircuitCubesDsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/ConnectionDsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/DeviceDsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/LegoDsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/SBrickDsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/ScanDsl.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/dsl/package-info.java
 /Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/api/package-info.java
 /Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/device/buwizz/BuWizz2ProtocolConstants.java
 /Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/main/java/ch/varani/bricks/ble/device/buwizz/BuWizz3ProtocolConstants.java

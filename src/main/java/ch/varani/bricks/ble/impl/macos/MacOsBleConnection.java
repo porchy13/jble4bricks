@@ -149,7 +149,7 @@ final class MacOsBleConnection implements BleConnection {
     public @NonNull CompletableFuture<Void> writeWithoutResponse(
             final @NonNull String serviceUuid,
             final @NonNull String characteristicUuid,
-            final @NonNull byte[] data) {
+            final byte[] data) {
 
         checkOpen();
         return CompletableFuture.runAsync(() ->
@@ -254,7 +254,7 @@ final class MacOsBleConnection implements BleConnection {
     void onNotification(
             final @NonNull String serviceUuid,
             final @NonNull String characteristicUuid,
-            final @NonNull byte[] value) {
+            final byte[] value) {
 
         final CharacteristicKey key = new CharacteristicKey(serviceUuid, characteristicUuid);
         final SubmissionPublisher<byte[]> pub = notificationPublishers.get(key);

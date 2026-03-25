@@ -124,7 +124,7 @@ final class JniNativeBridge implements NativeBridge {
             final long connectionPtr,
             final @NonNull String serviceUuid,
             final @NonNull String characteristicUuid,
-            final @NonNull byte[] data) {
+            final byte[] data) {
         nativeWriteWithoutResponse(connectionPtr, serviceUuid, characteristicUuid, data);
     }
 
@@ -137,7 +137,7 @@ final class JniNativeBridge implements NativeBridge {
      * {@code [CBPeripheral readValueForCharacteristic:]}.
      */
     @Override
-    public @Nullable byte[] readCharacteristic(
+    public byte[] readCharacteristic(
             final long connectionPtr,
             final @NonNull String serviceUuid,
             final @NonNull String characteristicUuid) {
@@ -275,7 +275,6 @@ final class JniNativeBridge implements NativeBridge {
      * @param characteristicUuid GATT characteristic UUID
      * @return the value bytes, or {@code null} on failure
      */
-    @Nullable
     private native byte[] nativeReadCharacteristic(
             long connectionPtr, String serviceUuid, String characteristicUuid);
 

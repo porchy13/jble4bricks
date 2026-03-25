@@ -43,7 +43,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/opt/homebrew/sbin/uname"
       - "/opt/homebrew/opt/postgresql@15/bin/uname"
@@ -76,12 +75,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -135,7 +128,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/opt/homebrew/sbin/gmake"
       - "/opt/homebrew/opt/postgresql@15/bin/gmake"
@@ -160,7 +152,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/gmake"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/gmake"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/gmake"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/gmake"
       - "/opt/homebrew/sbin/make"
       - "/opt/homebrew/opt/postgresql@15/bin/make"
       - "/Users/jvarani/bin/make"
@@ -192,12 +183,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -249,7 +234,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/opt/homebrew/sbin/cc"
       - "/opt/homebrew/opt/postgresql@15/bin/cc"
@@ -282,12 +266,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -339,12 +317,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -453,7 +425,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     found: "/usr/bin/ar"
     search_context:
       ENV{PATH}:
@@ -479,12 +450,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -530,7 +495,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     found: "/usr/bin/ranlib"
     search_context:
       ENV{PATH}:
@@ -556,12 +520,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -607,7 +565,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     found: "/usr/bin/strip"
     search_context:
       ENV{PATH}:
@@ -633,12 +590,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -684,7 +635,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     found: "/usr/bin/ld"
     search_context:
       ENV{PATH}:
@@ -710,12 +660,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -761,7 +705,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     found: "/usr/bin/nm"
     search_context:
       ENV{PATH}:
@@ -787,12 +730,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -838,7 +775,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     found: "/usr/bin/objdump"
     search_context:
       ENV{PATH}:
@@ -864,12 +800,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -915,7 +845,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/usr/bin/objcopy"
       - "/opt/homebrew/sbin/objcopy"
@@ -940,7 +869,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/objcopy"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/objcopy"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/objcopy"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/objcopy"
     found: false
     search_context:
       ENV{PATH}:
@@ -966,12 +894,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -1017,7 +939,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/usr/bin/readelf"
       - "/opt/homebrew/sbin/readelf"
@@ -1042,7 +963,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/readelf"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/readelf"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/readelf"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/readelf"
     found: false
     search_context:
       ENV{PATH}:
@@ -1068,12 +988,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -1119,7 +1033,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/usr/bin/dlltool"
       - "/opt/homebrew/sbin/dlltool"
@@ -1144,7 +1057,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/dlltool"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/dlltool"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/dlltool"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/dlltool"
     found: false
     search_context:
       ENV{PATH}:
@@ -1170,12 +1082,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -1221,7 +1127,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/usr/bin/addr2line"
       - "/opt/homebrew/sbin/addr2line"
@@ -1246,7 +1151,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/addr2line"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/addr2line"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/addr2line"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/addr2line"
     found: false
     search_context:
       ENV{PATH}:
@@ -1272,12 +1176,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -1323,7 +1221,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/usr/bin/tapi"
       - "/opt/homebrew/sbin/tapi"
@@ -1348,7 +1245,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/tapi"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/tapi"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/tapi"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/tapi"
     found: false
     search_context:
       ENV{PATH}:
@@ -1374,12 +1270,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -1428,12 +1318,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -1485,12 +1369,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
   -
@@ -1599,7 +1477,6 @@ events:
       - "/Library/Frameworks/Mono.framework/Versions/Current/Commands/"
       - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin/"
       - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/"
-      - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts/"
     searched_directories:
       - "/opt/homebrew/sbin/install_name_tool"
       - "/opt/homebrew/opt/postgresql@15/bin/install_name_tool"
@@ -1632,12 +1509,6 @@ events:
         - "~/.dotnet/tools"
         - "/Library/Frameworks/Mono.framework/Versions/Current/Commands"
         - "/Applications/Xamarin Workbooks.app/Contents/SharedSupport/path-bin"
-        - "/opt/homebrew/sbin"
-        - "/opt/homebrew/opt/postgresql@15/bin"
-        - "/Users/jvarani/bin"
-        - "/opt/homebrew/bin"
-        - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
-        - "/Users/jvarani/.vscode/extensions/vscjava.vscode-java-debug-0.58.5/bundled/scripts/noConfigScripts"
         - "/usr/local/bin"
         - "/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin"
       CMAKE_INSTALL_PREFIX: "/usr/local"
@@ -1650,8 +1521,8 @@ events:
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-i4AijB"
-      binary: "/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-i4AijB"
+      source: "/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-tUThoS"
+      binary: "/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-tUThoS"
     cmakeVariables:
       CMAKE_C_FLAGS: ""
       CMAKE_C_FLAGS_DEBUG: "-g"
@@ -1663,18 +1534,18 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-i4AijB'
+        Change Dir: '/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-tUThoS'
         
-        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_8c92e/fast
-        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_8c92e.dir/build.make CMakeFiles/cmTC_8c92e.dir/build
-        Building C object CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o
-        /usr/bin/cc   -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_3e2e6/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_3e2e6.dir/build.make CMakeFiles/cmTC_3e2e6.dir/build
+        Building C object CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o
+        /usr/bin/cc   -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
         Apple clang version 17.0.0 (clang-1700.6.4.2)
         Target: arm64-apple-darwin25.3.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
         clang: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb "-fdebug-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-i4AijB" -target-linker-version 1230.1 -v "-fcoverage-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-i4AijB" -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb "-fdebug-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-tUThoS" -target-linker-version 1230.1 -v "-fcoverage-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-tUThoS" -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c
         clang -cc1 version 17.0.0 (clang-1700.6.4.2) default target arm64-apple-darwin25.3.0
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"
@@ -1687,13 +1558,13 @@ events:
          /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)
          /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)
         End of search list.
-        Linking C executable cmTC_8c92e
-        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8c92e.dir/link.txt --verbose=1
+        Linking C executable cmTC_3e2e6
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3e2e6.dir/link.txt --verbose=1
         Apple clang version 17.0.0 (clang-1700.6.4.2)
         Target: arm64-apple-darwin25.3.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_8c92e -L/usr/local/lib -v CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_3e2e6 -L/usr/local/lib -v CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a
         @(#)PROGRAM:ld PROJECT:ld-1230.1
         BUILD 10:14:01 Jan  9 2026
         configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em armv8m.main armv8.1m.main
@@ -1706,7 +1577,7 @@ events:
         	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift
         Framework search paths:
         	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks
-        /usr/bin/cc  -arch arm64  -v -Wl,-v CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -o cmTC_8c92e
+        /usr/bin/cc  -arch arm64  -v -Wl,-v CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -o cmTC_3e2e6
         
       exitCode: 0
   -
@@ -1750,18 +1621,18 @@ events:
       Parsed C implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
-        ignore line: [Change Dir: '/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-i4AijB']
+        ignore line: [Change Dir: '/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-tUThoS']
         ignore line: []
-        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_8c92e/fast]
-        ignore line: [/Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_8c92e.dir/build.make CMakeFiles/cmTC_8c92e.dir/build]
-        ignore line: [Building C object CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o]
-        ignore line: [/usr/bin/cc   -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_3e2e6/fast]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_3e2e6.dir/build.make CMakeFiles/cmTC_3e2e6.dir/build]
+        ignore line: [Building C object CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o]
+        ignore line: [/usr/bin/cc   -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -MF CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o.d -o CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
         ignore line: [Apple clang version 17.0.0 (clang-1700.6.4.2)]
         ignore line: [Target: arm64-apple-darwin25.3.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
         ignore line: [clang: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
-        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb "-fdebug-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-i4AijB" -target-linker-version 1230.1 -v "-fcoverage-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-i4AijB" -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
+        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb "-fdebug-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-tUThoS" -target-linker-version 1230.1 -v "-fcoverage-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-tUThoS" -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -x c /opt/homebrew/share/cmake/Modules/CMakeCCompilerABI.c]
         ignore line: [clang -cc1 version 17.0.0 (clang-1700.6.4.2) default target arm64-apple-darwin25.3.0]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"]
@@ -1774,13 +1645,13 @@ events:
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)]
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)]
         ignore line: [End of search list.]
-        ignore line: [Linking C executable cmTC_8c92e]
-        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_8c92e.dir/link.txt --verbose=1]
+        ignore line: [Linking C executable cmTC_3e2e6]
+        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3e2e6.dir/link.txt --verbose=1]
         ignore line: [Apple clang version 17.0.0 (clang-1700.6.4.2)]
         ignore line: [Target: arm64-apple-darwin25.3.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
-        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_8c92e -L/usr/local/lib -v CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
+        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_3e2e6 -L/usr/local/lib -v CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
           arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
           arg [-demangle] ==> ignore
           arg [-lto_library] ==> ignore, skip following value
@@ -1797,10 +1668,10 @@ events:
           arg [-mllvm] ==> ignore
           arg [-enable-linkonceodr-outlining] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_8c92e] ==> ignore
+          arg [cmTC_3e2e6] ==> ignore
           arg [-L/usr/local/lib] ==> dir [/usr/local/lib]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_8c92e.dir/CMakeCCompilerABI.c.o] ==> ignore
+          arg [CMakeFiles/cmTC_3e2e6.dir/CMakeCCompilerABI.c.o] ==> ignore
           arg [-lSystem] ==> lib [System]
           arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
         linker tool for 'C': /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld
@@ -1843,8 +1714,8 @@ events:
     checks:
       - "Detecting OBJC compiler ABI info"
     directories:
-      source: "/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-zkG8AS"
-      binary: "/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-zkG8AS"
+      source: "/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-93Li5x"
+      binary: "/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-93Li5x"
     cmakeVariables:
       CMAKE_EXE_LINKER_FLAGS: ""
       CMAKE_OBJC_FLAGS: ""
@@ -1856,18 +1727,18 @@ events:
       variable: "CMAKE_OBJC_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: '/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-zkG8AS'
+        Change Dir: '/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-93Li5x'
         
-        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_d730f/fast
-        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_d730f.dir/build.make CMakeFiles/cmTC_d730f.dir/build
-        Building OBJC object CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o
-        /usr/bin/cc   -x objective-c -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -MF CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o.d -o CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -c /opt/homebrew/share/cmake/Modules/CMakeOBJCCompilerABI.m
+        Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_44513/fast
+        /Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_44513.dir/build.make CMakeFiles/cmTC_44513.dir/build
+        Building OBJC object CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o
+        /usr/bin/cc   -x objective-c -arch arm64   -v -Wl,-v -MD -MT CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -MF CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o.d -o CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -c /opt/homebrew/share/cmake/Modules/CMakeOBJCCompilerABI.m
         Apple clang version 17.0.0 (clang-1700.6.4.2)
         Target: arm64-apple-darwin25.3.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
         clang: warning: -Wl,-v: 'linker' input unused [-Wunused-command-line-argument]
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeOBJCCompilerABI.m -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb "-fdebug-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-zkG8AS" -target-linker-version 1230.1 -v "-fcoverage-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-zkG8AS" -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fobjc-runtime=macosx-26.0.0 -fobjc-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -x objective-c /opt/homebrew/share/cmake/Modules/CMakeOBJCCompilerABI.m
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeOBJCCompilerABI.m -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb "-fdebug-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-93Li5x" -target-linker-version 1230.1 -v "-fcoverage-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-93Li5x" -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fobjc-runtime=macosx-26.0.0 -fobjc-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -x objective-c /opt/homebrew/share/cmake/Modules/CMakeOBJCCompilerABI.m
         clang -cc1 version 17.0.0 (clang-1700.6.4.2) default target arm64-apple-darwin25.3.0
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"
         ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"
@@ -1880,13 +1751,13 @@ events:
          /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)
          /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)
         End of search list.
-        Linking OBJC executable cmTC_d730f
-        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d730f.dir/link.txt --verbose=1
+        Linking OBJC executable cmTC_44513
+        /opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_44513.dir/link.txt --verbose=1
         Apple clang version 17.0.0 (clang-1700.6.4.2)
         Target: arm64-apple-darwin25.3.0
         Thread model: posix
         InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_d730f -L/usr/local/lib -v CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_44513 -L/usr/local/lib -v CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a
         @(#)PROGRAM:ld PROJECT:ld-1230.1
         BUILD 10:14:01 Jan  9 2026
         configured to support archs: armv6 armv7 armv7s arm64 arm64e arm64_32 i386 x86_64 x86_64h armv6m armv7k armv7m armv7em armv8m.main armv8.1m.main
@@ -1899,7 +1770,7 @@ events:
         	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/lib/swift
         Framework search paths:
         	/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks
-        /usr/bin/cc  -arch arm64  -v -Wl,-v CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -o cmTC_d730f
+        /usr/bin/cc  -arch arm64  -v -Wl,-v CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -o cmTC_44513
         
       exitCode: 0
   -
@@ -1943,18 +1814,18 @@ events:
       Parsed OBJC implicit link information:
         link line regex: [^( *|.*[/\\])(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|"|[0-9]+>[ 	-]*Build:[ 	0-9]+ ms[ 	]*)?[ 	]*(([^"]*[/\\])?(ld[0-9]*(|\\.[a-rt-z][a-z]*|\\.s[a-np-z][a-z]*|\\.so[a-z]+)))("|,| |$)]
-        ignore line: [Change Dir: '/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-zkG8AS']
+        ignore line: [Change Dir: '/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-93Li5x']
         ignore line: []
-        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_d730f/fast]
-        ignore line: [/Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_d730f.dir/build.make CMakeFiles/cmTC_d730f.dir/build]
-        ignore line: [Building OBJC object CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o]
-        ignore line: [/usr/bin/cc   -x objective-c -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -MF CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o.d -o CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -c /opt/homebrew/share/cmake/Modules/CMakeOBJCCompilerABI.m]
+        ignore line: [Run Build Command(s): /opt/homebrew/bin/cmake -E env VERBOSE=1 /usr/bin/make -f Makefile cmTC_44513/fast]
+        ignore line: [/Applications/Xcode.app/Contents/Developer/usr/bin/make  -f CMakeFiles/cmTC_44513.dir/build.make CMakeFiles/cmTC_44513.dir/build]
+        ignore line: [Building OBJC object CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o]
+        ignore line: [/usr/bin/cc   -x objective-c -arch arm64   -v -Wl -v -MD -MT CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -MF CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o.d -o CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -c /opt/homebrew/share/cmake/Modules/CMakeOBJCCompilerABI.m]
         ignore line: [Apple clang version 17.0.0 (clang-1700.6.4.2)]
         ignore line: [Target: arm64-apple-darwin25.3.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
         ignore line: [clang: warning: -Wl -v: 'linker' input unused [-Wunused-command-line-argument]]
-        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeOBJCCompilerABI.m -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb "-fdebug-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-zkG8AS" -target-linker-version 1230.1 -v "-fcoverage-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-zkG8AS" -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fobjc-runtime=macosx-26.0.0 -fobjc-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -x objective-c /opt/homebrew/share/cmake/Modules/CMakeOBJCCompilerABI.m]
+        ignore line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang" -cc1 -triple arm64-apple-macosx26.0.0 -Wundef-prefix=TARGET_OS_ -Wdeprecated-objc-isa-usage -Werror=deprecated-objc-isa-usage -Werror=implicit-function-declaration -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeOBJCCompilerABI.m -mrelocation-model pic -pic-level 2 -mframe-pointer=non-leaf -fno-strict-return -ffp-contract=on -fno-rounding-math -funwind-tables=1 -fobjc-msgsend-selector-stubs -target-sdk-version=26.2 -fvisibility-inlines-hidden-static-local-var -fdefine-target-os-macros -fno-assume-unique-vtables -fno-modulemap-allow-subdirectory-search -target-cpu apple-m1 -target-feature +zcm -target-feature +zcz -target-feature +v8.5a -target-feature +aes -target-feature +altnzcv -target-feature +ccdp -target-feature +complxnum -target-feature +crc -target-feature +dotprod -target-feature +fp-armv8 -target-feature +fp16fml -target-feature +fptoint -target-feature +fullfp16 -target-feature +jsconv -target-feature +lse -target-feature +neon -target-feature +pauth -target-feature +perfmon -target-feature +predres -target-feature +ras -target-feature +rcpc -target-feature +rdm -target-feature +sb -target-feature +sha2 -target-feature +sha3 -target-feature +specrestrict -target-feature +ssbs -target-abi darwinpcs -debugger-tuning=lldb "-fdebug-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-93Li5x" -target-linker-version 1230.1 -v "-fcoverage-compilation-dir=/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/native/CMakeFiles/CMakeScratch/TryCompile-93Li5x" -resource-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17 -dependency-file CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o.d -skip-unused-modulemap-deps -MT CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -sys-header-deps -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -I/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include -internal-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include -internal-externc-isystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks -internal-iframework /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks -Wno-reorder-init-list -Wno-implicit-int-float-conversion -Wno-c99-designator -Wno-final-dtor-non-final-class -Wno-extra-semi-stmt -Wno-misleading-indentation -Wno-quoted-include-in-framework-header -Wno-implicit-fallthrough -Wno-enum-enum-conversion -Wno-enum-float-conversion -Wno-elaborated-enum-base -ferror-limit 19 -stack-protector 1 -fstack-check -mdarwin-stkchk-strong-link -fblocks -fencode-extended-block-signature -fregister-global-dtors-with-atexit -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fobjc-runtime=macosx-26.0.0 -fobjc-exceptions -fexceptions -fmax-type-align=16 -fcommon -clang-vendor-feature=+disableNonDependentMemberExprInCurrentInstantiation -fno-odr-hash-protocols -clang-vendor-feature=+enableAggressiveVLAFolding -clang-vendor-feature=+revert09abecef7bbf -clang-vendor-feature=+thisNoAlignAttr -clang-vendor-feature=+thisNoNullAttr -clang-vendor-feature=+disableAtImportPrivateFrameworkInImplementationError -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -x objective-c /opt/homebrew/share/cmake/Modules/CMakeOBJCCompilerABI.m]
         ignore line: [clang -cc1 version 17.0.0 (clang-1700.6.4.2) default target arm64-apple-darwin25.3.0]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/local/include"]
         ignore line: [ignoring nonexistent directory "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/Library/Frameworks"]
@@ -1967,13 +1838,13 @@ events:
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks (framework directory)]
         ignore line: [ /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/SubFrameworks (framework directory)]
         ignore line: [End of search list.]
-        ignore line: [Linking OBJC executable cmTC_d730f]
-        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_d730f.dir/link.txt --verbose=1]
+        ignore line: [Linking OBJC executable cmTC_44513]
+        ignore line: [/opt/homebrew/bin/cmake -E cmake_link_script CMakeFiles/cmTC_44513.dir/link.txt --verbose=1]
         ignore line: [Apple clang version 17.0.0 (clang-1700.6.4.2)]
         ignore line: [Target: arm64-apple-darwin25.3.0]
         ignore line: [Thread model: posix]
         ignore line: [InstalledDir: /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin]
-        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_d730f -L/usr/local/lib -v CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
+        link line: [ "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld" -demangle -lto_library /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libLTO.dylib -dynamic -arch arm64 -platform_version macos 26.0.0 26.2 -syslibroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk -mllvm -enable-linkonceodr-outlining -o cmTC_44513 -L/usr/local/lib -v CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o -lSystem /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
           arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld] ==> ignore
           arg [-demangle] ==> ignore
           arg [-lto_library] ==> ignore, skip following value
@@ -1990,10 +1861,10 @@ events:
           arg [-mllvm] ==> ignore
           arg [-enable-linkonceodr-outlining] ==> ignore
           arg [-o] ==> ignore
-          arg [cmTC_d730f] ==> ignore
+          arg [cmTC_44513] ==> ignore
           arg [-L/usr/local/lib] ==> dir [/usr/local/lib]
           arg [-v] ==> ignore
-          arg [CMakeFiles/cmTC_d730f.dir/CMakeOBJCCompilerABI.m.o] ==> ignore
+          arg [CMakeFiles/cmTC_44513.dir/CMakeOBJCCompilerABI.m.o] ==> ignore
           arg [-lSystem] ==> lib [System]
           arg [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a] ==> lib [/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/17/lib/darwin/libclang_rt.osx.a]
         linker tool for 'OBJC': /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld

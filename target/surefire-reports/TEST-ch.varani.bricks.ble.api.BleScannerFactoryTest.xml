@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="ch.varani.bricks.ble.api.BleScannerFactoryTest" time="0.181" tests="4" errors="0" skipped="0" failures="1" flakes="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="ch.varani.bricks.ble.api.BleScannerFactoryTest" time="0.186" tests="4" errors="0" skipped="0" failures="0" flakes="0">
   <properties>
     <property name="java.specification.version" value="25"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -13,7 +13,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="CH"/>
     <property name="sun.boot.library.path" value="/opt/homebrew/Cellar/openjdk/25.0.2/libexec/openjdk.jdk/Contents/Home/lib"/>
-    <property name="sun.java.command" value="/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/surefire/surefirebooter-20260325114635438_3.jar /Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/surefire 2026-03-25T11-46-35_400-jvmRun1 surefire-20260325114635438_1tmp surefire_0-20260325114635438_2tmp"/>
+    <property name="sun.java.command" value="/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/surefire/surefirebooter-20260325122749475_3.jar /Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/surefire 2026-03-25T12-27-49_435-jvmRun1 surefire-20260325122749475_1tmp surefire_0-20260325122749475_2tmp"/>
     <property name="http.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/test-classes:/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/classes:/Users/jvarani/.m2/repository/org/jspecify/jspecify/1.0.0/jspecify-1.0.0.jar:/Users/jvarani/.m2/repository/org/junit/jupiter/junit-jupiter/5.12.2/junit-jupiter-5.12.2.jar:/Users/jvarani/.m2/repository/org/junit/jupiter/junit-jupiter-api/5.12.2/junit-jupiter-api-5.12.2.jar:/Users/jvarani/.m2/repository/org/opentest4j/opentest4j/1.3.0/opentest4j-1.3.0.jar:/Users/jvarani/.m2/repository/org/junit/platform/junit-platform-commons/1.12.2/junit-platform-commons-1.12.2.jar:/Users/jvarani/.m2/repository/org/junit/jupiter/junit-jupiter-params/5.12.2/junit-jupiter-params-5.12.2.jar:/Users/jvarani/.m2/repository/org/junit/jupiter/junit-jupiter-engine/5.12.2/junit-jupiter-engine-5.12.2.jar:/Users/jvarani/.m2/repository/org/junit/platform/junit-platform-engine/1.12.2/junit-platform-engine-1.12.2.jar:/Users/jvarani/.m2/repository/org/apiguardian/apiguardian-api/1.1.2/apiguardian-api-1.1.2.jar:/Users/jvarani/.m2/repository/org/mockito/mockito-core/5.18.0/mockito-core-5.18.0.jar:/Users/jvarani/.m2/repository/net/bytebuddy/byte-buddy/1.17.5/byte-buddy-1.17.5.jar:/Users/jvarani/.m2/repository/net/bytebuddy/byte-buddy-agent/1.17.5/byte-buddy-agent-1.17.5.jar:/Users/jvarani/.m2/repository/org/objenesis/objenesis/3.3/objenesis-3.3.jar:/Users/jvarani/.m2/repository/org/mockito/mockito-junit-jupiter/5.18.0/mockito-junit-jupiter-5.18.0.jar:/Users/jvarani/.m2/repository/org/awaitility/awaitility/4.3.0/awaitility-4.3.0.jar:/Users/jvarani/.m2/repository/org/hamcrest/hamcrest/2.1/hamcrest-2.1.jar:"/>
@@ -29,9 +29,8 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="ble.native.skip" value="true"/>
     <property name="apple.awt.application.name" value="ForkedBooter"/>
-    <property name="surefire.real.class.path" value="/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/surefire/surefirebooter-20260325114635438_3.jar"/>
+    <property name="surefire.real.class.path" value="/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/target/surefire/surefirebooter-20260325122749475_3.jar"/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="ftp.nonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.runtime.version" value="25.0.2"/>
@@ -61,26 +60,8 @@
     <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.class.version" value="69.0"/>
   </properties>
-  <testcase name="create_macOs_throwsBleExceptionBecauseNativeLibraryAbsent" classname="ch.varani.bricks.ble.api.BleScannerFactoryTest" time="0.176">
-    <failure message="Unexpected exception type thrown, expected: &lt;ch.varani.bricks.ble.api.BleException&gt; but was: &lt;java.lang.UnsatisfiedLinkError&gt;" type="org.opentest4j.AssertionFailedError"><![CDATA[org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: <ch.varani.bricks.ble.api.BleException> but was: <java.lang.UnsatisfiedLinkError>
-	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:67)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
-	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3128)
-	at ch.varani.bricks.ble.api.BleScannerFactoryTest.create_macOs_throwsBleExceptionBecauseNativeLibraryAbsent(BleScannerFactoryTest.java:56)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
-Caused by: java.lang.UnsatisfiedLinkError: 'long ch.varani.bricks.ble.impl.macos.JniNativeBridge.nativeInit()'
-	at ch.varani.bricks.ble.impl.macos.JniNativeBridge.nativeInit(Native Method)
-	at ch.varani.bricks.ble.impl.macos.JniNativeBridge.init(JniNativeBridge.java:46)
-	at ch.varani.bricks.ble.impl.macos.MacOsBleScanner.<init>(MacOsBleScanner.java:97)
-	at ch.varani.bricks.ble.api.BleScannerFactory.create(BleScannerFactory.java:55)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:53)
-	... 6 more
-]]></failure>
-  </testcase>
+  <testcase name="create_macOs_throwsBleExceptionBecauseNativeLibraryAbsent" classname="ch.varani.bricks.ble.api.BleScannerFactoryTest" time="0.183"/>
   <testcase name="create_unsupportedOs_throwsBleExceptionWithNoPlatformMessage" classname="ch.varani.bricks.ble.api.BleScannerFactoryTest" time="0.001"/>
   <testcase name="constructor_isPrivate_throwsAssertionError" classname="ch.varani.bricks.ble.api.BleScannerFactoryTest" time="0.001"/>
-  <testcase name="create_throwsBleException_whichIsThrowable" classname="ch.varani.bricks.ble.api.BleScannerFactoryTest" time="0.0"/>
+  <testcase name="create_throwsBleException_whichIsThrowable" classname="ch.varani.bricks.ble.api.BleScannerFactoryTest" time="0.001"/>
 </testsuite>

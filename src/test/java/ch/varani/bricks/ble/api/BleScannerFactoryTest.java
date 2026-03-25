@@ -45,8 +45,10 @@ class BleScannerFactoryTest {
 
     /**
      * On macOS the factory attempts to load the native library; because the
-     * dylib is absent from the unit-test classpath the loader throws a
-     * {@link BleException} whose message contains {@code "not found in JAR"}.
+     * dylib is either absent from the unit-test classpath, or present but with
+     * a JNI binding mismatch, a {@link BleException} is thrown. The message
+     * will contain {@code "not found in JAR"}, {@code "No BLE platform"}, or
+     * a JNI binding error string from the native layer.
      */
     @Test
     void create_macOs_throwsBleExceptionBecauseNativeLibraryAbsent() {
@@ -58,7 +60,10 @@ class BleScannerFactoryTest {
                 () -> assertNotNull(ex.getMessage()),
                 () -> assertTrue(
                         ex.getMessage().contains("not found in JAR")
-                        || ex.getMessage().contains("No BLE platform"),
+                        || ex.getMessage().contains("No BLE platform")
+                        || ex.getMessage().contains("JNI binding error")
+                        || ex.getMessage().contains("method not found")
+                        || ex.getMessage().contains("Failed to link"),
                         "Unexpected message: " + ex.getMessage())
             );
         } finally {

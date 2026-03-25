@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MacOsBleDevice.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Bluetooth LE API for Lego Powered Up</a> &gt; <a href="index.source.html" class="el_package">ch.varani.bricks.ble.impl.macos</a> &gt; <span class="el_source">MacOsBleDevice.java</span></div><h1>MacOsBleDevice.java</h1><pre class="source lang-java linenums">package ch.varani.bricks.ble.impl.macos;
+
+import java.util.concurrent.CompletableFuture;
+
+import org.jspecify.annotations.NonNull;
+
+import ch.varani.bricks.ble.api.BleConnection;
+import ch.varani.bricks.ble.api.BleDevice;
+
+/**
+ * macOS implementation of {@link BleDevice}.
+ *
+ * &lt;p&gt;Instances are created by {@link MacOsBleScanner#onDeviceFound} when the
+ * CoreBluetooth delegate reports a new or updated advertisement.  All fields
+ * are set at construction time and never mutated, making instances
+ * thread-safe.
+ *
+ * &lt;p&gt;The {@link #connect()} method delegates to the owning
+ * {@link MacOsBleScanner} so that the scanner's native context pointer can be
+ * used to initiate the CoreBluetooth connection.
+ *
+ * @since 1.0
+ */
+final class MacOsBleDevice implements BleDevice {
+
+    /** The CoreBluetooth peripheral UUID string (stable identifier). */
+    private final String peripheralId;
+
+    /** Advertised local name (may be an empty string). */
+    private final String deviceName;
+
+    /** Received signal strength in dBm at discovery time. */
+    private final int rssiValue;
+
+    /** Back-reference to the scanner that discovered this device. */
+    private final MacOsBleScanner owner;
+
+    /**
+     * Constructs a new {@code MacOsBleDevice}.
+     *
+     * @param peripheralId the CoreBluetooth peripheral UUID string; must not be {@code null}
+     * @param name         advertised device name; must not be {@code null}
+     * @param rssi         signal strength in dBm
+     * @param owner        the scanner instance that discovered this device; must not be {@code null}
+     */
+    MacOsBleDevice(
+            final @NonNull String peripheralId,
+            final @NonNull String name,
+            final int rssi,
+<span class="fc" id="L50">            final @NonNull MacOsBleScanner owner) {</span>
+<span class="fc" id="L51">        this.peripheralId = peripheralId;</span>
+<span class="fc" id="L52">        this.deviceName   = name;</span>
+<span class="fc" id="L53">        this.rssiValue    = rssi;</span>
+<span class="fc" id="L54">        this.owner        = owner;</span>
+<span class="fc" id="L55">    }</span>
+
+    /**
+     * {@inheritDoc}
+     *
+     * &lt;p&gt;On macOS this is the {@code NSUUID} string assigned by CoreBluetooth
+     * to the peripheral; it is stable within a single OS installation but may
+     * differ across devices or OS re-installations.
+     */
+    @Override
+    public @NonNull String id() {
+<span class="fc" id="L66">        return peripheralId;</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public @NonNull String name() {
+<span class="fc" id="L74">        return deviceName;</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public int rssi() {
+<span class="fc" id="L82">        return rssiValue;</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * &lt;p&gt;Delegates to {@link MacOsBleScanner#connectPeripheral(String)},
+     * which calls {@code CBCentralManager connectPeripheral:options:} and
+     * waits for full service and characteristic discovery before completing
+     * the returned future.
+     */
+    @Override
+    public @NonNull CompletableFuture&lt;BleConnection&gt; connect() {
+<span class="fc" id="L95">        return owner.connectPeripheral(peripheralId).thenApply(conn -&gt; (BleConnection) conn);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

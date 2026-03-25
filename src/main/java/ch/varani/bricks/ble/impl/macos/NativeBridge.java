@@ -111,9 +111,9 @@ interface NativeBridge {
      */
     void writeWithoutResponse(
             long connectionPtr,
-            @NonNull String serviceUuid,
+             @NonNull String serviceUuid,
             @NonNull String characteristicUuid,
-            @NonNull byte[] data);
+            byte[] data);
 
     /**
      * Reads the current value of a GATT characteristic via
@@ -128,7 +128,6 @@ interface NativeBridge {
      * @param characteristicUuid GATT characteristic UUID string
      * @return the characteristic value bytes, or {@code null} on failure
      */
-    @Nullable
     byte[] readCharacteristic(
             long connectionPtr,
             @NonNull String serviceUuid,

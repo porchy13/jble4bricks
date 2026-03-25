@@ -1,22 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: ch.varani.bricks.ble.api.BleScannerFactoryTest
 -------------------------------------------------------------------------------
-Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.181 s <<< FAILURE! -- in ch.varani.bricks.ble.api.BleScannerFactoryTest
-ch.varani.bricks.ble.api.BleScannerFactoryTest.create_macOs_throwsBleExceptionBecauseNativeLibraryAbsent -- Time elapsed: 0.176 s <<< FAILURE!
-org.opentest4j.AssertionFailedError: Unexpected exception type thrown, expected: <ch.varani.bricks.ble.api.BleException> but was: <java.lang.UnsatisfiedLinkError>
-	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:67)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
-	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3128)
-	at ch.varani.bricks.ble.api.BleScannerFactoryTest.create_macOs_throwsBleExceptionBecauseNativeLibraryAbsent(BleScannerFactoryTest.java:56)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
-	at java.base/java.util.ArrayList.forEach(ArrayList.java:1604)
-Caused by: java.lang.UnsatisfiedLinkError: 'long ch.varani.bricks.ble.impl.macos.JniNativeBridge.nativeInit()'
-	at ch.varani.bricks.ble.impl.macos.JniNativeBridge.nativeInit(Native Method)
-	at ch.varani.bricks.ble.impl.macos.JniNativeBridge.init(JniNativeBridge.java:46)
-	at ch.varani.bricks.ble.impl.macos.MacOsBleScanner.<init>(MacOsBleScanner.java:97)
-	at ch.varani.bricks.ble.api.BleScannerFactory.create(BleScannerFactory.java:55)
-	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:53)
-	... 6 more
-
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.186 s -- in ch.varani.bricks.ble.api.BleScannerFactoryTest

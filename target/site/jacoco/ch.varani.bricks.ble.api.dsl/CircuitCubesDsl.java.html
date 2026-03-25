@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CircuitCubesDsl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Bluetooth LE API for Lego Powered Up</a> &gt; <a href="index.source.html" class="el_package">ch.varani.bricks.ble.api.dsl</a> &gt; <span class="el_source">CircuitCubesDsl.java</span></div><h1>CircuitCubesDsl.java</h1><pre class="source lang-java linenums">package ch.varani.bricks.ble.api.dsl;
+
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Flow.Publisher;
+
+import org.jspecify.annotations.NonNull;
+
+import ch.varani.bricks.ble.api.BleConnection;
+import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesProtocolConstants;
+
+/**
+ * Fluent DSL sub-builder for Circuit Cubes motor control operations.
+ *
+ * &lt;p&gt;Obtained via {@link ConnectionDsl#asCircuitCubes()}. Commands are ASCII
+ * strings written to the NUS TX characteristic. Responses (including battery
+ * readings) arrive as ASCII strings on the NUS RX characteristic.
+ *
+ * &lt;p&gt;Usage example:
+ * &lt;pre&gt;{@code
+ * connectionDsl.asCircuitCubes()
+ *     .motorForward(CircuitCubesProtocolConstants.CHANNEL_A, 128)
+ *     .motorStop(CircuitCubesProtocolConstants.CHANNEL_B)
+ *     .queryBattery()
+ *     .done();
+ * }&lt;/pre&gt;
+ *
+ * &lt;p&gt;Thread safety: not thread-safe; do not share across threads.
+ *
+ * &lt;p&gt;&lt;b&gt;DSL maintenance rule:&lt;/b&gt; any change to
+ * {@link CircuitCubesProtocolConstants} must be reflected here.
+ * See {@code AGENTS.md §16}.
+ */
+public final class CircuitCubesDsl {
+
+    private final BleConnection connection;
+
+    /**
+     * Creates a {@code CircuitCubesDsl} wrapping the given connection.
+     *
+     * @param connection the active BLE connection; must not be {@code null}
+     */
+<span class="fc" id="L44">    CircuitCubesDsl(@NonNull BleConnection connection) {</span>
+<span class="fc" id="L45">        this.connection = connection;</span>
+<span class="fc" id="L46">    }</span>
+
+    // =========================================================================
+    // Notifications (RX)
+    // =========================================================================
+
+    /**
+     * Returns a publisher that emits raw bytes received on the NUS RX
+     * characteristic (e.g. battery voltage response).
+     *
+     * @return a publisher of response payloads; never {@code null}
+     */
+    public @NonNull Publisher&lt;byte[]&gt; notifications() {
+<span class="fc" id="L59">        return connection.notifications(</span>
+                CircuitCubesProtocolConstants.NUS_SERVICE_UUID,
+                CircuitCubesProtocolConstants.RX_CHARACTERISTIC_UUID);
+    }
+
+    // =========================================================================
+    // Motor commands
+    // =========================================================================
+
+    /**
+     * Drives a motor channel in the forward direction at the given velocity.
+     *
+     * &lt;p&gt;The internal velocity is clamped to the range
+     * 0–{@value CircuitCubesProtocolConstants#MAX_INTERNAL_VELOCITY}.
+     *
+     * @param channel  motor channel character (e.g.
+     *                 {@link CircuitCubesProtocolConstants#CHANNEL_A})
+     * @param velocity forward speed in the range
+     *                 0–{@value CircuitCubesProtocolConstants#MAX_INTERNAL_VELOCITY}
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture&lt;Void&gt; motorForward(char channel, int velocity) {
+<span class="fc" id="L81">        return sendMotorCommand(channel, Math.abs(velocity));</span>
+    }
+
+    /**
+     * Drives a motor channel in the reverse direction at the given velocity.
+     *
+     * @param channel  motor channel character
+     * @param velocity reverse speed in the range
+     *                 0–{@value CircuitCubesProtocolConstants#MAX_INTERNAL_VELOCITY}
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture&lt;Void&gt; motorReverse(char channel, int velocity) {
+<span class="fc" id="L93">        return sendMotorCommand(channel, -Math.abs(velocity));</span>
+    }
+
+    /**
+     * Stops a motor channel.
+     *
+     * @param channel motor channel character
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture&lt;Void&gt; motorStop(char channel) {
+<span class="fc" id="L103">        return sendMotorCommand(channel, 0);</span>
+    }
+
+    /**
+     * Sends a motor command with the given signed velocity.
+     *
+     * &lt;p&gt;The velocity is encoded as per the Circuit Cubes protocol:
+     * &lt;ul&gt;
+     *   &lt;li&gt;velocity == 0 → magnitude = 000, sign = '+'&lt;/li&gt;
+     *   &lt;li&gt;velocity != 0 → magnitude = 55 + abs(velocity), sign = '+'/'-'&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @param channel  motor channel character
+     * @param velocity signed velocity (negative = reverse);
+     *                 clamped to ±{@value CircuitCubesProtocolConstants#MAX_INTERNAL_VELOCITY}
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture&lt;Void&gt; sendMotorCommand(char channel, int velocity) {
+<span class="fc" id="L121">        final int clamped = Math.max(</span>
+                -CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY,
+<span class="fc" id="L123">                Math.min(CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY, velocity));</span>
+
+        final char sign;
+        final int magnitude;
+<span class="fc bfc" id="L127" title="All 2 branches covered.">        if (clamped == 0) {</span>
+<span class="fc" id="L128">            sign = CircuitCubesProtocolConstants.SIGN_FORWARD;</span>
+<span class="fc" id="L129">            magnitude = CircuitCubesProtocolConstants.MAGNITUDE_STOP;</span>
+        } else {
+<span class="fc bfc" id="L131" title="All 2 branches covered.">            sign = clamped &gt; 0</span>
+<span class="fc" id="L132">                    ? CircuitCubesProtocolConstants.SIGN_FORWARD</span>
+<span class="fc" id="L133">                    : CircuitCubesProtocolConstants.SIGN_REVERSE;</span>
+<span class="fc" id="L134">            magnitude = CircuitCubesProtocolConstants.MAGNITUDE_MIN_NONZERO + Math.abs(clamped);</span>
+        }
+
+<span class="fc" id="L137">        final String cmd = String.format(&quot;%c%03d%c&quot;, sign, magnitude, channel);</span>
+<span class="fc" id="L138">        return writeString(cmd);</span>
+    }
+
+    // =========================================================================
+    // Battery query
+    // =========================================================================
+
+    /**
+     * Sends the battery voltage query command.
+     *
+     * &lt;p&gt;The battery voltage response is delivered as an ASCII string on the
+     * RX characteristic notification.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture&lt;Void&gt; queryBattery() {
+<span class="fc" id="L154">        final byte[] msg = {CircuitCubesProtocolConstants.BATTERY_QUERY_COMMAND};</span>
+<span class="fc" id="L155">        return write(msg);</span>
+    }
+
+    // =========================================================================
+    // Lifecycle
+    // =========================================================================
+
+    /**
+     * Disconnects the Circuit Cubes brick and releases all resources.
+     *
+     * @throws BleException if the disconnect fails
+     */
+    public void done() throws BleException {
+<span class="fc" id="L168">        connection.close();</span>
+<span class="fc" id="L169">    }</span>
+
+    /**
+     * Returns the underlying {@link BleConnection}.
+     *
+     * @return the connection; never {@code null}
+     */
+    public @NonNull BleConnection connection() {
+<span class="fc" id="L177">        return connection;</span>
+    }
+
+    // =========================================================================
+    // Internal helpers
+    // =========================================================================
+
+    /**
+     * Encodes {@code text} as UTF-8 and writes it to the NUS TX characteristic.
+     *
+     * @param text the ASCII command string
+     * @return a future that completes when the write is submitted
+     */
+    private @NonNull CompletableFuture&lt;Void&gt; writeString(@NonNull String text) {
+<span class="fc" id="L191">        return write(text.getBytes(StandardCharsets.UTF_8));</span>
+    }
+
+    /**
+     * Writes {@code payload} to the NUS TX characteristic.
+     *
+     * @param payload the raw bytes to write
+     * @return a future that completes when the write is submitted
+     */
+    private @NonNull CompletableFuture&lt;Void&gt; write(byte[] payload) {
+<span class="fc" id="L201">        return connection.writeWithoutResponse(</span>
+                CircuitCubesProtocolConstants.NUS_SERVICE_UUID,
+                CircuitCubesProtocolConstants.TX_CHARACTERISTIC_UUID,
+                payload);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

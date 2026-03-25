@@ -253,6 +253,8 @@ Do not introduce code that would lower these ratings.
   `NativeLibraryLoader.loadAbsolutePath()`, which contains a `System.load()` call that JaCoCo
   cannot instrument past in Java 25 restricted mode. This exception is documented in `pom.xml`.
 - Do not use `http` repository URLs in `pom.xml`.
+- Do not modify the public API (`api/`) or the DSL (`api/dsl/`) without updating `README.md`
+  accordingly. The usage examples in `README.md` must always reflect the actual public surface.
 
 ---
 
@@ -266,6 +268,9 @@ A task is complete when **all** of the following are true:
 4. SonarQube Quality Gate is Passed.
 5. All public API elements have complete Javadoc.
 6. The PR description explains the change and references the relevant issue.
+7. `README.md` reflects every change to the public API (`api/`) and the DSL (`api/dsl/`):
+   new methods are documented, removed methods are removed from examples, and changed
+   signatures are corrected.
 
 ---
 
@@ -970,3 +975,47 @@ Disconnects battery immediately. Device wakes only when charger is connected.
 **`0xAC` — Check charger settings**
 
 Send byte `0xAC` only. Response: byte `0xAC` + 1 byte of charger settings data.
+
+---
+
+## 16. DSL and README Maintenance Rules
+
+### 16.1 DSL must mirror the public API
+
+The fluent DSL (`ch.varani.bricks.ble.api.dsl`) is a thin, named-method layer built directly on
+top of the public API (`ch.varani.bricks.ble.api`) and the protocol-constant classes in
+`ch.varani.bricks.ble.device.*`. Any change to either of these layers **must** be reflected in
+the corresponding DSL class:
+
+| Changed layer | DSL class(es) to update |
+|---|---|
+| `api/` (e.g. new method on `BleConnection`) | `ConnectionDsl`, any DSL sub-builder that delegates to it |
+| `device/lego/` | `LegoDsl` |
+| `device/sbrick/` | `SBrickDsl` |
+| `device/circuitcubes/` | `CircuitCubesDsl` |
+| `device/buwizz/` (BuWizz 2.0) | `BuWizz2Dsl` |
+| `device/buwizz/` (BuWizz 3.0) | `BuWizz3Dsl` |
+
+Rules:
+- A new public method on a protocol-constants class requires a corresponding named method in the
+  DSL class, with a Javadoc comment referencing the constant and the protocol specification.
+- A removed or renamed constant requires the DSL method to be updated or removed accordingly.
+- DSL classes must **never** import from `impl` or `util`.
+- Coverage requirements (≥ 99 % instruction, 100 % branch) apply to DSL classes exactly as they
+  do to production classes.
+
+### 16.2 README.md must reflect every change to the public API and DSL
+
+`README.md` is the canonical, human-readable usage guide for this library. It must be kept
+accurate at all times:
+
+- **New public method** in `api/` or `api/dsl/` → add a usage example in the relevant section
+  of `README.md`.
+- **Removed public method** → remove every occurrence of that method from `README.md` examples.
+- **Changed signature** (renamed parameter, different return type, etc.) → correct the
+  corresponding example in `README.md`.
+- **New device brand or protocol** → add a dedicated sub-section under both the DSL usage guide
+  and the raw API usage guide in `README.md`.
+
+A pull request that modifies `api/` or `api/dsl/` and does **not** update `README.md` is
+incomplete and must not be merged.

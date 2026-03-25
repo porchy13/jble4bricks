@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ScanDsl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Bluetooth LE API for Lego Powered Up</a> &gt; <a href="index.source.html" class="el_package">ch.varani.bricks.ble.api.dsl</a> &gt; <span class="el_source">ScanDsl.java</span></div><h1>ScanDsl.java</h1><pre class="source lang-java linenums">package ch.varani.bricks.ble.api.dsl;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
+
+import ch.varani.bricks.ble.api.BleDevice;
+import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.api.BleScanner;
+import ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstants;
+import ch.varani.bricks.ble.device.buwizz.BuWizz3ProtocolConstants;
+import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesProtocolConstants;
+import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+import ch.varani.bricks.ble.device.sbrick.SBrickProtocolConstants;
+
+/**
+ * Fluent builder for BLE scan operations.
+ *
+ * &lt;p&gt;Obtained via {@link BrickDsl#scan()}. The typical usage is:
+ * &lt;pre&gt;{@code
+ * dsl.scan()
+ *    .forLegoHubs()          // filter by LEGO hub GATT service UUID
+ *    .timeoutSeconds(10)     // stop automatically after 10 s
+ *    .first()                // take only the first discovered device
+ *    .thenConnect();         // connect and return a ConnectionDsl
+ * }&lt;/pre&gt;
+ *
+ * &lt;p&gt;Thread safety: instances of this class are not thread-safe and must
+ * not be shared across threads.
+ */
+public final class ScanDsl {
+
+    /** Default scan timeout in seconds (no timeout by default). */
+    private static final long NO_TIMEOUT = 0L;
+
+    /** Default maximum number of devices to collect (no limit by default). */
+    private static final int NO_LIMIT = 0;
+
+    private final BleScanner scanner;
+
+    @Nullable
+    private String serviceUuidFilter;
+    private long timeoutSeconds;
+    private int maxDevices;
+
+    /**
+     * Creates a {@code ScanDsl} wrapping the given scanner.
+     *
+     * @param scanner the BLE scanner to delegate to; must not be {@code null}
+     */
+<span class="fc" id="L57">    ScanDsl(@NonNull BleScanner scanner) {</span>
+<span class="fc" id="L58">        this.scanner = scanner;</span>
+<span class="fc" id="L59">        this.serviceUuidFilter = null;</span>
+<span class="fc" id="L60">        this.timeoutSeconds = NO_TIMEOUT;</span>
+<span class="fc" id="L61">        this.maxDevices = NO_LIMIT;</span>
+<span class="fc" id="L62">    }</span>
+
+    // =========================================================================
+    // Filter helpers — named shortcuts for common GATT service UUIDs
+    // =========================================================================
+
+    /**
+     * Restricts the scan to peripherals advertising the LEGO Hub GATT service.
+     *
+     * &lt;p&gt;Sets the service UUID filter to
+     * {@link LegoProtocolConstants#HUB_SERVICE_UUID}.
+     *
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl forLegoHubs() {
+<span class="fc" id="L77">        this.serviceUuidFilter = LegoProtocolConstants.HUB_SERVICE_UUID;</span>
+<span class="fc" id="L78">        return this;</span>
+    }
+
+    /**
+     * Restricts the scan to peripherals advertising the SBrick Remote Control
+     * GATT service.
+     *
+     * &lt;p&gt;Sets the service UUID filter to
+     * {@link SBrickProtocolConstants#REMOTE_CONTROL_SERVICE_UUID}.
+     *
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl forSBricks() {
+<span class="fc" id="L91">        this.serviceUuidFilter = SBrickProtocolConstants.REMOTE_CONTROL_SERVICE_UUID;</span>
+<span class="fc" id="L92">        return this;</span>
+    }
+
+    /**
+     * Restricts the scan to peripherals advertising the Circuit Cubes NUS
+     * service.
+     *
+     * &lt;p&gt;Sets the service UUID filter to
+     * {@link CircuitCubesProtocolConstants#NUS_SERVICE_UUID}.
+     *
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl forCircuitCubes() {
+<span class="fc" id="L105">        this.serviceUuidFilter = CircuitCubesProtocolConstants.NUS_SERVICE_UUID;</span>
+<span class="fc" id="L106">        return this;</span>
+    }
+
+    /**
+     * Restricts the scan to BuWizz 2.0 peripherals using the Application
+     * service UUID.
+     *
+     * &lt;p&gt;Sets the service UUID filter to
+     * {@link BuWizz2ProtocolConstants#APPLICATION_SERVICE_UUID}.
+     *
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl forBuWizz2() {
+<span class="fc" id="L119">        this.serviceUuidFilter = BuWizz2ProtocolConstants.APPLICATION_SERVICE_UUID;</span>
+<span class="fc" id="L120">        return this;</span>
+    }
+
+    /**
+     * Restricts the scan to BuWizz 3.0 peripherals using the Application
+     * service UUID.
+     *
+     * &lt;p&gt;Sets the service UUID filter to
+     * {@link BuWizz3ProtocolConstants#APPLICATION_SERVICE_UUID}.
+     *
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl forBuWizz3() {
+<span class="fc" id="L133">        this.serviceUuidFilter = BuWizz3ProtocolConstants.APPLICATION_SERVICE_UUID;</span>
+<span class="fc" id="L134">        return this;</span>
+    }
+
+    /**
+     * Applies a custom GATT service UUID filter.
+     *
+     * &lt;p&gt;Pass {@code null} to scan without any service UUID filter.
+     *
+     * @param uuid 128-bit UUID string, or {@code null} for no filter
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl forService(@Nullable String uuid) {
+<span class="fc" id="L146">        this.serviceUuidFilter = uuid;</span>
+<span class="fc" id="L147">        return this;</span>
+    }
+
+    // =========================================================================
+    // Scan control
+    // =========================================================================
+
+    /**
+     * Stops the scan automatically after the given number of seconds.
+     *
+     * &lt;p&gt;A value of {@code 0} (the default) means the scan runs until
+     * {@link BleScanner#stopScan()} is called explicitly or until
+     * {@link #first()} / {@link #collect(int)} receives enough devices.
+     *
+     * @param seconds scan duration in seconds; must be ≥ 0
+     * @return this builder for chaining
+     * @throws IllegalArgumentException if {@code seconds} is negative
+     */
+    public @NonNull ScanDsl timeoutSeconds(long seconds) {
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        if (seconds &lt; 0) {</span>
+<span class="fc" id="L167">            throw new IllegalArgumentException(</span>
+                    &quot;Scan timeout must be &gt;= 0, got: &quot; + seconds);
+        }
+<span class="fc" id="L170">        this.timeoutSeconds = seconds;</span>
+<span class="fc" id="L171">        return this;</span>
+    }
+
+    /**
+     * Returns the scan timeout (in seconds) configured on this builder.
+     *
+     * &lt;p&gt;A value of {@code 0} means no timeout.
+     *
+     * @return timeout in seconds, ≥ 0
+     */
+    long timeoutSeconds() {
+<span class="fc" id="L182">        return timeoutSeconds;</span>
+    }
+
+    // =========================================================================
+    // Terminal operations — start the scan and wait for results
+    // =========================================================================
+
+    /**
+     * Starts a scan and blocks until the first device is discovered, then
+     * stops the scan.
+     *
+     * &lt;p&gt;If a timeout was set via {@link #timeoutSeconds(long)} and no device
+     * is found within that period, this method completes exceptionally with a
+     * {@link BleException}.
+     *
+     * @return a {@link DeviceDsl} wrapping the first discovered device;
+     *         never {@code null}
+     * @throws BleException if the scan fails or times out without finding a device
+     */
+    public @NonNull DeviceDsl first() throws BleException {
+<span class="fc" id="L202">        final List&lt;BleDevice&gt; found = collect(1);</span>
+<span class="fc" id="L203">        return new DeviceDsl(found.get(0));</span>
+    }
+
+    /**
+     * Starts a scan and blocks until {@code count} devices have been discovered
+     * or the configured timeout elapses, then stops the scan.
+     *
+     * @param count the number of devices to collect; must be ≥ 1
+     * @return an immutable list of at most {@code count} discovered devices;
+     *         never {@code null}
+     * @throws BleException             if the scan cannot be started or if it
+     *                                  times out before {@code count} devices are found
+     * @throws IllegalArgumentException if {@code count} is less than 1
+     */
+    public @NonNull List&lt;BleDevice&gt; collect(int count) throws BleException {
+<span class="fc bfc" id="L218" title="All 2 branches covered.">        if (count &lt; 1) {</span>
+<span class="fc" id="L219">            throw new IllegalArgumentException(</span>
+                    &quot;count must be &gt;= 1, got: &quot; + count);
+        }
+<span class="fc" id="L222">        this.maxDevices = count;</span>
+<span class="fc" id="L223">        final List&lt;BleDevice&gt; devices = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L224">        final CompletableFuture&lt;Void&gt; done = new CompletableFuture&lt;&gt;();</span>
+
+<span class="fc" id="L226">        final CompletableFuture&lt;Void&gt; scanStarted = scanner.startScan(</span>
+                serviceUuidFilter,
+                device -&gt; {
+<span class="fc" id="L229">                    synchronized (devices) {</span>
+<span class="fc bfc" id="L230" title="All 2 branches covered.">                        if (devices.size() &lt; maxDevices) {</span>
+<span class="fc" id="L231">                            devices.add(device);</span>
+                        }
+<span class="fc bfc" id="L233" title="All 2 branches covered.">                        if (devices.size() &gt;= maxDevices) {</span>
+<span class="fc" id="L234">                            done.complete(null);</span>
+                        }
+<span class="fc" id="L236">                    }</span>
+<span class="fc" id="L237">                });</span>
+
+        try {
+<span class="fc bfc" id="L240" title="All 2 branches covered.">            if (timeoutSeconds &gt; NO_TIMEOUT) {</span>
+<span class="fc" id="L241">                scanStarted.get(timeoutSeconds, TimeUnit.SECONDS);</span>
+<span class="fc" id="L242">                done.get(timeoutSeconds, TimeUnit.SECONDS);</span>
+            } else {
+<span class="fc" id="L244">                scanStarted.get();</span>
+<span class="fc" id="L245">                done.get();</span>
+            }
+<span class="fc" id="L247">        } catch (TimeoutException ex) {</span>
+<span class="fc" id="L248">            throw new BleException(</span>
+                    &quot;Scan timed out after &quot; + timeoutSeconds
+                    + &quot; second(s) without finding &quot; + count + &quot; device(s).&quot;,
+                    ex);
+<span class="fc" id="L252">        } catch (InterruptedException ex) {</span>
+<span class="fc" id="L253">            Thread.currentThread().interrupt();</span>
+<span class="fc" id="L254">            throw new BleException(&quot;Scan interrupted.&quot;, ex);</span>
+<span class="fc" id="L255">        } catch (ExecutionException ex) {</span>
+<span class="fc" id="L256">            throw new BleException(&quot;Scan failed: &quot; + ex.getCause().getMessage(),</span>
+<span class="fc" id="L257">                    ex.getCause());</span>
+        } finally {
+<span class="fc" id="L259">            scanner.stopScan();</span>
+        }
+
+<span class="fc" id="L262">        return List.copyOf(devices);</span>
+    }
+
+    /**
+     * Returns the service UUID filter currently configured on this builder.
+     *
+     * &lt;p&gt;This method is intended for testing and introspection only.
+     *
+     * @return the UUID string, or {@code null} if no filter is set
+     */
+    @Nullable
+    String serviceUuidFilter() {
+<span class="fc" id="L274">        return serviceUuidFilter;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

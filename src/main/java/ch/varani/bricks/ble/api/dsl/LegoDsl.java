@@ -1,0 +1,650 @@
+package ch.varani.bricks.ble.api.dsl;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Flow.Publisher;
+
+import org.jspecify.annotations.NonNull;
+
+import ch.varani.bricks.ble.api.BleConnection;
+import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+
+/**
+ * Fluent DSL sub-builder for LEGO Wireless Protocol 3.0 (LWP3) operations.
+ *
+ * <p>Obtained via {@link ConnectionDsl#asLego()}. Provides named methods for
+ * every downstream command and upstream notification defined in LWP3, mapping
+ * to writes/reads on the single {@link LegoProtocolConstants#HUB_CHARACTERISTIC_UUID}
+ * characteristic.
+ *
+ * <p>Usage example:
+ * <pre>{@code
+ * connectionDsl.asLego()
+ *     .requestBatteryVoltage()
+ *     .motor(0x00).startSpeed(80)
+ *     .hubAction().switchOff()
+ *     .done();
+ * }</pre>
+ *
+ * <p>Thread safety: not thread-safe; do not share across threads.
+ *
+ * <p><b>DSL maintenance rule:</b> any change to
+ * {@link LegoProtocolConstants} must be reflected here. See {@code AGENTS.md §16}.
+ */
+public final class LegoDsl {
+
+    private final BleConnection connection;
+
+    /**
+     * Creates a {@code LegoDsl} wrapping the given connection.
+     *
+     * @param connection the active BLE connection; must not be {@code null}
+     */
+    LegoDsl(@NonNull BleConnection connection) {
+        this.connection = connection;
+    }
+
+    // =========================================================================
+    // Notifications (upstream)
+    // =========================================================================
+
+    /**
+     * Returns a publisher that emits raw LWP3 messages received from the hub.
+     *
+     * <p>Enables BLE notifications on the LEGO Hub characteristic.
+     *
+     * @return a publisher of raw upstream message bytes; never {@code null}
+     */
+    public @NonNull Publisher<byte[]> notifications() {
+        return connection.notifications(
+                LegoProtocolConstants.HUB_SERVICE_UUID,
+                LegoProtocolConstants.HUB_CHARACTERISTIC_UUID);
+    }
+
+    // =========================================================================
+    // Hub Property requests (message type 0x01)
+    // =========================================================================
+
+    /**
+     * Sends a Hub Properties request-update message for the given property.
+     *
+     * <p>The hub will respond with a Properties Update notification.
+     *
+     * @param propertyRef the hub property reference byte (e.g.
+     *                    {@link LegoProtocolConstants#HUB_PROP_BATTERY_VOLTAGE})
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestHubProperty(int propertyRef) {
+        final byte[] msg = {
+            0x05,
+            (byte) LegoProtocolConstants.HUB_ID,
+            (byte) LegoProtocolConstants.MSG_HUB_PROPERTIES,
+            (byte) propertyRef,
+            (byte) LegoProtocolConstants.HUB_PROP_OP_REQUEST_UPDATE
+        };
+        return write(msg);
+    }
+
+    /**
+     * Requests the current battery voltage percentage from the hub.
+     *
+     * <p>Convenience shortcut for
+     * {@code requestHubProperty(HUB_PROP_BATTERY_VOLTAGE)}.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestBatteryVoltage() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_BATTERY_VOLTAGE);
+    }
+
+    /**
+     * Requests the firmware version string from the hub.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestFirmwareVersion() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_FW_VERSION);
+    }
+
+    /**
+     * Requests the hardware version string from the hub.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestHardwareVersion() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_HW_VERSION);
+    }
+
+    /**
+     * Requests the RSSI value from the hub.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestRssi() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_RSSI);
+    }
+
+    /**
+     * Enables periodic battery voltage updates from the hub.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> enableBatteryVoltageUpdates() {
+        return hubPropertyOperation(
+                LegoProtocolConstants.HUB_PROP_BATTERY_VOLTAGE,
+                LegoProtocolConstants.HUB_PROP_OP_ENABLE_UPDATES);
+    }
+
+    /**
+     * Disables periodic battery voltage updates from the hub.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> disableBatteryVoltageUpdates() {
+        return hubPropertyOperation(
+                LegoProtocolConstants.HUB_PROP_BATTERY_VOLTAGE,
+                LegoProtocolConstants.HUB_PROP_OP_DISABLE_UPDATES);
+    }
+
+    /**
+     * Sends a Hub Properties message with the given property reference and
+     * operation code.
+     *
+     * @param propertyRef the hub property reference byte
+     * @param operation   the property operation byte
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> hubPropertyOperation(
+            int propertyRef,
+            int operation) {
+        final byte[] msg = {
+            0x05,
+            (byte) LegoProtocolConstants.HUB_ID,
+            (byte) LegoProtocolConstants.MSG_HUB_PROPERTIES,
+            (byte) propertyRef,
+            (byte) operation
+        };
+        return write(msg);
+    }
+
+    // =========================================================================
+    // Hub Action commands (message type 0x02)
+    // =========================================================================
+
+    /**
+     * Returns a fluent sub-builder for Hub Action commands.
+     *
+     * @return the hub-action builder; never {@code null}
+     */
+    public @NonNull HubActionBuilder hubAction() {
+        return new HubActionBuilder(this);
+    }
+
+    /**
+     * Sends a raw Hub Action command.
+     *
+     * @param actionType the action type byte (e.g.
+     *                   {@link LegoProtocolConstants#HUB_ACTION_SWITCH_OFF})
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> sendHubAction(int actionType) {
+        final byte[] msg = {
+            0x04,
+            (byte) LegoProtocolConstants.HUB_ID,
+            (byte) LegoProtocolConstants.MSG_HUB_ACTIONS,
+            (byte) actionType
+        };
+        return write(msg);
+    }
+
+    // =========================================================================
+    // Hub Alert operations (message type 0x03)
+    // =========================================================================
+
+    /**
+     * Enables upstream alert updates for the given alert type.
+     *
+     * @param alertType the alert type byte (e.g.
+     *                  {@link LegoProtocolConstants#HUB_ALERT_LOW_VOLTAGE})
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> enableAlert(int alertType) {
+        return sendAlertOperation(alertType, LegoProtocolConstants.HUB_ALERT_OP_ENABLE_UPDATES);
+    }
+
+    /**
+     * Disables upstream alert updates for the given alert type.
+     *
+     * @param alertType the alert type byte
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> disableAlert(int alertType) {
+        return sendAlertOperation(alertType, LegoProtocolConstants.HUB_ALERT_OP_DISABLE_UPDATES);
+    }
+
+    /**
+     * Requests the current status of the given alert type.
+     *
+     * @param alertType the alert type byte
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestAlert(int alertType) {
+        return sendAlertOperation(alertType, LegoProtocolConstants.HUB_ALERT_OP_REQUEST_UPDATE);
+    }
+
+    /**
+     * Sends a Hub Alerts message with the given type and operation.
+     *
+     * @param alertType  the alert type byte
+     * @param operation  the alert operation byte
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> sendAlertOperation(int alertType, int operation) {
+        final byte[] msg = {
+            0x05,
+            (byte) LegoProtocolConstants.HUB_ID,
+            (byte) LegoProtocolConstants.MSG_HUB_ALERTS,
+            (byte) alertType,
+            (byte) operation
+        };
+        return write(msg);
+    }
+
+    // =========================================================================
+    // Port Output commands for motors (message type 0x81)
+    // =========================================================================
+
+    /**
+     * Returns a fluent motor sub-builder for the specified port.
+     *
+     * @param portId the port identifier byte (e.g. {@code 0x00} for port A)
+     * @return the motor builder; never {@code null}
+     */
+    public @NonNull MotorBuilder motor(int portId) {
+        return new MotorBuilder(this, portId);
+    }
+
+    /**
+     * Sends a raw Port Output Command message.
+     *
+     * @param portId            the port identifier byte
+     * @param startupCompletion the startup/completion info nibbles byte
+     * @param subCommand        the motor sub-command byte
+     * @param parameters        additional sub-command parameters; may be empty
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> portOutputCommand(
+            int portId,
+            int startupCompletion,
+            int subCommand,
+            byte... parameters) {
+        // Layout: [length, hubId, msgType, portId, startupCompletion, subCmd, params...]
+        final byte[] msg = new byte[PORT_OUTPUT_HEADER_SIZE + parameters.length];
+        msg[IDX_MSG_LENGTH] = (byte) msg.length;
+        msg[IDX_HUB_ID] = (byte) LegoProtocolConstants.HUB_ID;
+        msg[IDX_MSG_TYPE] = (byte) LegoProtocolConstants.MSG_PORT_OUTPUT_COMMAND;
+        msg[IDX_PORT_ID] = (byte) portId;
+        msg[IDX_STARTUP_COMPLETION] = (byte) startupCompletion;
+        msg[IDX_SUB_COMMAND] = (byte) subCommand;
+        System.arraycopy(parameters, 0, msg, PORT_OUTPUT_HEADER_SIZE, parameters.length);
+        return write(msg);
+    }
+
+    // =========================================================================
+    // Port Information requests (message types 0x21, 0x22)
+    // =========================================================================
+
+    /**
+     * Sends a Port Information Request for the given port.
+     *
+     * @param portId          the port identifier byte
+     * @param informationType the information type byte (0x01=value, 0x02=mode-info, 0x03=combinations)
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestPortInfo(int portId, int informationType) {
+        final byte[] msg = {
+            0x05,
+            (byte) LegoProtocolConstants.HUB_ID,
+            (byte) LegoProtocolConstants.MSG_PORT_INFO_REQUEST,
+            (byte) portId,
+            (byte) informationType
+        };
+        return write(msg);
+    }
+
+    /**
+     * Sends a Port Mode Information Request for the given port and mode.
+     *
+     * @param portId          the port identifier byte
+     * @param mode            the mode index byte
+     * @param informationType the mode-information type byte
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestPortModeInfo(
+            int portId,
+            int mode,
+            int informationType) {
+        final byte[] msg = {
+            0x06,
+            (byte) LegoProtocolConstants.HUB_ID,
+            (byte) LegoProtocolConstants.MSG_PORT_MODE_INFO_REQUEST,
+            (byte) portId,
+            (byte) mode,
+            (byte) informationType
+        };
+        return write(msg);
+    }
+
+    // =========================================================================
+    // Lifecycle
+    // =========================================================================
+
+    /**
+     * Disconnects the hub and releases all resources.
+     *
+     * @throws BleException if the disconnect fails
+     */
+    public void done() throws BleException {
+        connection.close();
+    }
+
+    /**
+     * Returns the underlying {@link BleConnection}.
+     *
+     * @return the connection; never {@code null}
+     */
+    public @NonNull BleConnection connection() {
+        return connection;
+    }
+
+    // =========================================================================
+    // Internal helpers
+    // =========================================================================
+
+    // =========================================================================
+    // Internal constants
+    // =========================================================================
+
+    /** Number of fixed header bytes prepended to every Port Output Command. */
+    private static final int PORT_OUTPUT_HEADER_SIZE = 6;
+
+    /** Array index of the message-length field in a Port Output Command. */
+    private static final int IDX_MSG_LENGTH = 0;
+
+    /** Array index of the Hub ID field in a Port Output Command. */
+    private static final int IDX_HUB_ID = 1;
+
+    /** Array index of the message-type field in a Port Output Command. */
+    private static final int IDX_MSG_TYPE = 2;
+
+    /** Array index of the port-ID field in a Port Output Command. */
+    private static final int IDX_PORT_ID = 3;
+
+    /** Array index of the startup/completion field in a Port Output Command. */
+    private static final int IDX_STARTUP_COMPLETION = 4;
+
+    /** Array index of the sub-command field in a Port Output Command. */
+    private static final int IDX_SUB_COMMAND = 5;
+
+    /**
+     * Writes {@code payload} to the LEGO hub characteristic.
+     *
+     * @param payload the raw bytes to write
+     * @return a future that completes when the write is submitted
+     */
+    private @NonNull CompletableFuture<Void> write(byte[] payload) {
+        return connection.writeWithoutResponse(
+                LegoProtocolConstants.HUB_SERVICE_UUID,
+                LegoProtocolConstants.HUB_CHARACTERISTIC_UUID,
+                payload);
+    }
+
+    // =========================================================================
+    // Nested fluent builders
+    // =========================================================================
+
+    /**
+     * Fluent builder for Hub Action commands.
+     */
+    public static final class HubActionBuilder {
+
+        private final LegoDsl parent;
+
+        /**
+         * Creates a {@code HubActionBuilder}.
+         *
+         * @param parent the owning {@link LegoDsl}; must not be {@code null}
+         */
+        HubActionBuilder(@NonNull LegoDsl parent) {
+            this.parent = parent;
+        }
+
+        /**
+         * Sends the Switch Off Hub action ({@code 0x01}).
+         *
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> switchOff() {
+            return parent.sendHubAction(LegoProtocolConstants.HUB_ACTION_SWITCH_OFF);
+        }
+
+        /**
+         * Sends the Disconnect action ({@code 0x02}).
+         *
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> disconnect() {
+            return parent.sendHubAction(LegoProtocolConstants.HUB_ACTION_DISCONNECT);
+        }
+
+        /**
+         * Sends the VCC Port Control On action ({@code 0x03}).
+         *
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> vccPortOn() {
+            return parent.sendHubAction(LegoProtocolConstants.HUB_ACTION_VCC_PORT_ON);
+        }
+
+        /**
+         * Sends the VCC Port Control Off action ({@code 0x04}).
+         *
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> vccPortOff() {
+            return parent.sendHubAction(LegoProtocolConstants.HUB_ACTION_VCC_PORT_OFF);
+        }
+
+        /**
+         * Returns the parent {@link LegoDsl} to continue chaining.
+         *
+         * @return the parent builder; never {@code null}
+         */
+        public @NonNull LegoDsl and() {
+            return parent;
+        }
+    }
+
+    /**
+     * Fluent builder for Port Output motor commands.
+     */
+    public static final class MotorBuilder {
+
+        /** Startup info: buffer if necessary + execute immediately. */
+        private static final int DEFAULT_STARTUP_COMPLETION = 0x11;
+
+        /** Default maximum power percentage used by the single-argument {@link #startSpeed(int)}. */
+        private static final int DEFAULT_MAX_POWER = 100;
+
+        /** Byte mask for extracting the lowest 8 bits of an integer. */
+        private static final int BYTE_MASK = 0xFF;
+
+        /** Bit-shift amount to reach bits 8–15 of a 32-bit integer. */
+        private static final int SHIFT_8 = 8;
+
+        /** Bit-shift amount to reach bits 16–23 of a 32-bit integer. */
+        private static final int SHIFT_16 = 16;
+
+        /** Bit-shift amount to reach bits 24–31 of a 32-bit integer. */
+        private static final int SHIFT_24 = 24;
+
+        /**
+         * End-state byte: brake ({@code 0x7E}).
+         *
+         * <p>Used as the end-state parameter in timed and degree-limited motor commands.
+         */
+        private static final byte END_STATE_BRAKE = 0x7E;
+
+        private final LegoDsl parent;
+        private final int portId;
+
+        /**
+         * Creates a {@code MotorBuilder} for the given port.
+         *
+         * @param parent the owning {@link LegoDsl}; must not be {@code null}
+         * @param portId the port identifier byte
+         */
+        MotorBuilder(@NonNull LegoDsl parent, int portId) {
+            this.parent = parent;
+            this.portId = portId;
+        }
+
+        /**
+         * Sends a {@code StartSpeed} command ({@code 0x07}) on this port.
+         *
+         * @param speed   signed speed in the range −100 to 100
+         * @param maxPower maximum power (0–100)
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> startSpeed(int speed, int maxPower) {
+            return parent.portOutputCommand(
+                    portId,
+                    DEFAULT_STARTUP_COMPLETION,
+                    LegoProtocolConstants.MOTOR_CMD_START_SPEED,
+                    (byte) speed,
+                    (byte) maxPower,
+                    (byte) 0x00);   // end state: float
+        }
+
+        /**
+         * Sends a {@code StartSpeed} command with default max power (100).
+         *
+         * @param speed signed speed in the range −100 to 100
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> startSpeed(int speed) {
+            return startSpeed(speed, DEFAULT_MAX_POWER);
+        }
+
+        /**
+         * Sends a {@code StartSpeedForTime} command ({@code 0x09}) on this port.
+         *
+         * @param timeMs  duration in milliseconds
+         * @param speed   signed speed in the range −100 to 100
+         * @param maxPower maximum power (0–100)
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> startSpeedForTime(
+                int timeMs, int speed, int maxPower) {
+            return parent.portOutputCommand(
+                    portId,
+                    DEFAULT_STARTUP_COMPLETION,
+                    LegoProtocolConstants.MOTOR_CMD_START_SPEED_FOR_TIME,
+                    (byte) (timeMs & BYTE_MASK),
+                    (byte) ((timeMs >> SHIFT_8) & BYTE_MASK),
+                    (byte) speed,
+                    (byte) maxPower,
+                    END_STATE_BRAKE,
+                    (byte) 0x00);   // use acceleration profile
+        }
+
+        /**
+         * Sends a {@code StartSpeedForDegrees} command ({@code 0x0B}) on this port.
+         *
+         * @param degrees  rotation in degrees (unsigned 32-bit)
+         * @param speed    signed speed in the range −100 to 100
+         * @param maxPower maximum power (0–100)
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> startSpeedForDegrees(
+                int degrees, int speed, int maxPower) {
+            return parent.portOutputCommand(
+                    portId,
+                    DEFAULT_STARTUP_COMPLETION,
+                    LegoProtocolConstants.MOTOR_CMD_START_SPEED_FOR_DEGREES,
+                    (byte) (degrees & BYTE_MASK),
+                    (byte) ((degrees >> SHIFT_8) & BYTE_MASK),
+                    (byte) ((degrees >> SHIFT_16) & BYTE_MASK),
+                    (byte) ((degrees >> SHIFT_24) & BYTE_MASK),
+                    (byte) speed,
+                    (byte) maxPower,
+                    END_STATE_BRAKE,
+                    (byte) 0x00);   // use acceleration profile
+        }
+
+        /**
+         * Sends a {@code GotoAbsolutePosition} command ({@code 0x0D}) on this port.
+         *
+         * @param position signed absolute position in degrees
+         * @param speed    signed speed in the range −100 to 100
+         * @param maxPower maximum power (0–100)
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> gotoAbsolutePosition(
+                int position, int speed, int maxPower) {
+            return parent.portOutputCommand(
+                    portId,
+                    DEFAULT_STARTUP_COMPLETION,
+                    LegoProtocolConstants.MOTOR_CMD_GOTO_ABSOLUTE_POSITION,
+                    (byte) (position & BYTE_MASK),
+                    (byte) ((position >> SHIFT_8) & BYTE_MASK),
+                    (byte) ((position >> SHIFT_16) & BYTE_MASK),
+                    (byte) ((position >> SHIFT_24) & BYTE_MASK),
+                    (byte) speed,
+                    (byte) maxPower,
+                    END_STATE_BRAKE,
+                    (byte) 0x00);   // use profile
+        }
+
+        /**
+         * Sends a {@code SetAccTime} command ({@code 0x01}).
+         *
+         * @param timeMs ramp-up time in milliseconds
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> setAccTime(int timeMs) {
+            return parent.portOutputCommand(
+                    portId,
+                    DEFAULT_STARTUP_COMPLETION,
+                    LegoProtocolConstants.MOTOR_CMD_SET_ACC_TIME,
+                    (byte) (timeMs & BYTE_MASK),
+                    (byte) ((timeMs >> SHIFT_8) & BYTE_MASK),
+                    (byte) 0x00);
+        }
+
+        /**
+         * Sends a {@code SetDecTime} command ({@code 0x02}).
+         *
+         * @param timeMs ramp-down time in milliseconds
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> setDecTime(int timeMs) {
+            return parent.portOutputCommand(
+                    portId,
+                    DEFAULT_STARTUP_COMPLETION,
+                    LegoProtocolConstants.MOTOR_CMD_SET_DEC_TIME,
+                    (byte) (timeMs & BYTE_MASK),
+                    (byte) ((timeMs >> SHIFT_8) & BYTE_MASK),
+                    (byte) 0x00);
+        }
+
+        /**
+         * Returns the parent {@link LegoDsl} to continue chaining.
+         *
+         * @return the parent builder; never {@code null}
+         */
+        public @NonNull LegoDsl and() {
+            return parent;
+        }
+    }
+}

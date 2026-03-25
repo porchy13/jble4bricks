@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConnectionDsl.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Bluetooth LE API for Lego Powered Up</a> &gt; <a href="index.source.html" class="el_package">ch.varani.bricks.ble.api.dsl</a> &gt; <span class="el_source">ConnectionDsl.java</span></div><h1>ConnectionDsl.java</h1><pre class="source lang-java linenums">package ch.varani.bricks.ble.api.dsl;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Flow.Publisher;
+
+import org.jspecify.annotations.NonNull;
+
+import ch.varani.bricks.ble.api.BleConnection;
+import ch.varani.bricks.ble.api.BleDevice;
+import ch.varani.bricks.ble.api.BleException;
+
+/**
+ * Fluent builder for an active BLE connection.
+ *
+ * &lt;p&gt;Obtained via {@link DeviceDsl#thenConnect()}. Provides access to the
+ * raw connection operations as well as device-specific DSL sub-builders:
+ * &lt;pre&gt;{@code
+ * connectionDsl.asLego()
+ *              .motor(0x00).startSpeed(80)
+ *              .hubAction().switchOff()
+ *              .done();
+ * }&lt;/pre&gt;
+ *
+ * &lt;p&gt;Closing this builder (via {@link #done()} or try-with-resources)
+ * disconnects the underlying peripheral and releases all native resources.
+ *
+ * &lt;p&gt;Thread safety: not thread-safe; do not share across threads.
+ */
+public final class ConnectionDsl implements AutoCloseable {
+
+    private final BleConnection connection;
+
+    /**
+     * Creates a {@code ConnectionDsl} wrapping the given connection.
+     *
+     * @param connection the active BLE connection; must not be {@code null}
+     */
+<span class="fc" id="L38">    ConnectionDsl(@NonNull BleConnection connection) {</span>
+<span class="fc" id="L39">        this.connection = connection;</span>
+<span class="fc" id="L40">    }</span>
+
+    // =========================================================================
+    // Raw BLE operations (pass-through to BleConnection)
+    // =========================================================================
+
+    /**
+     * Returns the device this connection belongs to.
+     *
+     * @return the associated {@link BleDevice}; never {@code null}
+     */
+    public @NonNull BleDevice device() {
+<span class="fc" id="L52">        return connection.device();</span>
+    }
+
+    /**
+     * Writes a byte array to a GATT characteristic without waiting for a
+     * response (Write Without Response).
+     *
+     * @param serviceUuid        GATT service UUID
+     * @param characteristicUuid GATT characteristic UUID
+     * @param data               bytes to write; must not be empty
+     * @return a future that completes when the write is submitted
+     */
+    public @NonNull CompletableFuture&lt;Void&gt; writeWithoutResponse(
+            @NonNull String serviceUuid,
+            @NonNull String characteristicUuid,
+            byte[] data) {
+<span class="fc" id="L68">        return connection.writeWithoutResponse(serviceUuid, characteristicUuid, data);</span>
+    }
+
+    /**
+     * Subscribes to notifications from a GATT characteristic.
+     *
+     * @param serviceUuid        GATT service UUID
+     * @param characteristicUuid GATT characteristic UUID
+     * @return a publisher of notification payloads; never {@code null}
+     */
+    public @NonNull Publisher&lt;byte[]&gt; notifications(
+            @NonNull String serviceUuid,
+            @NonNull String characteristicUuid) {
+<span class="fc" id="L81">        return connection.notifications(serviceUuid, characteristicUuid);</span>
+    }
+
+    /**
+     * Reads the current value of a GATT characteristic.
+     *
+     * @param serviceUuid        GATT service UUID
+     * @param characteristicUuid GATT characteristic UUID
+     * @return a future that completes with the read bytes; never {@code null}
+     */
+    public @NonNull CompletableFuture&lt;byte[]&gt; read(
+            @NonNull String serviceUuid,
+            @NonNull String characteristicUuid) {
+<span class="fc" id="L94">        return connection.read(serviceUuid, characteristicUuid);</span>
+    }
+
+    /**
+     * Disconnects the peripheral asynchronously.
+     *
+     * @return a future that completes when the disconnect is acknowledged;
+     *         never {@code null}
+     */
+    public @NonNull CompletableFuture&lt;Void&gt; disconnect() {
+<span class="fc" id="L104">        return connection.disconnect();</span>
+    }
+
+    // =========================================================================
+    // Device-specific DSL sub-builders
+    // =========================================================================
+
+    /**
+     * Returns a {@link LegoDsl} sub-builder for LEGO Wireless Protocol 3.0
+     * operations on this connection.
+     *
+     * @return the LEGO DSL sub-builder; never {@code null}
+     */
+    public @NonNull LegoDsl asLego() {
+<span class="fc" id="L118">        return new LegoDsl(connection);</span>
+    }
+
+    /**
+     * Returns an {@link SBrickDsl} sub-builder for SBrick protocol operations
+     * on this connection.
+     *
+     * @return the SBrick DSL sub-builder; never {@code null}
+     */
+    public @NonNull SBrickDsl asSBrick() {
+<span class="fc" id="L128">        return new SBrickDsl(connection);</span>
+    }
+
+    /**
+     * Returns a {@link CircuitCubesDsl} sub-builder for Circuit Cubes
+     * operations on this connection.
+     *
+     * @return the Circuit Cubes DSL sub-builder; never {@code null}
+     */
+    public @NonNull CircuitCubesDsl asCircuitCubes() {
+<span class="fc" id="L138">        return new CircuitCubesDsl(connection);</span>
+    }
+
+    /**
+     * Returns a {@link BuWizz2Dsl} sub-builder for BuWizz 2.0 protocol
+     * operations on this connection.
+     *
+     * @return the BuWizz 2.0 DSL sub-builder; never {@code null}
+     */
+    public @NonNull BuWizz2Dsl asBuWizz2() {
+<span class="fc" id="L148">        return new BuWizz2Dsl(connection);</span>
+    }
+
+    /**
+     * Returns a {@link BuWizz3Dsl} sub-builder for BuWizz 3.0 protocol
+     * operations on this connection.
+     *
+     * @return the BuWizz 3.0 DSL sub-builder; never {@code null}
+     */
+    public @NonNull BuWizz3Dsl asBuWizz3() {
+<span class="fc" id="L158">        return new BuWizz3Dsl(connection);</span>
+    }
+
+    /**
+     * Returns the underlying {@link BleConnection} for callers that need
+     * direct access to the raw API.
+     *
+     * @return the connection; never {@code null}
+     */
+    public @NonNull BleConnection connection() {
+<span class="fc" id="L168">        return connection;</span>
+    }
+
+    // =========================================================================
+    // Lifecycle
+    // =========================================================================
+
+    /**
+     * Disconnects the peripheral and releases all associated resources.
+     *
+     * &lt;p&gt;Equivalent to {@code connection.close()}. This method satisfies
+     * both the {@link AutoCloseable} contract and the DSL terminal
+     * convention of ending a chain with {@code .done()}.
+     *
+     * @throws BleException if the disconnect fails
+     */
+    public void done() throws BleException {
+<span class="fc" id="L185">        connection.close();</span>
+<span class="fc" id="L186">    }</span>
+
+    /**
+     * Closes the connection; delegates to {@link #done()}.
+     *
+     * @throws BleException if the disconnect fails
+     */
+    @Override
+    public void close() throws BleException {
+<span class="fc" id="L195">        done();</span>
+<span class="fc" id="L196">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

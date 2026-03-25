@@ -429,7 +429,7 @@
                               invocations which are physically unreachable without the dylib.
                             -->
                             <excludes>
-                                <exclude>ch/varani/lego/ble/impl/macos/JniNativeBridge.class</exclude>
+                                <exclude>ch/varani/bricks/ble/impl/macos/JniNativeBridge.class</exclude>
                             </excludes>
                         </configuration>
                     </execution>

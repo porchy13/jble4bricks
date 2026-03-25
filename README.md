@@ -1,7 +1,7 @@
 # Bluetooth LE API for Lego Powered Up
 
-A Java library for connecting to and controlling LEGO Powered Up devices and compatible third-party
-hardware via Bluetooth Low Energy (BLE).
+A Java library for connecting to and controlling LEGO Powered Up devices and compatible
+third-party hardware via Bluetooth Low Energy (BLE).
 
 ## Overview
 
@@ -14,9 +14,20 @@ BLE-enabled smart brick controllers and accessories, including:
 | **SBrick** | SBrick, SBrick Plus |
 | **FX Bricks** | BrickPi3, PiStorms (BLE mode) |
 | **Circuit Cubes** | Bluetooth Cube |
+| **BuWizz** | BuWizz 2.0, BuWizz 3.0 |
 
 The API abstracts away OS-level and hardware-level BLE differences behind a single, consistent
 interface. Consumers write their logic once and run it on any supported platform.
+
+Two usage styles are available:
+
+- **Raw API** (`ch.varani.bricks.ble.api`) — direct access to BLE primitives: scan, connect,
+  write, read, notifications.
+- **Fluent DSL** (`ch.varani.bricks.ble.api.dsl`) — a higher-level, method-chaining interface
+  built on top of the raw API. The DSL maps each supported protocol's commands to clearly named
+  methods and handles byte encoding for you.
+
+---
 
 ## Requirements
 
@@ -33,9 +44,9 @@ interface. Consumers write their logic once and run it on any supported platform
 | Windows 11 | yes | yes |
 | Linux (kernel 5.10+, BlueZ 5.50+) | yes | yes |
 
-## Getting Started
+---
 
-### Add the dependency
+## Add the Dependency
 
 ```xml
 <dependency>
@@ -45,22 +56,382 @@ interface. Consumers write their logic once and run it on any supported platform
 </dependency>
 ```
 
+---
+
+## Usage — Fluent DSL
+
+The DSL entry point is `BrickDsl.open()`. It returns an `AutoCloseable` session that can be used
+in a try-with-resources block. Every scan, connection, and device-specific operation chains from
+that single entry point.
+
+### General pattern
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    dsl.scan()
+       .<filter>()           // forLegoHubs(), forSBricks(), forBuWizz3(), …
+       .timeoutSeconds(10)   // optional: stop scan after 10 s
+       .first()              // wait for the first matching device
+       .thenConnect()        // establish the BLE connection
+       .<asXxx>()            // asLego(), asSBrick(), asBuWizz2(), …
+       .<commands>           // device-specific operations
+       .done();              // disconnect and release resources
+}
+```
+
+### LEGO Powered Up hub
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    LegoDsl lego = dsl.scan()
+        .forLegoHubs()
+        .timeoutSeconds(15)
+        .first()
+        .thenConnect()
+        .asLego();
+
+    // Subscribe to all upstream notifications
+    lego.notifications().subscribe(subscriber);
+
+    // Request battery voltage once (hub responds via notification)
+    lego.requestBatteryVoltage().get();
+
+    // Enable continuous battery voltage updates
+    lego.enableBatteryVoltageUpdates().get();
+
+    // Request firmware and hardware version
+    lego.requestFirmwareVersion().get();
+    lego.requestHardwareVersion().get();
+
+    // Control motors
+    lego.motor(0x00).startSpeed(80).get();          // port A, 80 % forward
+    lego.motor(0x00).startSpeed(80, 100).get();     // port A, speed 80, max power 100
+    lego.motor(0x00).startSpeedForTime(2000, 50, 100).get();    // run for 2 s
+    lego.motor(0x00).startSpeedForDegrees(360, 50, 100).get();  // rotate 360°
+    lego.motor(0x00).gotoAbsolutePosition(0, 50, 100).get();    // go to position 0
+    lego.motor(0x00).setAccTime(500).get();   // 500 ms ramp-up
+    lego.motor(0x00).setDecTime(300).get();   // 300 ms ramp-down
+
+    // Chain motor operations
+    lego.motor(0x00).startSpeed(60).get();
+    lego.motor(0x01).startSpeed(-60).get();   // port B, reverse
+
+    // Hub actions
+    lego.hubAction().vccPortOn().get();
+    lego.hubAction().disconnect().get();
+    lego.hubAction().switchOff().get();
+
+    // Hub alerts
+    lego.enableAlert(LegoProtocolConstants.HUB_ALERT_LOW_VOLTAGE).get();
+    lego.requestAlert(LegoProtocolConstants.HUB_ALERT_HIGH_CURRENT).get();
+    lego.disableAlert(LegoProtocolConstants.HUB_ALERT_LOW_VOLTAGE).get();
+
+    // Port information
+    lego.requestPortInfo(0x00, 0x01).get();
+    lego.requestPortModeInfo(0x00, 0x00, 0x04).get();
+
+    lego.done();
+}
+```
+
+### SBrick
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    SBrickDsl sbrick = dsl.scan()
+        .forSBricks()
+        .timeoutSeconds(10)
+        .first()
+        .thenConnect()
+        .asSBrick();
+
+    // Subscribe to response notifications
+    sbrick.notifications().subscribe(subscriber);
+
+    // Drive channels
+    sbrick.drive(SBrickProtocolConstants.CHANNEL_A, false, 200).get(); // channel A, CW, power 200
+    sbrick.drive(SBrickProtocolConstants.CHANNEL_B, true,  128).get(); // channel B, CCW, power 128
+
+    // Brake one or more channels at once
+    sbrick.brake(SBrickProtocolConstants.CHANNEL_A, SBrickProtocolConstants.CHANNEL_B).get();
+
+    // Query ADC channels
+    sbrick.queryBatteryVoltage().get();    // battery voltage
+    sbrick.queryTemperature().get();       // internal temperature
+    sbrick.queryAdc(SBrickProtocolConstants.ADC_CHANNEL_BATTERY).get(); // raw ADC
+
+    // Watchdog (keeps the SBrick alive while the app is running)
+    sbrick.setWatchdogTimeout(5).get();   // 0.5 s (units of 0.1 s)
+    sbrick.getWatchdogTimeout().get();
+
+    sbrick.done();
+}
+```
+
+### Circuit Cubes
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    CircuitCubesDsl cc = dsl.scan()
+        .forCircuitCubes()
+        .timeoutSeconds(10)
+        .first()
+        .thenConnect()
+        .asCircuitCubes();
+
+    // Subscribe to RX notifications (e.g. battery voltage response)
+    cc.notifications().subscribe(subscriber);
+
+    // Drive motors forward / reverse / stop
+    cc.motorForward(CircuitCubesProtocolConstants.CHANNEL_A, 128).get();
+    cc.motorReverse(CircuitCubesProtocolConstants.CHANNEL_B, 64).get();
+    cc.motorStop(CircuitCubesProtocolConstants.CHANNEL_C).get();
+
+    // Query battery voltage (response arrives as an RX notification)
+    cc.queryBattery().get();
+
+    cc.done();
+}
+```
+
+### BuWizz 2.0
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    BuWizz2Dsl bw2 = dsl.scan()
+        .forBuWizz2()
+        .timeoutSeconds(10)
+        .first()
+        .thenConnect()
+        .asBuWizz2();
+
+    // Subscribe to ~25 Hz status reports
+    bw2.notifications().subscribe(subscriber);
+
+    // Set power level before sending motor commands (default is 0 = disabled)
+    bw2.setPowerLevel(BuWizz2ProtocolConstants.POWER_LEVEL_NORMAL).get();
+
+    // Set motor speeds (channels 1–4, signed −127 to 127) and brake flags
+    bw2.setMotorData(
+        100, -100, 0, 0,    // speeds: ch1 forward, ch2 reverse, ch3 stop, ch4 stop
+        false, false, false, false  // brake flags: coast mode on all channels
+    ).get();
+
+    // Stop all motors (coast)
+    bw2.stopAllMotors().get();
+
+    // Adjust current limits (steps of 33 mA per channel)
+    bw2.setCurrentLimits(23, 23, 23, 23).get(); // ~750 mA each
+
+    bw2.done();
+}
+```
+
+### BuWizz 3.0
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    BuWizz3Dsl bw3 = dsl.scan()
+        .forBuWizz3()
+        .timeoutSeconds(10)
+        .first()
+        .thenConnect()
+        .asBuWizz3();
+
+    // Subscribe to ~20 Hz status reports
+    bw3.notifications().subscribe(subscriber);
+
+    // Set motor speeds on all 6 channels (signed −127 to 127) + brake flags
+    bw3.setMotorData(
+        100, -50, 0, 0, 80, -80,      // speeds: ch1–6
+        false, true, false, false, false, false  // brake flags: brake on ch2
+    ).get();
+
+    // Stop all 6 motors (coast)
+    bw3.stopAllMotors().get();
+
+    // Set LED colours (4 LEDs, RGB 0–255)
+    bw3.setAllLeds(
+        0xFF, 0x00, 0x00,   // LED 1: red
+        0x00, 0xFF, 0x00,   // LED 2: green
+        0x00, 0x00, 0xFF,   // LED 3: blue
+        0xFF, 0xFF, 0x00    // LED 4: yellow
+    ).get();
+    bw3.setLedsUniform(0x00, 0xFF, 0xFF).get();  // all LEDs: cyan
+    bw3.resetLeds().get();                        // revert to default
+
+    // Configure the connection watchdog
+    bw3.setWatchdog(5).get();    // disconnect after 5 s of silence
+
+    // Set notification period
+    bw3.setDataTransferPeriod(50).get();  // 50 ms (~20 Hz)
+
+    // Set motor timeout behaviour on disconnect
+    bw3.setMotorTimeout(1).get();   // coast to stop immediately
+
+    // Set current limits for all 6 channels (steps of 30 mA)
+    bw3.setCurrentLimits(50, 50, 50, 50, 100, 100).get(); // 1.5 A / 3.0 A
+
+    // Rename the device
+    bw3.setDeviceName("MyBuWizz").get();
+
+    // Configure PU port functions (ports 1–4)
+    bw3.setPuPortFunctions(
+        BuWizz3ProtocolConstants.PU_PORT_FUNCTION_SPEED_SERVO,
+        BuWizz3ProtocolConstants.PU_PORT_FUNCTION_SIMPLE_PWM,
+        BuWizz3ProtocolConstants.PU_PORT_FUNCTION_SIMPLE_PWM,
+        BuWizz3ProtocolConstants.PU_PORT_FUNCTION_SIMPLE_PWM
+    ).get();
+
+    // Activate shelf mode (deep power-off; wakes on charger connect)
+    bw3.activateShelfMode().get();
+
+    bw3.done();
+}
+```
+
+### Scanning for multiple devices at once
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    // Collect up to 3 LEGO hubs, stopping after 20 s
+    List<BleDevice> hubs = dsl.scan()
+        .forLegoHubs()
+        .timeoutSeconds(20)
+        .collect(3);
+
+    for (BleDevice hub : hubs) {
+        System.out.println(hub.name() + " @ " + hub.address());
+    }
+}
+```
+
+### Using a custom GATT service UUID filter
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    DeviceDsl device = dsl.scan()
+        .forService("12345678-1234-1234-1234-1234567890ab")
+        .timeoutSeconds(10)
+        .first();
+}
+```
+
+---
+
+## Usage — Raw API
+
+The raw API gives direct access to the underlying BLE abstractions. Use it when you need
+lower-level control or when integrating with protocols not yet covered by the DSL.
+
+### Core interfaces
+
+| Interface | Description |
+|---|---|
+| `BleScanner` | Starts and stops BLE advertisement scans |
+| `BleDevice` | Discovered peripheral (name, address, RSSI) |
+| `BleConnection` | Active connection — write, read, notifications |
+| `BleScannerFactory` | Creates the platform-appropriate `BleScanner` |
+| `ScanCallback` | Callback invoked for each discovered device |
+
+### Obtain a scanner
+
+```java
+BleScanner scanner = BleScannerFactory.create();
+```
+
 ### Scan for devices
 
 ```java
-BleScanner scanner = BleScanner.create();
-scanner.scan(device -> System.out.println("Found: " + device.name() + " @ " + device.address()));
+// Start an open scan (no service UUID filter)
+CompletableFuture<Void> started = scanner.startScan(null, device -> {
+    System.out.println("Found: " + device.name() + " @ " + device.address()
+        + " RSSI=" + device.rssi());
+});
+
+started.get();          // wait for the scan to be running
+Thread.sleep(5_000);
+scanner.stopScan();
 ```
 
-### Connect and send a command
+### Scan with a service UUID filter
 
 ```java
-try (BleHub hub = BleHub.connect(address)) {
-    hub.setMotorSpeed(Port.A, 50);   // 50 % forward
-    Thread.sleep(2_000);
-    hub.setMotorSpeed(Port.A, 0);    // stop
+import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+
+scanner.startScan(LegoProtocolConstants.HUB_SERVICE_UUID, device -> {
+    // called only for peripherals advertising the LEGO Hub service
+    System.out.println("LEGO hub: " + device.name());
+});
+```
+
+### Connect to a device
+
+```java
+BleDevice device = /* obtained from a scan callback */;
+try (BleConnection connection = device.connect().get()) {
+    // use the connection …
 }
 ```
+
+### Write to a GATT characteristic
+
+```java
+// Write Without Response
+CompletableFuture<Void> write = connection.writeWithoutResponse(
+    LegoProtocolConstants.HUB_SERVICE_UUID,
+    LegoProtocolConstants.HUB_CHARACTERISTIC_UUID,
+    new byte[]{ 0x05, 0x00, 0x01, 0x06, 0x05 }  // request battery voltage
+);
+write.get();
+```
+
+### Read from a GATT characteristic
+
+```java
+CompletableFuture<byte[]> read = connection.read(serviceUuid, characteristicUuid);
+byte[] value = read.get();
+```
+
+### Subscribe to notifications
+
+```java
+import java.util.concurrent.Flow;
+
+Flow.Publisher<byte[]> publisher = connection.notifications(
+    LegoProtocolConstants.HUB_SERVICE_UUID,
+    LegoProtocolConstants.HUB_CHARACTERISTIC_UUID
+);
+
+publisher.subscribe(new Flow.Subscriber<>() {
+    @Override public void onSubscribe(Flow.Subscription s) { s.request(Long.MAX_VALUE); }
+    @Override public void onNext(byte[] payload) { /* process message */ }
+    @Override public void onError(Throwable t) { /* handle error */ }
+    @Override public void onComplete() { /* scan ended */ }
+});
+```
+
+### Disconnect
+
+```java
+connection.disconnect().get();
+// or simply close the try-with-resources block
+```
+
+### Exception handling
+
+All BLE errors surface as `BleException` (an unchecked exception). Catch it where you need to
+handle platform or connectivity failures:
+
+```java
+try {
+    BleScanner scanner = BleScannerFactory.create();
+} catch (BleException ex) {
+    System.err.println("BLE not available: " + ex.getMessage());
+}
+```
+
+---
 
 ## Building from Source
 
@@ -75,51 +446,59 @@ mvn jacoco:report
 mvn javadoc:jar
 ```
 
+---
+
 ## Quality Gates
 
 Every build enforces the following quality rules:
 
 | Tool | Rule |
 |---|---|
-| **JaCoCo** | 100 % instruction and branch coverage (unit tests) |
+| **JaCoCo** | ≥ 99 % instruction coverage, 100 % branch coverage |
 | **Checkstyle** | Project-defined rule set (`varani_java_checks.xml`) |
-| **SpotBugs / FindBugs** | Zero bugs at confidence level NORMAL or higher |
-| **OWASP Dependency-Check** | Zero known CVEs in compile/runtime dependencies |
 | **SonarQube** | Zero blocker or critical issues; Quality Gate = Passed |
 
 A build that violates any of these rules **fails** and must not be merged.
+
+---
 
 ## Architecture
 
 ```
 src/
-  main/java/ch/varani/lego/ble/
-    api/          # Public interfaces and value types (no BLE stack dependency)
-    impl/         # Platform-specific BLE adapter implementations
-      macos/      # CoreBluetooth bridge via JNI / FFM
-      windows/    # WinRT Bluetooth LE via JNI / FFM
-      linux/      # D-Bus / BlueZ bridge via JNI / FFM
-    device/       # Per-brand protocol implementations
-      lego/       # LEGO Wireless Protocol 3.0
-      sbrick/     # SBrick BLE protocol
-      fxbricks/   # FX Bricks BLE protocol
+  main/java/ch/varani/bricks/ble/
+    api/            # Public interfaces and value types (no BLE stack dependency)
+    api/dsl/        # Fluent DSL built on top of api/
+    impl/           # Platform-specific BLE adapter implementations
+      macos/        # CoreBluetooth bridge via JNI / FFM
+      windows/      # WinRT Bluetooth LE via JNI / FFM
+      linux/        # D-Bus / BlueZ bridge via JNI / FFM
+    device/         # Per-brand protocol constants and implementations
+      lego/         # LEGO Wireless Protocol 3.0
+      sbrick/       # SBrick BLE protocol
+      fxbricks/     # FX Bricks BLE protocol
       circuitcubes/ # Circuit Cubes BLE protocol
-    util/         # Internal helpers (not part of the public API)
-  test/java/ch/varani/lego/ble/
+      buwizz/       # BuWizz 2.0 and BuWizz 3.0 BLE protocol
+    util/           # Internal helpers (not part of the public API)
+  test/java/ch/varani/bricks/ble/
     # Mirrors the main tree; every production class has a corresponding test class
 ```
 
-The `api` package is the only package that library consumers depend on. All other packages are
-internal and subject to change without notice.
+The `api` and `api/dsl` packages are the only packages that library consumers depend on. All
+other packages are internal and subject to change without notice.
+
+---
 
 ## Contributing
 
 1. Fork the repository and create a feature branch.
-2. Write code and tests together — coverage must remain at 100 %.
+2. Write code and tests together — coverage must remain at the thresholds above.
 3. Run `mvn verify` locally and confirm all checks pass.
 4. Open a pull request; CI must be green before review.
 
 See [AGENTS.md](AGENTS.md) for the full set of coding standards and agent guidelines.
+
+---
 
 ## License
 

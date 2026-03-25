@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BuWizz3ProtocolConstants.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Bluetooth LE API for Lego Powered Up</a> &gt; <a href="index.source.html" class="el_package">ch.varani.bricks.ble.device.buwizz</a> &gt; <span class="el_source">BuWizz3ProtocolConstants.java</span></div><h1>BuWizz3ProtocolConstants.java</h1><pre class="source lang-java linenums">package ch.varani.bricks.ble.device.buwizz;
+
+/**
+ * Constants for the BuWizz 3.0 BLE protocol (API version 3.22).
+ *
+ * &lt;p&gt;BuWizz 3.0 uses Nordic nRF52833 as the main MCU and a co-processor (&quot;Tajnik&quot;)
+ * for motor outputs, LEDs, and UART on ports 1–4. After connection it requests
+ * a PHY switch to BLE 5 Coded (long-range) mode.
+ *
+ * &lt;p&gt;All 128-bit UUIDs are stored in standard UUID string format.
+ */
+public final class BuWizz3ProtocolConstants {
+
+    // =========================================================================
+    // Discovery
+    // =========================================================================
+
+    /** Default advertised BLE device name (user-customisable via command 0x20). */
+    public static final String DEVICE_NAME = &quot;BuWizz3&quot;;
+
+    /** Manufacturer data length in bytes. */
+    public static final int MANUFACTURER_DATA_LENGTH = 8;
+
+    // =========================================================================
+    // GATT Service UUID
+    // =========================================================================
+
+    /**
+     * Application Service UUID (128-bit).
+     *
+     * &lt;p&gt;Raw bytes MSB-first:
+     * {@code 93:6E:67:B1:19:99:B3:88:81:44:FB:74:D1:92:05:50}
+     */
+    public static final String APPLICATION_SERVICE_UUID =
+            &quot;936e67b1-1999-b388-8144-fb74d1920550&quot;;
+
+    // =========================================================================
+    // GATT Characteristic short UUIDs (16-bit, within the Application service)
+    // =========================================================================
+
+    /**
+     * Application characteristic (short UUID 0x2901) — Write + Notify.
+     * All application commands are written here; status notifications arrive here.
+     */
+    public static final String APPLICATION_CHARACTERISTIC_UUID =
+            &quot;00002901-0000-1000-8000-00805f9b34fb&quot;;
+
+    /**
+     * Bootloader characteristic (short UUID 0x8000) — Write + Notify.
+     * Used for OTA firmware update.
+     */
+    public static final String BOOTLOADER_CHARACTERISTIC_UUID =
+            &quot;00008000-0000-1000-8000-00805f9b34fb&quot;;
+
+    /**
+     * UART channel 1 characteristic (short UUID 0x3901) — Write + Notify.
+     * Raw UART pass-through for port 1.
+     */
+    public static final String UART_CH1_CHARACTERISTIC_UUID =
+            &quot;00003901-0000-1000-8000-00805f9b34fb&quot;;
+
+    /**
+     * UART channel 2 characteristic (short UUID 0x3902) — Write + Notify.
+     * Raw UART pass-through for port 2.
+     */
+    public static final String UART_CH2_CHARACTERISTIC_UUID =
+            &quot;00003902-0000-1000-8000-00805f9b34fb&quot;;
+
+    /**
+     * UART channel 3 characteristic (short UUID 0x3903) — Write + Notify.
+     * Raw UART pass-through for port 3.
+     */
+    public static final String UART_CH3_CHARACTERISTIC_UUID =
+            &quot;00003903-0000-1000-8000-00805f9b34fb&quot;;
+
+    /**
+     * UART channel 4 characteristic (short UUID 0x3904) — Write + Notify.
+     * Raw UART pass-through for port 4.
+     */
+    public static final String UART_CH4_CHARACTERISTIC_UUID =
+            &quot;00003904-0000-1000-8000-00805f9b34fb&quot;;
+
+    // =========================================================================
+    // Packet limits
+    // =========================================================================
+
+    /** Maximum packet size in bytes for application commands. */
+    public static final int MAX_PACKET_SIZE = 129;
+
+    /** Maximum packet size in bytes for bootloader commands. */
+    public static final int MAX_BOOTLOADER_PACKET_SIZE = 244;
+
+    // =========================================================================
+    // Status Report — command 0x01 (notification, ~20 Hz)
+    // =========================================================================
+
+    /** Command byte for the Device Status Report notification. */
+    public static final int CMD_STATUS_REPORT = 0x01;
+
+    /** Status byte bit: USB connected (bit 6). */
+    public static final int STATUS_USB_CONNECTED_BIT = 0x40;
+
+    /** Status byte bit: charging (bit 5). */
+    public static final int STATUS_CHARGING_BIT = 0x20;
+
+    /** Status byte mask for battery level (bits 4–3). */
+    public static final int STATUS_BATTERY_LEVEL_MASK = 0x18;
+
+    /** Status byte bit shift for battery level. */
+    public static final int STATUS_BATTERY_LEVEL_SHIFT = 3;
+
+    /** Status byte bit: BLE long-range PHY active (bit 2). */
+    public static final int STATUS_BLE_LONG_RANGE_BIT = 0x04;
+
+    /** Status byte bit: motion wake-up enabled (bit 1). */
+    public static final int STATUS_MOTION_WAKE_BIT = 0x02;
+
+    /** Status byte bit: error flag (bit 0). */
+    public static final int STATUS_ERROR_BIT = 0x01;
+
+    /**
+     * Battery voltage base (volts).
+     * Formula: {@code V = BATTERY_VOLTAGE_BASE + rawByte * BATTERY_VOLTAGE_STEP}
+     */
+    public static final double BATTERY_VOLTAGE_BASE = 9.00;
+
+    /** Battery voltage step per ADC unit (volts). */
+    public static final double BATTERY_VOLTAGE_STEP = 0.05;
+
+    /** Motor current scale factor (amperes per ADC unit). */
+    public static final double MOTOR_CURRENT_SCALE = 0.015;
+
+    // =========================================================================
+    // Commands
+    // =========================================================================
+
+    /**
+     * Command byte: Set Device Name.
+     * Format: {@code [0x20][name: up to 12 ASCII bytes, NUL-terminated if shorter]}.
+     */
+    public static final int CMD_SET_DEVICE_NAME = 0x20;
+
+    /**
+     * Command byte: Enable / Disable Motion Wake-Up.
+     * Format: {@code [0x21][enable][idleTimeoutSecs: 4 bytes][shallowSleepTimeout: 4 bytes]}.
+     */
+    public static final int CMD_SET_MOTION_WAKE = 0x21;
+
+    /**
+     * Command byte: Set Accelerometer Calibration Data.
+     * Format: {@code [0x22][24 bytes of 6 × IEEE 754 float calibration factors]}.
+     */
+    public static final int CMD_SET_ACCEL_CALIBRATION = 0x22;
+
+    /**
+     * Command byte: Read Accelerometer Calibration Data.
+     * Send byte only; response: {@code [0x23][24 bytes]}.
+     */
+    public static final int CMD_READ_ACCEL_CALIBRATION = 0x23;
+
+    /**
+     * Command byte: Set Motor Data (simple 6-channel PWM).
+     * Format: {@code [0x30][spd1..spd6: 6 signed bytes][brakeFlags][lutDisable]}.
+     * Speed encoding: 0x81 (−127) = full reverse, 0x00 = stop, 0x7F (127) = full forward.
+     */
+    public static final int CMD_SET_MOTOR_DATA = 0x30;
+
+    /**
+     * Command byte: Set Motor Data (extended, PU-aware, 4 PU ports + 2 PWM).
+     * Format: {@code [0x31][ref1..ref4: 4 × 4 signed bytes][spd5][spd6][brakeFlags][lutDisable]}.
+     */
+    public static final int CMD_SET_MOTOR_DATA_EXTENDED = 0x31;
+
+    /**
+     * Command byte: Set Data Transfer Period.
+     * Format: {@code [0x32][periodMs: unsigned 8-bit, 20–255 in steps of 5 ms]}.
+     */
+    public static final int CMD_SET_DATA_PERIOD = 0x32;
+
+    /**
+     * Command byte: Set Motor Ramp-Up / Ramp-Down Rates.
+     * Format: {@code [0x33][rampUp1..rampUp6][rampDown1..rampDown6]}.
+     * Each byte is % per 128 ms; 0 = disabled.
+     */
+    public static final int CMD_SET_MOTOR_RAMP = 0x33;
+
+    /**
+     * Command byte: Set Motor Timeout Configuration.
+     * Format: {@code [0x34][config]}.
+     * 0 = stop + brake, 1 = stop + coast, 2–254 = coast to stop in (N−1) seconds.
+     */
+    public static final int CMD_SET_MOTOR_TIMEOUT = 0x34;
+
+    /**
+     * Command byte: Activate Connection Watchdog.
+     * Format: {@code [0x35][timeoutSecs: unsigned 8-bit]}. 0 = disable. Resets on each call.
+     */
+    public static final int CMD_SET_WATCHDOG = 0x35;
+
+    /**
+     * Command byte: Set LED Status.
+     * Format: {@code [0x36][r1][g1][b1]...[r4][g4][b4] + optional blinking config for 4 LEDs}.
+     * Send byte alone to revert to default (solid white).
+     */
+    public static final int CMD_SET_LED_STATUS = 0x36;
+
+    /**
+     * Command byte: Set Accelerometer Low-Pass Filter.
+     * Format: {@code [0x37][lpfSetting: unsigned 8-bit]}. Default at startup: 2.
+     */
+    public static final int CMD_SET_ACCEL_LPF = 0x37;
+
+    /**
+     * Command byte: Set Current Limits.
+     * Format: {@code [0x38][limit1..limit6: 6 unsigned bytes]}. Step = 30 mA.
+     * Defaults: 1.5 A (ports 1–4), 3.0 A (ports 5–6).
+     */
+    public static final int CMD_SET_CURRENT_LIMITS = 0x38;
+
+    /**
+     * Command byte: UART Baud Rate Setup.
+     * Format: {@code [0x40][0x10][channelId: 1–4][baudRate: 4 bytes little-endian]}.
+     */
+    public static final int CMD_UART_BAUD_RATE = 0x40;
+
+    /** Sub-command for {@link #CMD_UART_BAUD_RATE}: set baud rate. */
+    public static final int CMD_UART_BAUD_RATE_SET = 0x10;
+
+    /**
+     * Command byte: Set PU Port Function.
+     * Format: {@code [0x50][func1..func4: one byte per port]}.
+     */
+    public static final int CMD_SET_PU_PORT_FUNCTION = 0x50;
+
+    /**
+     * Command byte: Enable PID Controller State Reporting.
+     * Format: {@code [0x51][portIndex: 1–4 enable, 0 disable]}.
+     */
+    public static final int CMD_ENABLE_PID_REPORTING = 0x51;
+
+    /**
+     * Command byte: Set Servo Reference Input.
+     * Format: {@code [0x52][ref1..ref4: 4 × 4 signed bytes]}.
+     */
+    public static final int CMD_SET_SERVO_REFERENCE = 0x52;
+
+    /**
+     * Command byte: Set Servo PID Parameters.
+     * Format: {@code [0x53][portIndex][36 bytes of float/int8 PID params]}.
+     */
+    public static final int CMD_SET_SERVO_PID = 0x53;
+
+    /**
+     * Command byte: Activate Shelf Mode (battery disconnect).
+     * Format: single byte {@code 0xA1}.
+     */
+    public static final int CMD_ACTIVATE_SHELF_MODE = 0xA1;
+
+    /**
+     * Command byte: Check Charger Settings.
+     * Send byte only; response: {@code [0xAC][1 byte settings]}.
+     */
+    public static final int CMD_CHECK_CHARGER_SETTINGS = 0xAC;
+
+    // =========================================================================
+    // PU Port Function values (used in CMD_SET_PU_PORT_FUNCTION)
+    // =========================================================================
+
+    /** PU port function: Generic PWM. */
+    public static final int PU_FUNCTION_GENERIC_PWM = 0x00;
+
+    /** PU port function: PU simple PWM (default). */
+    public static final int PU_FUNCTION_PU_SIMPLE_PWM = 0x10;
+
+    /** PU port function: PU speed servo. */
+    public static final int PU_FUNCTION_PU_SPEED_SERVO = 0x14;
+
+    /** PU port function: PU position servo. */
+    public static final int PU_FUNCTION_PU_POSITION_SERVO = 0x15;
+
+    /** PU port function: PU absolute position servo. */
+    public static final int PU_FUNCTION_PU_ABS_POSITION_SERVO = 0x16;
+
+    // =========================================================================
+    // Motor speed limits
+    // =========================================================================
+
+    /** Motor speed: full reverse (−127). */
+    public static final int MOTOR_SPEED_FULL_REVERSE = 0x81;
+
+    /** Motor speed: stop. */
+    public static final int MOTOR_SPEED_STOP = 0x00;
+
+    /** Motor speed: full forward (127). */
+    public static final int MOTOR_SPEED_FULL_FORWARD = 0x7F;
+
+    // =========================================================================
+    // PID controller sample rate
+    // =========================================================================
+
+    /** PID controller sample rate in Hz. */
+    public static final int PID_SAMPLE_RATE_HZ = 100;
+
+    /** PID controller sample period in seconds ({@code 1.0 / PID_SAMPLE_RATE_HZ}). */
+    public static final double PID_SAMPLE_PERIOD_S = 0.01;
+
+    // =========================================================================
+    // Constructor
+    // =========================================================================
+
+    /**
+     * Private constructor — this is a constants class with no instances.
+     */
+<span class="fc" id="L314">    private BuWizz3ProtocolConstants() {</span>
+<span class="fc" id="L315">        throw new AssertionError(&quot;BuWizz3ProtocolConstants must not be instantiated&quot;);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

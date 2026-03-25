@@ -42,7 +42,7 @@ public interface BleConnection extends AutoCloseable {
     CompletableFuture<Void> writeWithoutResponse(
             @NonNull String serviceUuid,
             @NonNull String characteristicUuid,
-            @NonNull byte[] data);
+            byte[] data);
 
     /**
      * Subscribes to notifications from the specified GATT characteristic.

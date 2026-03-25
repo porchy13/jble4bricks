@@ -260,7 +260,7 @@ public final class MacOsBleScanner implements BleScanner {
             final long connectionPtr,
             final @NonNull String serviceUuid,
             final @NonNull String characteristicUuid,
-            final @NonNull byte[] data) {
+            final byte[] data) {
         bridge.writeWithoutResponse(connectionPtr, serviceUuid, characteristicUuid, data);
     }
 
@@ -272,7 +272,6 @@ public final class MacOsBleScanner implements BleScanner {
      * @param characteristicUuid GATT characteristic UUID string
      * @return the characteristic value bytes, or an empty array on failure
      */
-    @NonNull
     byte[] readCharacteristicNative(
             final long connectionPtr,
             final @NonNull String serviceUuid,
