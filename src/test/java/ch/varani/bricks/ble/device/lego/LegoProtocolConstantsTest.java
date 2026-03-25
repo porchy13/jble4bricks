@@ -81,4 +81,29 @@ class LegoProtocolConstantsTest {
             () -> assertEquals(0x51, LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA)
         );
     }
+
+    @Test
+    void deviceTypeConstants_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(0x00, LegoProtocolConstants.DEVICE_WEDO2_HUB),
+            () -> assertEquals(0x20, LegoProtocolConstants.DEVICE_DUPLO_TRAIN),
+            () -> assertEquals(0x40, LegoProtocolConstants.DEVICE_BOOST_HUB),
+            () -> assertEquals(0x41, LegoProtocolConstants.DEVICE_2PORT_HUB),
+            () -> assertEquals(0x42, LegoProtocolConstants.DEVICE_2PORT_HANDSET),
+            () -> assertEquals(0x50, LegoProtocolConstants.DEVICE_TECHNIC_HUB),
+            () -> assertEquals(0x60, LegoProtocolConstants.DEVICE_MARIO_HUB)
+        );
+    }
+
+    @Test
+    void manufacturerDataIndexConstants_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(0, LegoProtocolConstants.MANUFACTURER_DATA_IDX_MFR_ID_LSB),
+            () -> assertEquals(1, LegoProtocolConstants.MANUFACTURER_DATA_IDX_MFR_ID_MSB),
+            () -> assertEquals(3, LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE),
+            () -> assertEquals(4, LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH),
+            () -> assertEquals(0x97, LegoProtocolConstants.MANUFACTURER_ID_LSB),
+            () -> assertEquals(0x03, LegoProtocolConstants.MANUFACTURER_ID_MSB)
+        );
+    }
 }

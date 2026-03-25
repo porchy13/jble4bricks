@@ -45,6 +45,27 @@ public interface BleDevice {
     int rssi();
 
     /**
+     * Returns the raw manufacturer-specific advertisement data payload for
+     * this peripheral, as received in the BLE advertisement packet.
+     *
+     * <p>The returned byte array contains only the payload bytes that follow
+     * the AD Type byte ({@code 0xFF}) and the 2-byte company identifier —
+     * i.e. the bytes starting from the first brand-specific data byte.
+     * For LEGO hubs the payload is 8 bytes: Button State, System Type +
+     * Device Number, Device Capabilities, Last Network ID, Status, Option,
+     * and two reserved bytes.
+     *
+     * <p>Returns an empty array if the advertisement did not include a
+     * Manufacturer Specific Data AD structure, or if the platform did not
+     * expose that data.
+     *
+     * @return a copy of the manufacturer-specific payload bytes; never
+     *         {@code null}, may be empty
+     */
+    @NonNull
+    byte[] manufacturerData();
+
+    /**
      * Initiates a connection to this peripheral.
      *
      * <p>The returned future completes with a {@link BleConnection} when the

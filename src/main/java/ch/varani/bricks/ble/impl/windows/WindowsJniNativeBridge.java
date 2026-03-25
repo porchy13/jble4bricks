@@ -43,7 +43,7 @@ final class WindowsJniNativeBridge implements WindowsNativeBridge {
      * {@code IBluetoothAdapter.GetDefaultAsync()}.
      * The {@code callbacks} reference is stored by the native layer as a JNI
      * global reference so that WinRT thread-pool callbacks can invoke
-     * {@link WindowsBleNativeCallbacks#onDeviceFound(String, String, int)} and
+     * {@link WindowsBleNativeCallbacks#onDeviceFound(String, String, int, byte[])} and
      * {@link WindowsBleNativeCallbacks#onNotification(long, String, String, byte[])}
      * directly.
      */

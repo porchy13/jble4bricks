@@ -32,7 +32,7 @@ import ch.varani.bricks.ble.util.NativeLibraryLoader;
  * <p>This class implements {@link WindowsBleNativeCallbacks} so that the
  * native layer can call back into Java without holding a reference to any
  * Windows-specific concrete type.
- * {@link #onDeviceFound(String, String, int)} is invoked for every discovered
+ * {@link #onDeviceFound(String, String, int, byte[])} is invoked for every discovered
  * peripheral; {@link #onNotification(long, String, String, byte[])} is invoked
  * for every GATT notification and is routed to the correct
  * {@link WindowsBleConnection} by {@code connectionPtr}.
@@ -329,22 +329,25 @@ public final class WindowsBleScanner implements BleScanner, WindowsBleNativeCall
      * <p>Corresponds to the {@code BluetoothLEAdvertisementWatcher.Received}
      * event handler in {@code BleBridge.cpp}.
      *
-     * @param id   the BLE device address string
-     * @param name the advertised local name (may be empty)
-     * @param rssi received signal strength in dBm
+     * @param id               the BLE device address string
+     * @param name             the advertised local name (may be empty)
+     * @param rssi             received signal strength in dBm
+     * @param manufacturerData raw manufacturer-specific advertisement payload bytes;
+     *                         empty array if none was present
      */
     @Override
     public void onDeviceFound(
             final @NonNull String id,
             final @NonNull String name,
-            final int rssi) {
+            final int rssi,
+            final byte[] manufacturerData) {
 
         final ScanCallback cb = currentCallback;
         if (cb == null) {
             return;
         }
         final WindowsBleDevice device = knownDevices.computeIfAbsent(
-                id, addr -> new WindowsBleDevice(addr, name, rssi, this));
+                id, addr -> new WindowsBleDevice(addr, name, rssi, manufacturerData, this));
         cb.onDeviceFound(device);
     }
 

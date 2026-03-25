@@ -1,5 +1,6 @@
 package ch.varani.bricks.ble.impl.macos;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 import org.jspecify.annotations.NonNull;
@@ -32,25 +33,33 @@ final class MacOsBleDevice implements BleDevice {
     /** Received signal strength in dBm at discovery time. */
     private final int rssiValue;
 
+    /** Manufacturer-specific advertisement payload bytes (copy). */
+    private final byte[] mfrData;
+
     /** Back-reference to the scanner that discovered this device. */
     private final MacOsBleScanner owner;
 
     /**
      * Constructs a new {@code MacOsBleDevice}.
      *
-     * @param peripheralId the CoreBluetooth peripheral UUID string; must not be {@code null}
-     * @param name         advertised device name; must not be {@code null}
-     * @param rssi         signal strength in dBm
-     * @param owner        the scanner instance that discovered this device; must not be {@code null}
+     * @param peripheralId  the CoreBluetooth peripheral UUID string; must not be {@code null}
+     * @param name          advertised device name; must not be {@code null}
+     * @param rssi          signal strength in dBm
+     * @param manufacturerData raw manufacturer-specific payload bytes (copied); must not be
+     *                      {@code null}
+     * @param owner         the scanner instance that discovered this device; must not be
+     *                      {@code null}
      */
     MacOsBleDevice(
             final @NonNull String peripheralId,
             final @NonNull String name,
             final int rssi,
+            final @NonNull byte[] manufacturerData,
             final @NonNull MacOsBleScanner owner) {
         this.peripheralId = peripheralId;
         this.deviceName   = name;
         this.rssiValue    = rssi;
+        this.mfrData      = Arrays.copyOf(manufacturerData, manufacturerData.length);
         this.owner        = owner;
     }
 
@@ -80,6 +89,18 @@ final class MacOsBleDevice implements BleDevice {
     @Override
     public int rssi() {
         return rssiValue;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns a defensive copy of the manufacturer-specific data bytes
+     * extracted from the CoreBluetooth advertisement data dictionary key
+     * {@code CBAdvertisementDataManufacturerDataKey}.
+     */
+    @Override
+    public @NonNull byte[] manufacturerData() {
+        return Arrays.copyOf(mfrData, mfrData.length);
     }
 
     /**

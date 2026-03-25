@@ -31,11 +31,15 @@ interface WindowsBleNativeCallbacks {
      * {@code BluetoothLEAdvertisementWatcher.Received} event handler
      * in {@code BleBridge.cpp}.
      *
-     * @param id   the peripheral's BLE address as a hex string
-     * @param name the advertised local name (empty string if absent)
-     * @param rssi received signal strength in dBm
+     * @param id               the peripheral's BLE address as a hex string
+     * @param name             the advertised local name (empty string if absent)
+     * @param rssi             received signal strength in dBm
+     * @param manufacturerData raw manufacturer-specific advertisement payload
+     *                         bytes (after the 2-byte company ID); empty array
+     *                         if none was present in the advertisement
      */
-    void onDeviceFound(@NonNull String id, @NonNull String name, int rssi);
+    void onDeviceFound(@NonNull String id, @NonNull String name, int rssi,
+                       byte[] manufacturerData);
 
     /**
      * Called by the native layer when a GATT notification arrives for a

@@ -275,11 +275,62 @@ public final class LegoProtocolConstants {
     /** Device: Boost Move Hub (SSS=010, DDDDD=00000). */
     public static final int DEVICE_BOOST_HUB = 0x40;
 
-    /** Device: 2-Port Hub (SSS=010, DDDDD=00001). */
+    /** Device: 2-Port Hub / City Hub (SSS=010, DDDDD=00001). */
     public static final int DEVICE_2PORT_HUB = 0x41;
 
     /** Device: 2-Port Handset (SSS=010, DDDDD=00010). */
     public static final int DEVICE_2PORT_HANDSET = 0x42;
+
+    /** Device: Technic Hub / 4-Port Hub (SSS=010, DDDDD=10000). */
+    public static final int DEVICE_TECHNIC_HUB = 0x50;
+
+    /** Device: Mario Hub (SSS=011, DDDDD=00000). */
+    public static final int DEVICE_MARIO_HUB = 0x60;
+
+    /**
+     * Byte index within the LEGO manufacturer-specific advertisement payload
+     * (after stripping the AD Length and AD Type prefix) at which the System
+     * Type and Device Number byte is located.
+     *
+     * <p>The 10-byte payload layout is: Length (1), Data Type 0xFF (1),
+     * Manufacturer ID LSB (1), Manufacturer ID MSB (1),
+     * Button State (1), <em>System Type + Device Number (1)</em>,
+     * Device Capabilities (1), Last Network ID (1), Status (1), Option (1).
+     * After stripping the AD Length and Data Type bytes the raw payload
+     * starts at the Manufacturer ID; the System Type byte is therefore at
+     * index {@value #MANUFACTURER_DATA_IDX_SYSTEM_TYPE}.
+     */
+    public static final int MANUFACTURER_DATA_IDX_SYSTEM_TYPE = 3;
+
+    /**
+     * Byte index within the LEGO manufacturer-specific advertisement payload
+     * at which the Manufacturer ID LSB is located (value {@code 0x97}).
+     */
+    public static final int MANUFACTURER_DATA_IDX_MFR_ID_LSB = 0;
+
+    /**
+     * Byte index within the LEGO manufacturer-specific advertisement payload
+     * at which the Manufacturer ID MSB is located (value {@code 0x03}).
+     */
+    public static final int MANUFACTURER_DATA_IDX_MFR_ID_MSB = 1;
+
+    /**
+     * Expected LSB of the LEGO System A/S manufacturer ID ({@code 0x97})
+     * as stored in the manufacturer-specific advertisement payload.
+     */
+    public static final int MANUFACTURER_ID_LSB = 0x97;
+
+    /**
+     * Expected MSB of the LEGO System A/S manufacturer ID ({@code 0x03})
+     * as stored in the manufacturer-specific advertisement payload.
+     */
+    public static final int MANUFACTURER_ID_MSB = 0x03;
+
+    /**
+     * Minimum length of the LEGO manufacturer-specific advertisement payload
+     * required to safely read the System Type and Device Number byte.
+     */
+    public static final int MANUFACTURER_DATA_MIN_LENGTH = 4;
 
     // =========================================================================
     // Common message header

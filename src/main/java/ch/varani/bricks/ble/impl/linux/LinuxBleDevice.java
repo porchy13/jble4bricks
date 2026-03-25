@@ -1,5 +1,6 @@
 package ch.varani.bricks.ble.impl.linux;
 
+import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 
 import org.jspecify.annotations.NonNull;
@@ -33,26 +34,33 @@ final class LinuxBleDevice implements BleDevice {
     /** Received signal strength in dBm at discovery time. */
     private final int rssiValue;
 
+    /** Manufacturer-specific advertisement payload bytes (copy). */
+    private final byte[] mfrData;
+
     /** Back-reference to the scanner that discovered this device. */
     private final LinuxBleScanner owner;
 
     /**
      * Constructs a new {@code LinuxBleDevice}.
      *
-     * @param devicePath the BlueZ D-Bus object path; must not be {@code null}
-     * @param name       advertised device name; must not be {@code null}
-     * @param rssi       signal strength in dBm
-     * @param owner      the scanner instance that discovered this device;
-     *                   must not be {@code null}
+     * @param devicePath       the BlueZ D-Bus object path; must not be {@code null}
+     * @param name             advertised device name; must not be {@code null}
+     * @param rssi             signal strength in dBm
+     * @param manufacturerData raw manufacturer-specific payload bytes (copied);
+     *                         must not be {@code null}
+     * @param owner            the scanner instance that discovered this device;
+     *                         must not be {@code null}
      */
     LinuxBleDevice(
             final @NonNull String devicePath,
             final @NonNull String name,
             final int rssi,
+            final @NonNull byte[] manufacturerData,
             final @NonNull LinuxBleScanner owner) {
         this.devicePath = devicePath;
         this.deviceName = name;
         this.rssiValue  = rssi;
+        this.mfrData    = Arrays.copyOf(manufacturerData, manufacturerData.length);
         this.owner      = owner;
     }
 
@@ -81,6 +89,18 @@ final class LinuxBleDevice implements BleDevice {
     @Override
     public int rssi() {
         return rssiValue;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns a defensive copy of the manufacturer-specific data bytes
+     * extracted from the BlueZ {@code org.bluez.Device1.ManufacturerData}
+     * property delivered via the {@code InterfacesAdded} D-Bus signal.
+     */
+    @Override
+    public @NonNull byte[] manufacturerData() {
+        return Arrays.copyOf(mfrData, mfrData.length);
     }
 
     /**

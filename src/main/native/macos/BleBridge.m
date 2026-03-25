@@ -75,7 +75,7 @@ typedef struct {
      */
     JavaVM                 *jvm;
     jobject                 callbacksRef;         /* GlobalRef to BleNativeCallbacks */
-    jmethodID               onDeviceFoundMethod;  /* void onDeviceFound(String,String,int) */
+    jmethodID               onDeviceFoundMethod;  /* void onDeviceFound(String,String,int,byte[]) */
     jmethodID               onNotificationMethod; /* void onNotification(long,String,String,[B) */
 
     /* Signals that CBCentralManagerStatePoweredOn has been received. */
@@ -220,7 +220,9 @@ static CBCharacteristic *findCharacteristic(
  * centralManager:didDiscoverPeripheral:advertisementData:RSSI: — called by
  * CBCentralManager each time a matching advertisement is received.
  *
- * Invokes the Java callback JniNativeBridge.onDeviceFound(id, name, rssi).
+ * Invokes the Java callback BleNativeCallbacks.onDeviceFound(id, name, rssi, manufacturerData).
+ * The manufacturer data byte array corresponds to the raw CBAdvertisementDataManufacturerDataKey
+ * payload from the advertisement. An empty array is passed when no manufacturer data is present.
  */
 - (void)centralManager:(CBCentralManager *)central
     didDiscoverPeripheral:(CBPeripheral *)peripheral
@@ -228,11 +230,13 @@ static CBCharacteristic *findCharacteristic(
     RSSI:(NSNumber *)RSSI {
 
     (void)central;
-    (void)advertisementData;
 
     NSString *deviceId   = peripheral.identifier.UUIDString;
     NSString *deviceName = peripheral.name ?: @"";
     int       rssi       = RSSI.intValue;
+
+    /* Extract raw manufacturer-specific advertisement data (may be nil). */
+    NSData *mfrData = advertisementData[CBAdvertisementDataManufacturerDataKey];
 
     BOOL attached = NO;
     JNIEnv *env = attachCurrentThread(_ctx->jvm, &attached);
@@ -240,15 +244,25 @@ static CBCharacteristic *findCharacteristic(
     jstring jId   = (*env)->NewStringUTF(env, deviceId.UTF8String);
     jstring jName = (*env)->NewStringUTF(env, deviceName.UTF8String);
 
+    /* Build a jbyteArray from the manufacturer data (empty array when absent). */
+    jsize mfrLen = (mfrData != nil) ? (jsize)mfrData.length : 0;
+    jbyteArray jMfrData = (*env)->NewByteArray(env, mfrLen);
+    if (mfrLen > 0) {
+        (*env)->SetByteArrayRegion(env, jMfrData, 0, mfrLen,
+                (const jbyte *)mfrData.bytes);
+    }
+
     (*env)->CallVoidMethod(env,
             _ctx->callbacksRef,
             _ctx->onDeviceFoundMethod,
             jId,
             jName,
-            (jint)rssi);
+            (jint)rssi,
+            jMfrData);
 
     (*env)->DeleteLocalRef(env, jId);
     (*env)->DeleteLocalRef(env, jName);
+    (*env)->DeleteLocalRef(env, jMfrData);
 
     detachIfNeeded(_ctx->jvm, attached);
 }
@@ -510,10 +524,10 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit(
     /* Keep a global reference to the BleNativeCallbacks implementation. */
     ctx->callbacksRef = (*env)->NewGlobalRef(env, callbacksObj);
 
-    /* Look up void onDeviceFound(String, String, int) */
+    /* Look up void onDeviceFound(String, String, int, byte[]) */
     jclass callbacksClass = (*env)->GetObjectClass(env, callbacksObj);
     ctx->onDeviceFoundMethod = (*env)->GetMethodID(env, callbacksClass,
-            "onDeviceFound", "(Ljava/lang/String;Ljava/lang/String;I)V");
+            "onDeviceFound", "(Ljava/lang/String;Ljava/lang/String;I[B)V");
 
     if (ctx->onDeviceFoundMethod == NULL) {
         (*env)->DeleteGlobalRef(env, ctx->callbacksRef);

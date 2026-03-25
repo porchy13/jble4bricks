@@ -29,7 +29,7 @@ interface WindowsNativeBridge {
      * <p>The {@code callbacks} instance is stored as a JNI global reference
      * inside the native {@code BleContext} so that WinRT thread-pool callbacks
      * can invoke
-     * {@link WindowsBleNativeCallbacks#onDeviceFound(String, String, int)} and
+     * {@link WindowsBleNativeCallbacks#onDeviceFound(String, String, int, byte[])} and
      * {@link WindowsBleNativeCallbacks#onNotification(long, String, String, byte[])}
      * without holding a reference to any concrete platform class.
      *

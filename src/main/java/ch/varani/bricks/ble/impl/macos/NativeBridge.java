@@ -25,7 +25,7 @@ interface NativeBridge {
      *
      * <p>The {@code callbacks} instance is stored as a JNI global reference inside
      * the native {@code BleContext} so that CoreBluetooth dispatch-queue callbacks
-     * can invoke {@link BleNativeCallbacks#onDeviceFound(String, String, int)} and
+     * can invoke {@link BleNativeCallbacks#onDeviceFound(String, String, int, byte[])} and
      * {@link BleNativeCallbacks#onNotification(long, String, String, byte[])} without
      * holding a reference to any concrete platform class.
      *

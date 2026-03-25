@@ -30,7 +30,7 @@ import ch.varani.bricks.ble.util.NativeLibraryLoader;
  *
  * <p>This class implements {@link BleNativeCallbacks} so that the native layer
  * can call back into Java without holding a reference to any macOS-specific
- * concrete type.  {@link #onDeviceFound(String, String, int)} is invoked for
+ * concrete type.  {@link #onDeviceFound(String, String, int, byte[])} is invoked for
  * every discovered peripheral; {@link #onNotification(long, String, String, byte[])}
  * is invoked for every GATT notification and is routed to the correct
  * {@link MacOsBleConnection} by {@code connectionPtr}.
@@ -325,22 +325,27 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
      * {@code centralManager:didDiscoverPeripheral:advertisementData:RSSI:}
      * in {@code BleBridge.m}.
      *
-     * @param id   the CoreBluetooth peripheral UUID string
-     * @param name the advertised local name (may be empty)
-     * @param rssi received signal strength in dBm
+     * @param id               the CoreBluetooth peripheral UUID string
+     * @param name             the advertised local name (may be empty)
+     * @param rssi             received signal strength in dBm
+     * @param manufacturerData raw manufacturer-specific payload bytes extracted
+     *                         from {@code CBAdvertisementDataManufacturerDataKey};
+     *                         empty array if the advertisement did not include
+     *                         manufacturer-specific data
      */
     @Override
     public void onDeviceFound(
             final @NonNull String id,
             final @NonNull String name,
-            final int rssi) {
+            final int rssi,
+            final byte[] manufacturerData) {
 
         final ScanCallback cb = currentCallback;
         if (cb == null) {
             return;
         }
         final MacOsBleDevice device = knownDevices.computeIfAbsent(
-                id, uuid -> new MacOsBleDevice(uuid, name, rssi, this));
+                id, uuid -> new MacOsBleDevice(uuid, name, rssi, manufacturerData, this));
         cb.onDeviceFound(device);
     }
 

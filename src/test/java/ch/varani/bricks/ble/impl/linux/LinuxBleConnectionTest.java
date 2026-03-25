@@ -53,7 +53,7 @@ class LinuxBleConnectionTest {
     void setUp() {
         scanner    = new LinuxBleScanner(bridge, CTX_PTR);
         device     = new LinuxBleDevice(
-                "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "TestDev", -55, scanner);
+                "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "TestDev", -55, new byte[0], scanner);
         connection = new LinuxBleConnection(CONN_PTR, CTX_PTR, scanner, device);
     }
 

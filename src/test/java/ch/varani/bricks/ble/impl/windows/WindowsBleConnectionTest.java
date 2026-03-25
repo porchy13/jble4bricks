@@ -52,7 +52,7 @@ class WindowsBleConnectionTest {
     @BeforeEach
     void setUp() {
         scanner    = new WindowsBleScanner(bridge, CTX_PTR);
-        device     = new WindowsBleDevice("addr-1", "TestDev", -55, scanner);
+        device     = new WindowsBleDevice("addr-1", "TestDev", -55, new byte[0], scanner);
         connection = new WindowsBleConnection(CONN_PTR, CTX_PTR, scanner, device);
     }
 

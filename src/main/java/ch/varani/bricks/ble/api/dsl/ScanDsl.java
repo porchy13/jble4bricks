@@ -6,6 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -16,6 +17,7 @@ import ch.varani.bricks.ble.api.BleScanner;
 import ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstants;
 import ch.varani.bricks.ble.device.buwizz.BuWizz3ProtocolConstants;
 import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesProtocolConstants;
+import ch.varani.bricks.ble.device.lego.LegoHubType;
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
 import ch.varani.bricks.ble.device.sbrick.SBrickProtocolConstants;
 
@@ -50,6 +52,14 @@ public final class ScanDsl {
     private int maxDevices;
 
     /**
+     * Post-scan predicate applied to every discovered device before it is
+     * admitted to the result list.  A {@code null} value means no filtering
+     * (every device is accepted).
+     */
+    @Nullable
+    private Predicate<BleDevice> deviceFilter;
+
+    /**
      * Creates a {@code ScanDsl} wrapping the given scanner.
      *
      * @param scanner the BLE scanner to delegate to; must not be {@code null}
@@ -59,6 +69,7 @@ public final class ScanDsl {
         this.serviceUuidFilter = null;
         this.timeoutSeconds = NO_TIMEOUT;
         this.maxDevices = NO_LIMIT;
+        this.deviceFilter = null;
     }
 
     // =========================================================================
@@ -147,6 +158,105 @@ public final class ScanDsl {
         return this;
     }
 
+    /**
+     * Restricts the scan to the single device whose BLE identifier equals
+     * {@code deviceId}.
+     *
+     * <p>All other discovered devices are silently discarded by the
+     * {@link #collect(int)} callback, so the scan will block until exactly
+     * the named device appears (or the timeout expires).
+     *
+     * <p>This filter is additive with {@link #forLegoHubType} and
+     * {@link #forService}.
+     *
+     * @param deviceId the BLE device identifier to match (e.g. a CoreBluetooth
+     *                 peripheral UUID, a BlueZ D-Bus path, or a WinRT address
+     *                 string); must not be {@code null}
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl withDeviceId(final @NonNull String deviceId) {
+        this.deviceFilter = andFilter(deviceFilter, d -> deviceId.equals(d.id()));
+        return this;
+    }
+
+    /**
+     * Restricts the scan to LEGO hubs of the specified hub type.
+     *
+     * <p>The hub type is identified by reading the System Type and Device
+     * Number byte (index {@link LegoProtocolConstants#MANUFACTURER_DATA_IDX_SYSTEM_TYPE})
+     * from the manufacturer-specific advertisement payload and comparing it
+     * with {@link LegoHubType#systemTypeDeviceByte()}.  Devices with a payload
+     * shorter than {@link LegoProtocolConstants#MANUFACTURER_DATA_MIN_LENGTH}
+     * bytes are rejected.
+     *
+     * <p>Combine with {@link #forLegoHubs()} to also apply a GATT service UUID
+     * filter at the OS level (more efficient):
+     * <pre>{@code
+     * dsl.scan()
+     *    .forLegoHubs()
+     *    .forLegoHubType(LegoHubType.CITY_HUB)
+     *    .timeoutSeconds(10)
+     *    .first();
+     * }</pre>
+     *
+     * @param type the hub type to match; must not be {@code null}
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl forLegoHubType(final @NonNull LegoHubType type) {
+        this.deviceFilter = andFilter(deviceFilter, d -> matchesLegoHubType(d, type));
+        return this;
+    }
+
+    /**
+     * Convenience shortcut for {@code forLegoHubType(LegoHubType.WEDO2_HUB)}.
+     *
+     * <p>Restricts the scan to WeDo 2.0 hubs only.
+     *
+     * @return this builder for chaining
+     */
+    public @NonNull ScanDsl forWeDo2() {
+        return forLegoHubType(LegoHubType.WEDO2_HUB);
+    }
+
+    // =========================================================================
+    // Private helpers
+    // =========================================================================
+
+    /**
+     * Returns a predicate that is the logical AND of {@code existing} and
+     * {@code additional}, or {@code additional} alone if {@code existing}
+     * is {@code null}.
+     *
+     * @param existing   the current predicate; may be {@code null}
+     * @param additional the new predicate to AND in; must not be {@code null}
+     * @return the combined predicate
+     */
+    private static @NonNull Predicate<BleDevice> andFilter(
+            final @Nullable Predicate<BleDevice> existing,
+            final @NonNull Predicate<BleDevice> additional) {
+        return existing == null ? additional : existing.and(additional);
+    }
+
+    /**
+     * Returns {@code true} if the manufacturer-specific advertisement payload
+     * of {@code device} indicates it is a LEGO hub of the specified type.
+     *
+     * @param device the device whose manufacturer data should be inspected
+     * @param type   the expected hub type
+     * @return {@code true} if the device matches
+     */
+    private static boolean matchesLegoHubType(
+            final @NonNull BleDevice device,
+            final @NonNull LegoHubType type) {
+        final byte[] data = device.manufacturerData();
+        if (data.length < LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH) {
+            return false;
+        }
+        final int systemTypeByte =
+                data[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE] & 0xFF;
+        return systemTypeByte == type.systemTypeDeviceByte();
+    }
+
     // =========================================================================
     // Scan control
     // =========================================================================
@@ -226,6 +336,9 @@ public final class ScanDsl {
         final CompletableFuture<Void> scanStarted = scanner.startScan(
                 serviceUuidFilter,
                 device -> {
+                    if (deviceFilter != null && !deviceFilter.test(device)) {
+                        return;
+                    }
                     synchronized (devices) {
                         if (devices.size() < maxDevices) {
                             devices.add(device);
@@ -272,5 +385,17 @@ public final class ScanDsl {
     @Nullable
     String serviceUuidFilter() {
         return serviceUuidFilter;
+    }
+
+    /**
+     * Returns the device predicate filter currently configured on this builder.
+     *
+     * <p>This method is intended for testing and introspection only.
+     *
+     * @return the predicate, or {@code null} if no device filter is set
+     */
+    @Nullable
+    Predicate<BleDevice> deviceFilter() {
+        return deviceFilter;
     }
 }

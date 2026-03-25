@@ -30,12 +30,16 @@ interface LinuxBleNativeCallbacks {
      * {@code org.freedesktop.DBus.ObjectManager.InterfacesAdded} filtered for
      * {@code org.bluez.Device1} objects in {@code BleBridge.c}.
      *
-     * @param id   the BlueZ D-Bus object path of the device (e.g.
-     *             {@code /org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF})
-     * @param name the advertised local name (empty string if absent)
-     * @param rssi received signal strength in dBm
+     * @param id               the BlueZ D-Bus object path of the device (e.g.
+     *                         {@code /org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF})
+     * @param name             the advertised local name (empty string if absent)
+     * @param rssi             received signal strength in dBm
+     * @param manufacturerData raw manufacturer-specific advertisement payload
+     *                         bytes (after the 2-byte company ID); empty array
+     *                         if none was present in the advertisement
      */
-    void onDeviceFound(@NonNull String id, @NonNull String name, int rssi);
+    void onDeviceFound(@NonNull String id, @NonNull String name, int rssi,
+                       byte[] manufacturerData);
 
     /**
      * Called by the native layer when a GATT notification arrives for a subscribed

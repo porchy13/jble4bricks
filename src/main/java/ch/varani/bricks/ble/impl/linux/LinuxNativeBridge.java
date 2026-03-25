@@ -25,7 +25,7 @@ interface LinuxNativeBridge {
      *
      * <p>The {@code callbacks} instance is stored as a JNI global reference inside
      * the native {@code BleContext} so that GLib-thread callbacks can invoke
-     * {@link LinuxBleNativeCallbacks#onDeviceFound(String, String, int)} and
+     * {@link LinuxBleNativeCallbacks#onDeviceFound(String, String, int, byte[])} and
      * {@link LinuxBleNativeCallbacks#onNotification(long, String, String, byte[])}
      * without holding a reference to any concrete platform class.
      *

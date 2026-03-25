@@ -157,7 +157,7 @@ class MacOsBleScannerTest {
     @Test
     void onDeviceFound_whenScanActive_invokesCallback() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("uuid-1", "DeviceA", -60);
+        scanner.onDeviceFound("uuid-1", "DeviceA", -60, new byte[0]);
 
         assertAll(
             () -> assertEquals(1, found.size()),
@@ -170,8 +170,8 @@ class MacOsBleScannerTest {
     @Test
     void onDeviceFound_sameUuid_returnsCachedDevice() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("uuid-same", "Dev", -50);
-        scanner.onDeviceFound("uuid-same", "Dev", -50);
+        scanner.onDeviceFound("uuid-same", "Dev", -50, new byte[0]);
+        scanner.onDeviceFound("uuid-same", "Dev", -50, new byte[0]);
 
         assertAll(
             () -> assertEquals(2, found.size()),
@@ -183,7 +183,7 @@ class MacOsBleScannerTest {
     @Test
     void onDeviceFound_whenNoCallback_doesNotThrow() {
         /* No startScan called — currentCallback is null. */
-        scanner.onDeviceFound("uuid-1", "Dev", -70);
+        scanner.onDeviceFound("uuid-1", "Dev", -70, new byte[0]);
         assertTrue(found.isEmpty());
     }
 
@@ -191,7 +191,7 @@ class MacOsBleScannerTest {
     void onDeviceFound_afterStopScan_doesNotDeliverToOldCallback() throws Exception {
         scanner.startScan(found::add).get();
         scanner.stopScan().get();
-        scanner.onDeviceFound("uuid-1", "Dev", -70);
+        scanner.onDeviceFound("uuid-1", "Dev", -70, new byte[0]);
 
         assertTrue(found.isEmpty());
     }
@@ -300,7 +300,7 @@ class MacOsBleScannerTest {
     @Test
     void startScan_clearsKnownDevicesFromPreviousScan() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("uuid-A", "Dev", -50);
+        scanner.onDeviceFound("uuid-A", "Dev", -50, new byte[0]);
 
         /* Second scan must clear the cache. */
         scanner.startScan(found::add).get();
@@ -310,7 +310,7 @@ class MacOsBleScannerTest {
          */
         final List<BleDevice> secondFound = new ArrayList<>();
         scanner.startScan(secondFound::add).get();
-        scanner.onDeviceFound("uuid-A", "Dev", -50);
+        scanner.onDeviceFound("uuid-A", "Dev", -50, new byte[0]);
 
         assertAll(
             () -> assertFalse(secondFound.isEmpty()),
@@ -327,7 +327,7 @@ class MacOsBleScannerTest {
             throws BleException, Exception {
         scanner.startScan(found::add).get();
         scanner.close();
-        scanner.onDeviceFound("uuid-1", "Dev", -70);
+        scanner.onDeviceFound("uuid-1", "Dev", -70, new byte[0]);
 
         assertTrue(found.isEmpty());
     }

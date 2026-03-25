@@ -26,6 +26,7 @@ import ch.varani.bricks.ble.api.ScanCallback;
 import ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstants;
 import ch.varani.bricks.ble.device.buwizz.BuWizz3ProtocolConstants;
 import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesProtocolConstants;
+import ch.varani.bricks.ble.device.lego.LegoHubType;
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
 import ch.varani.bricks.ble.device.sbrick.SBrickProtocolConstants;
 
@@ -263,5 +264,236 @@ class ScanDslTest {
         assertNotNull(caught[0]);
         assertTrue(caught[0].getMessage().contains("interrupted"),
                 "Expected 'interrupted' in message but got: " + caught[0].getMessage());
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       withDeviceId — device predicate filter
+       ───────────────────────────────────────────────────────────────────────── */
+
+    @Test
+    void withDeviceId_setsNonNullDeviceFilter() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final ScanDsl dsl = new ScanDsl(scanner).withDeviceId("some-id");
+
+        assertNotNull(dsl.deviceFilter());
+    }
+
+    @Test
+    void withDeviceId_filterAcceptsMatchingDevice() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        when(device.id()).thenReturn("target-id");
+
+        final ScanDsl dsl = new ScanDsl(scanner).withDeviceId("target-id");
+
+        assertTrue(dsl.deviceFilter().test(device));
+    }
+
+    @Test
+    void withDeviceId_filterRejectsNonMatchingDevice() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        when(device.id()).thenReturn("other-id");
+
+        final ScanDsl dsl = new ScanDsl(scanner).withDeviceId("target-id");
+
+        org.junit.jupiter.api.Assertions.assertFalse(dsl.deviceFilter().test(device));
+    }
+
+    @Test
+    void withDeviceId_onlyMatchingDeviceCollected() throws BleException {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice matchingDevice = mock(BleDevice.class);
+        final BleDevice otherDevice = mock(BleDevice.class);
+        when(matchingDevice.id()).thenReturn("target-id");
+        when(otherDevice.id()).thenReturn("other-id");
+
+        when(scanner.startScan(isNull(), any(ScanCallback.class)))
+                .thenAnswer(inv -> {
+                    final ScanCallback cb = inv.getArgument(1);
+                    cb.onDeviceFound(otherDevice);
+                    cb.onDeviceFound(matchingDevice);
+                    return CompletableFuture.completedFuture(null);
+                });
+        when(scanner.stopScan()).thenReturn(CompletableFuture.completedFuture(null));
+
+        final java.util.List<BleDevice> result =
+                new ScanDsl(scanner).withDeviceId("target-id").collect(1);
+
+        assertEquals(1, result.size());
+        assertEquals("target-id", result.get(0).id());
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       forLegoHubType — hub type predicate filter
+       ───────────────────────────────────────────────────────────────────────── */
+
+    @Test
+    void forLegoHubType_setsNonNullDeviceFilter() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final ScanDsl dsl = new ScanDsl(scanner).forLegoHubType(LegoHubType.CITY_HUB);
+
+        assertNotNull(dsl.deviceFilter());
+    }
+
+    @Test
+    void forLegoHubType_filterAcceptsDeviceWithMatchingSystemTypeByte() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        /* City Hub system type byte = 0x41; place it at index
+         * MANUFACTURER_DATA_IDX_SYSTEM_TYPE (3) in a 4-byte payload. */
+        final byte[] mfrData = new byte[LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH];
+        mfrData[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE] =
+                (byte) LegoProtocolConstants.DEVICE_2PORT_HUB;
+        when(device.manufacturerData()).thenReturn(mfrData);
+
+        final ScanDsl dsl = new ScanDsl(scanner).forLegoHubType(LegoHubType.CITY_HUB);
+
+        assertTrue(dsl.deviceFilter().test(device));
+    }
+
+    @Test
+    void forLegoHubType_filterRejectsDeviceWithDifferentSystemTypeByte() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        final byte[] mfrData = new byte[LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH];
+        mfrData[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE] =
+                (byte) LegoProtocolConstants.DEVICE_BOOST_HUB;
+        when(device.manufacturerData()).thenReturn(mfrData);
+
+        final ScanDsl dsl = new ScanDsl(scanner).forLegoHubType(LegoHubType.CITY_HUB);
+
+        org.junit.jupiter.api.Assertions.assertFalse(dsl.deviceFilter().test(device));
+    }
+
+    @Test
+    void forLegoHubType_filterRejectsDeviceWithTooShortPayload() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        /* Payload shorter than MANUFACTURER_DATA_MIN_LENGTH. */
+        when(device.manufacturerData())
+                .thenReturn(new byte[LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH - 1]);
+
+        final ScanDsl dsl = new ScanDsl(scanner).forLegoHubType(LegoHubType.CITY_HUB);
+
+        org.junit.jupiter.api.Assertions.assertFalse(dsl.deviceFilter().test(device));
+    }
+
+    @Test
+    void forLegoHubType_filterRejectsDeviceWithEmptyPayload() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        when(device.manufacturerData()).thenReturn(new byte[0]);
+
+        final ScanDsl dsl = new ScanDsl(scanner).forLegoHubType(LegoHubType.TECHNIC_HUB);
+
+        org.junit.jupiter.api.Assertions.assertFalse(dsl.deviceFilter().test(device));
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       forWeDo2 — convenience shortcut
+       ───────────────────────────────────────────────────────────────────────── */
+
+    @Test
+    void forWeDo2_setsNonNullDeviceFilter() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final ScanDsl dsl = new ScanDsl(scanner).forWeDo2();
+
+        assertNotNull(dsl.deviceFilter());
+    }
+
+    @Test
+    void forWeDo2_filterAcceptsWeDo2Device() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        final byte[] mfrData = new byte[LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH];
+        mfrData[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE] =
+                (byte) LegoProtocolConstants.DEVICE_WEDO2_HUB;
+        when(device.manufacturerData()).thenReturn(mfrData);
+
+        final ScanDsl dsl = new ScanDsl(scanner).forWeDo2();
+
+        assertTrue(dsl.deviceFilter().test(device));
+    }
+
+    @Test
+    void forWeDo2_filterRejectsNonWeDo2Device() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        final byte[] mfrData = new byte[LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH];
+        mfrData[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE] =
+                (byte) LegoProtocolConstants.DEVICE_2PORT_HUB;
+        when(device.manufacturerData()).thenReturn(mfrData);
+
+        final ScanDsl dsl = new ScanDsl(scanner).forWeDo2();
+
+        org.junit.jupiter.api.Assertions.assertFalse(dsl.deviceFilter().test(device));
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       deviceFilter initially null
+       ───────────────────────────────────────────────────────────────────────── */
+
+    @Test
+    void deviceFilter_initiallyNull() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final ScanDsl dsl = new ScanDsl(scanner);
+
+        assertNull(dsl.deviceFilter());
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       Combined withDeviceId + forLegoHubType — AND semantics
+       ───────────────────────────────────────────────────────────────────────── */
+
+    @Test
+    void withDeviceId_andForLegoHubType_combinedFilterRejectsMismatchedId() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        final byte[] mfrData = new byte[LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH];
+        mfrData[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE] =
+                (byte) LegoProtocolConstants.DEVICE_2PORT_HUB;
+        when(device.id()).thenReturn("wrong-id");
+        when(device.manufacturerData()).thenReturn(mfrData);
+
+        final ScanDsl dsl = new ScanDsl(scanner)
+                .withDeviceId("target-id")
+                .forLegoHubType(LegoHubType.CITY_HUB);
+
+        org.junit.jupiter.api.Assertions.assertFalse(dsl.deviceFilter().test(device));
+    }
+
+    @Test
+    void withDeviceId_andForLegoHubType_combinedFilterRejectsMismatchedType() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        final byte[] mfrData = new byte[LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH];
+        mfrData[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE] =
+                (byte) LegoProtocolConstants.DEVICE_BOOST_HUB; // wrong type
+        when(device.id()).thenReturn("target-id");
+        when(device.manufacturerData()).thenReturn(mfrData);
+
+        final ScanDsl dsl = new ScanDsl(scanner)
+                .withDeviceId("target-id")
+                .forLegoHubType(LegoHubType.CITY_HUB);
+
+        org.junit.jupiter.api.Assertions.assertFalse(dsl.deviceFilter().test(device));
+    }
+
+    @Test
+    void withDeviceId_andForLegoHubType_combinedFilterAcceptsBothMatching() {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+        final byte[] mfrData = new byte[LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH];
+        mfrData[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE] =
+                (byte) LegoProtocolConstants.DEVICE_2PORT_HUB;
+        when(device.id()).thenReturn("target-id");
+        when(device.manufacturerData()).thenReturn(mfrData);
+
+        final ScanDsl dsl = new ScanDsl(scanner)
+                .withDeviceId("target-id")
+                .forLegoHubType(LegoHubType.CITY_HUB);
+
+        assertTrue(dsl.deviceFilter().test(device));
     }
 }

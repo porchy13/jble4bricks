@@ -32,7 +32,7 @@ import ch.varani.bricks.ble.util.NativeLibraryLoader;
  * <p>This class implements {@link LinuxBleNativeCallbacks} so that the native
  * layer can call back into Java without holding a reference to any
  * Linux-specific concrete type.
- * {@link #onDeviceFound(String, String, int)} is invoked for every discovered
+ * {@link #onDeviceFound(String, String, int, byte[])} is invoked for every discovered
  * peripheral; {@link #onNotification(long, String, String, byte[])} is invoked
  * for every GATT notification and is routed to the correct
  * {@link LinuxBleConnection} by {@code connectionPtr}.
@@ -327,23 +327,26 @@ public final class LinuxBleScanner implements BleScanner, LinuxBleNativeCallback
      * <p>Corresponds to the {@code org.freedesktop.DBus.ObjectManager.InterfacesAdded}
      * signal handler for {@code org.bluez.Device1} objects in {@code BleBridge.c}.
      *
-     * @param id   the BlueZ D-Bus object path of the device (e.g.
-     *             {@code /org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF})
-     * @param name the advertised local name (may be empty)
-     * @param rssi received signal strength in dBm
+     * @param id               the BlueZ D-Bus object path of the device (e.g.
+     *                         {@code /org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF})
+     * @param name             the advertised local name (may be empty)
+     * @param rssi             received signal strength in dBm
+     * @param manufacturerData raw manufacturer-specific advertisement payload bytes;
+     *                         empty array if none was present
      */
     @Override
     public void onDeviceFound(
             final @NonNull String id,
             final @NonNull String name,
-            final int rssi) {
+            final int rssi,
+            final byte[] manufacturerData) {
 
         final ScanCallback cb = currentCallback;
         if (cb == null) {
             return;
         }
         final LinuxBleDevice device = knownDevices.computeIfAbsent(
-                id, path -> new LinuxBleDevice(path, name, rssi, this));
+                id, path -> new LinuxBleDevice(path, name, rssi, manufacturerData, this));
         cb.onDeviceFound(device);
     }
 

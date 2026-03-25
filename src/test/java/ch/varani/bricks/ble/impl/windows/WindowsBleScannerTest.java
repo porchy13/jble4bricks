@@ -158,7 +158,7 @@ class WindowsBleScannerTest {
     @Test
     void onDeviceFound_whenScanActive_invokesCallback() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("addr-1", "DeviceA", -60);
+        scanner.onDeviceFound("addr-1", "DeviceA", -60, new byte[0]);
 
         assertAll(
             () -> assertEquals(1, found.size()),
@@ -171,8 +171,8 @@ class WindowsBleScannerTest {
     @Test
     void onDeviceFound_sameAddress_returnsCachedDevice() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("addr-same", "Dev", -50);
-        scanner.onDeviceFound("addr-same", "Dev", -50);
+        scanner.onDeviceFound("addr-same", "Dev", -50, new byte[0]);
+        scanner.onDeviceFound("addr-same", "Dev", -50, new byte[0]);
 
         assertAll(
             () -> assertEquals(2, found.size()),
@@ -184,7 +184,7 @@ class WindowsBleScannerTest {
     @Test
     void onDeviceFound_whenNoCallback_doesNotThrow() {
         /* No startScan called — currentCallback is null. */
-        scanner.onDeviceFound("addr-1", "Dev", -70);
+        scanner.onDeviceFound("addr-1", "Dev", -70, new byte[0]);
         assertTrue(found.isEmpty());
     }
 
@@ -192,7 +192,7 @@ class WindowsBleScannerTest {
     void onDeviceFound_afterStopScan_doesNotDeliverToOldCallback() throws Exception {
         scanner.startScan(found::add).get();
         scanner.stopScan().get();
-        scanner.onDeviceFound("addr-1", "Dev", -70);
+        scanner.onDeviceFound("addr-1", "Dev", -70, new byte[0]);
 
         assertTrue(found.isEmpty());
     }
@@ -301,7 +301,7 @@ class WindowsBleScannerTest {
     @Test
     void startScan_clearsKnownDevicesFromPreviousScan() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("addr-A", "Dev", -50);
+        scanner.onDeviceFound("addr-A", "Dev", -50, new byte[0]);
 
         /* Second scan must clear the cache. */
         scanner.startScan(found::add).get();
@@ -311,7 +311,7 @@ class WindowsBleScannerTest {
          */
         final List<BleDevice> secondFound = new ArrayList<>();
         scanner.startScan(secondFound::add).get();
-        scanner.onDeviceFound("addr-A", "Dev", -50);
+        scanner.onDeviceFound("addr-A", "Dev", -50, new byte[0]);
 
         assertAll(
             () -> assertFalse(secondFound.isEmpty()),
@@ -328,7 +328,7 @@ class WindowsBleScannerTest {
             throws BleException, Exception {
         scanner.startScan(found::add).get();
         scanner.close();
-        scanner.onDeviceFound("addr-1", "Dev", -70);
+        scanner.onDeviceFound("addr-1", "Dev", -70, new byte[0]);
 
         assertTrue(found.isEmpty());
     }

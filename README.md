@@ -301,7 +301,7 @@ try (BrickDsl dsl = BrickDsl.open()) {
         .collect(3);
 
     for (BleDevice hub : hubs) {
-        System.out.println(hub.name() + " @ " + hub.address());
+        System.out.println(hub.name() + " @ " + hub.id());
     }
 }
 ```
@@ -316,6 +316,67 @@ try (BrickDsl dsl = BrickDsl.open()) {
         .first();
 }
 ```
+
+### Filtering by LEGO hub type
+
+Use `forLegoHubType(LegoHubType)` to restrict the scan to a specific LEGO Powered Up hub
+model. The hub type is identified by the System Type and Device Number byte in the
+manufacturer-specific advertisement payload.
+
+```java
+import ch.varani.bricks.ble.device.lego.LegoHubType;
+
+try (BrickDsl dsl = BrickDsl.open()) {
+    DeviceDsl hub = dsl.scan()
+        .forLegoHubs()                          // GATT service UUID filter (OS level)
+        .forLegoHubType(LegoHubType.CITY_HUB)  // manufacturer data filter
+        .timeoutSeconds(15)
+        .first();
+}
+```
+
+Available hub types:
+
+| `LegoHubType` constant | Hub model |
+|---|---|
+| `WEDO2_HUB` | WeDo 2.0 Hub |
+| `DUPLO_TRAIN` | Duplo Train Hub |
+| `BOOST_MOVE_HUB` | Boost Move Hub |
+| `CITY_HUB` | 2-Port Hub (City Hub / Hub 2) |
+| `HANDSET_2PORT` | 2-Port Handset |
+| `TECHNIC_HUB` | Technic Hub (4-Port Hub) |
+| `MARIO_HUB` | Super Mario Hub |
+
+The `forWeDo2()` shortcut is equivalent to `forLegoHubType(LegoHubType.WEDO2_HUB)`:
+
+```java
+DeviceDsl hub = dsl.scan().forWeDo2().timeoutSeconds(10).first();
+```
+
+### Filtering by device identifier (train layout management)
+
+Use `withDeviceId(String)` to wait for a hub with a known persistent BLE identifier.
+This is useful when multiple hubs are in range and each hub has a fixed role (e.g.
+freight train, passenger train):
+
+```java
+try (BrickDsl dsl = BrickDsl.open()) {
+    DeviceDsl freightTrain = dsl.scan()
+        .forLegoHubs()
+        .withDeviceId("A1B2C3D4-0000-0000-0000-000000000001")
+        .timeoutSeconds(20)
+        .first();
+
+    DeviceDsl passengerTrain = dsl.scan()
+        .forLegoHubs()
+        .withDeviceId("A1B2C3D4-0000-0000-0000-000000000002")
+        .timeoutSeconds(20)
+        .first();
+}
+```
+
+Filters are additive (AND semantics): `withDeviceId` and `forLegoHubType` can be chained
+together so that only the exact hub with the right type and the right identifier is accepted.
 
 ---
 
@@ -345,7 +406,7 @@ BleScanner scanner = BleScannerFactory.create();
 ```java
 // Start an open scan (no service UUID filter)
 CompletableFuture<Void> started = scanner.startScan(null, device -> {
-    System.out.println("Found: " + device.name() + " @ " + device.address()
+    System.out.println("Found: " + device.name() + " @ " + device.id()
         + " RSSI=" + device.rssi());
 });
 

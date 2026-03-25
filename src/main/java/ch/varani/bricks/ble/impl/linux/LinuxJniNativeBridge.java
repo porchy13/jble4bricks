@@ -43,7 +43,7 @@ final class LinuxJniNativeBridge implements LinuxNativeBridge {
      * GLib main loop on a dedicated thread.
      * The {@code callbacks} reference is stored by the native layer as a JNI
      * global reference so that GLib-thread callbacks can invoke
-     * {@link LinuxBleNativeCallbacks#onDeviceFound(String, String, int)} and
+     * {@link LinuxBleNativeCallbacks#onDeviceFound(String, String, int, byte[])} and
      * {@link LinuxBleNativeCallbacks#onNotification(long, String, String, byte[])}
      * directly.
      */

@@ -42,7 +42,7 @@ final class JniNativeBridge implements NativeBridge {
      * {@code [CBCentralManager initWithDelegate:queue:options:]}.
      * The {@code callbacks} reference is stored by the native layer as a JNI global
      * reference so that CoreBluetooth dispatch-queue callbacks can invoke
-     * {@link BleNativeCallbacks#onDeviceFound(String, String, int)} and
+     * {@link BleNativeCallbacks#onDeviceFound(String, String, int, byte[])} and
      * {@link BleNativeCallbacks#onNotification(long, String, String, byte[])} directly.
      */
     @Override
