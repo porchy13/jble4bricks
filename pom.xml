@@ -55,6 +55,15 @@
         <!-- Native build output directory (relative to ${project.build.directory}) -->
         <native.build.dir>${project.build.directory}/native</native.build.dir>
 
+        <!--
+          Directory that contains pre-built native libraries when assembling the
+          final multi-platform JAR on the CI packaging agent (Linux).  Each OS
+          build job copies its shared library into this directory before the
+          packaging job runs.  Used exclusively by the "native-bundle" profile.
+          Override on the command line with -Dble.natives.prebuilt.dir=<path>.
+        -->
+        <ble.natives.prebuilt.dir>${project.basedir}/native-prebuilt</ble.natives.prebuilt.dir>
+
         <!-- JaCoCo coverage thresholds.
              Instruction coverage is set to 0.99 rather than 1.00 because
              NativeLibraryLoader.loadAbsolutePath() contains a System.load()
@@ -138,6 +147,11 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -331,6 +345,13 @@
                         </goals>
                     </execution>
                 </executions>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>13.3.0</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <configLocation>${basedir}/varani_java_checks.xml</configLocation>
                     <propertyExpansion>suppressions.file=${basedir}/checkstyle-suppressions.xml</propertyExpansion>
@@ -471,418 +492,597 @@
                 </configuration>
             </plugin>
 
-            <!-- ─────────────────────────────────────────────────────────────
-                 Native macOS CoreBluetooth bridge — CMake build
-                 ─────────────────────────────────────────────────────────────
-                 Phase: generate-resources (runs before compile so the .dylib
-                 is present when the JAR is assembled by package).
-
-                 Step 1 — cmake configure:
-                   Creates the Makefile/Xcode project in ${native.build.dir}.
-
-                 Step 2 — cmake build:
-                   Compiles the Objective-C source and links libble-macos.dylib
-                   as a universal binary (arm64 + x86_64) via the OSX_ARCHITECTURES
-                   setting in CMakeLists.txt.
-
-                 Step 3 — cmake install:
-                   Copies the dylib to ${native.build.dir}/lib so the
-                   maven-resources-plugin can pick it up and embed it in the JAR
-                   under natives/macos/<arch>/.
-
-                 The <skip> flag is bound to the system property
-                 "ble.native.skip" (default false) so CI pipelines that cannot
-                 compile native code can set -Dble.native.skip=true and still
-                 run unit tests against the mocked native layer.
-
-                 JAVA_HOME is passed explicitly so CMakeLists.txt can locate
-                 jni.h without relying on the environment.
-                 ──────────────────────────────────────────────────────────── -->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-
-                    <!-- Step 1 — cmake configure -->
-                    <execution>
-                        <id>native-cmake-configure</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${ble.native.skip}</skip>
-                            <executable>cmake</executable>
-                            <arguments>
-                                <argument>-S</argument>
-                                <argument>${project.basedir}/src/main/native/macos</argument>
-                                <argument>-B</argument>
-                                <argument>${native.build.dir}</argument>
-                                <argument>-DCMAKE_BUILD_TYPE=Release</argument>
-                                <argument>-DJAVA_HOME=${java.home}</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-
-                    <!-- Step 2 — cmake build -->
-                    <execution>
-                        <id>native-cmake-build</id>
-                        <phase>generate-resources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${ble.native.skip}</skip>
-                            <executable>cmake</executable>
-                            <arguments>
-                                <argument>--build</argument>
-                                <argument>${native.build.dir}</argument>
-                                <argument>--config</argument>
-                                <argument>Release</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-
-                     <!-- Step 3 — cmake install (copies dylib to ${native.build.dir}/lib) -->
-                     <execution>
-                         <id>native-cmake-install</id>
-                         <phase>generate-resources</phase>
-                         <goals>
-                             <goal>exec</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <executable>cmake</executable>
-                             <arguments>
-                                 <argument>--install</argument>
-                                 <argument>${native.build.dir}</argument>
-                                 <argument>--prefix</argument>
-                                 <argument>${native.build.dir}</argument>
-                             </arguments>
-                         </configuration>
-                     </execution>
-
-                     <!-- ─────────────────────────────────────────────────────────────
-                          Native Windows WinRT BLE bridge — CMake build
-                          ─────────────────────────────────────────────────────────────
-                          Step 1 — cmake configure:
-                            Creates the Visual Studio / Ninja project in
-                            ${native.build.dir}/windows, separate from the macOS build
-                            directory to avoid conflicts.
-
-                          Step 2 — cmake build:
-                            Compiles the C++/WinRT source and links ble-windows.dll for
-                            the current host architecture.
-
-                          Step 3 — cmake install:
-                            Copies ble-windows.dll to ${native.build.dir}/windows/lib so
-                            the maven-resources-plugin can embed it in the JAR under
-                            natives/windows/<arch>/.
-
-                          The same <skip> flag (ble.native.skip) controls this build.
-                          ──────────────────────────────────────────────────────────── -->
-
-                     <!-- Windows Step 1 — cmake configure -->
-                     <execution>
-                         <id>native-windows-cmake-configure</id>
-                         <phase>generate-resources</phase>
-                         <goals>
-                             <goal>exec</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <executable>cmake</executable>
-                             <arguments>
-                                 <argument>-S</argument>
-                                 <argument>${project.basedir}/src/main/native/windows</argument>
-                                 <argument>-B</argument>
-                                 <argument>${native.build.dir}/windows</argument>
-                                 <argument>-DCMAKE_BUILD_TYPE=Release</argument>
-                                 <argument>-DJAVA_HOME=${java.home}</argument>
-                             </arguments>
-                         </configuration>
-                     </execution>
-
-                     <!-- Windows Step 2 — cmake build -->
-                     <execution>
-                         <id>native-windows-cmake-build</id>
-                         <phase>generate-resources</phase>
-                         <goals>
-                             <goal>exec</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <executable>cmake</executable>
-                             <arguments>
-                                 <argument>--build</argument>
-                                 <argument>${native.build.dir}/windows</argument>
-                                 <argument>--config</argument>
-                                 <argument>Release</argument>
-                             </arguments>
-                         </configuration>
-                     </execution>
-
-                     <!-- Windows Step 3 — cmake install (copies dll to ${native.build.dir}/windows/lib) -->
-                     <execution>
-                         <id>native-windows-cmake-install</id>
-                         <phase>generate-resources</phase>
-                         <goals>
-                             <goal>exec</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <executable>cmake</executable>
-                             <arguments>
-                                 <argument>--install</argument>
-                                 <argument>${native.build.dir}/windows</argument>
-                                 <argument>--prefix</argument>
-                                 <argument>${native.build.dir}/windows</argument>
-                             </arguments>
-                         </configuration>
-                     </execution>
-
-                     <!-- ─────────────────────────────────────────────────────────────
-                          Native Linux BlueZ BLE bridge — CMake build
-                          ─────────────────────────────────────────────────────────────
-                          Step 1 — cmake configure:
-                            Creates the Makefile project in ${native.build.dir}/linux,
-                            separate from the macOS and Windows build directories.
-
-                          Step 2 — cmake build:
-                            Compiles the C/GDBus source and links libble-linux.so for
-                            the current host architecture.
-
-                          Step 3 — cmake install:
-                            Copies libble-linux.so to ${native.build.dir}/linux/lib so
-                            the maven-resources-plugin can embed it in the JAR under
-                            natives/linux/<arch>/.
-
-                          The same <skip> flag (ble.native.skip) controls this build.
-                          ──────────────────────────────────────────────────────────── -->
-
-                     <!-- Linux Step 1 — cmake configure -->
-                     <execution>
-                         <id>native-linux-cmake-configure</id>
-                         <phase>generate-resources</phase>
-                         <goals>
-                             <goal>exec</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <executable>cmake</executable>
-                             <arguments>
-                                 <argument>-S</argument>
-                                 <argument>${project.basedir}/src/main/native/linux</argument>
-                                 <argument>-B</argument>
-                                 <argument>${native.build.dir}/linux</argument>
-                                 <argument>-DCMAKE_BUILD_TYPE=Release</argument>
-                                 <argument>-DJAVA_HOME=${java.home}</argument>
-                             </arguments>
-                         </configuration>
-                     </execution>
-
-                     <!-- Linux Step 2 — cmake build -->
-                     <execution>
-                         <id>native-linux-cmake-build</id>
-                         <phase>generate-resources</phase>
-                         <goals>
-                             <goal>exec</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <executable>cmake</executable>
-                             <arguments>
-                                 <argument>--build</argument>
-                                 <argument>${native.build.dir}/linux</argument>
-                                 <argument>--config</argument>
-                                 <argument>Release</argument>
-                             </arguments>
-                         </configuration>
-                     </execution>
-
-                     <!-- Linux Step 3 — cmake install (copies so to ${native.build.dir}/linux/lib) -->
-                     <execution>
-                         <id>native-linux-cmake-install</id>
-                         <phase>generate-resources</phase>
-                         <goals>
-                             <goal>exec</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <executable>cmake</executable>
-                             <arguments>
-                                 <argument>--install</argument>
-                                 <argument>${native.build.dir}/linux</argument>
-                                 <argument>--prefix</argument>
-                                 <argument>${native.build.dir}/linux</argument>
-                             </arguments>
-                         </configuration>
-                     </execution>
-
-                 </executions>
-             </plugin>
-
-            <!-- Copy compiled native libraries into the JAR resources tree.
-                 The universal binary produced by CMake serves both aarch64
-                 and amd64 on macOS, so it is placed under both arch paths so
-                 that NativeLibraryLoader can find it regardless of the JVM
-                 architecture token. -->
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-native-macos-aarch64</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <skip>${ble.native.skip}</skip>
-                            <outputDirectory>
-                                ${project.build.outputDirectory}/natives/macos/aarch64
-                            </outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${native.build.dir}/lib</directory>
-                                    <includes>
-                                        <include>libble-macos.dylib</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                     <execution>
-                         <id>copy-native-macos-amd64</id>
-                         <phase>process-resources</phase>
-                         <goals>
-                             <goal>copy-resources</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <outputDirectory>
-                                 ${project.build.outputDirectory}/natives/macos/amd64
-                             </outputDirectory>
-                             <resources>
-                                 <resource>
-                                     <directory>${native.build.dir}/lib</directory>
-                                     <includes>
-                                         <include>libble-macos.dylib</include>
-                                     </includes>
-                                 </resource>
-                             </resources>
-                         </configuration>
-                     </execution>
-                     <!-- Copy ble-windows.dll into the JAR under natives/windows/aarch64
-                          and natives/windows/amd64.  The DLL is built for a single
-                          architecture on each build host; placing it under both paths
-                          ensures NativeLibraryLoader finds it regardless of the JVM
-                          architecture token reported at runtime. -->
-                     <execution>
-                         <id>copy-native-windows-aarch64</id>
-                         <phase>process-resources</phase>
-                         <goals>
-                             <goal>copy-resources</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <outputDirectory>
-                                 ${project.build.outputDirectory}/natives/windows/aarch64
-                             </outputDirectory>
-                             <resources>
-                                 <resource>
-                                     <directory>${native.build.dir}/windows/lib</directory>
-                                     <includes>
-                                         <include>ble-windows.dll</include>
-                                     </includes>
-                                 </resource>
-                             </resources>
-                         </configuration>
-                     </execution>
-                     <execution>
-                         <id>copy-native-windows-amd64</id>
-                         <phase>process-resources</phase>
-                         <goals>
-                             <goal>copy-resources</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <outputDirectory>
-                                 ${project.build.outputDirectory}/natives/windows/amd64
-                             </outputDirectory>
-                             <resources>
-                                 <resource>
-                                     <directory>${native.build.dir}/windows/lib</directory>
-                                     <includes>
-                                         <include>ble-windows.dll</include>
-                                     </includes>
-                                 </resource>
-                             </resources>
-                         </configuration>
-                     </execution>
-                     <!-- Copy libble-linux.so into the JAR under natives/linux/aarch64
-                          and natives/linux/amd64.  The .so is built for a single
-                          architecture on each build host; placing it under both paths
-                          ensures NativeLibraryLoader finds it regardless of the JVM
-                          architecture token reported at runtime. -->
-                     <execution>
-                         <id>copy-native-linux-aarch64</id>
-                         <phase>process-resources</phase>
-                         <goals>
-                             <goal>copy-resources</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <outputDirectory>
-                                 ${project.build.outputDirectory}/natives/linux/aarch64
-                             </outputDirectory>
-                             <resources>
-                                 <resource>
-                                     <directory>${native.build.dir}/linux/lib</directory>
-                                     <includes>
-                                         <include>libble-linux.so</include>
-                                     </includes>
-                                 </resource>
-                             </resources>
-                         </configuration>
-                     </execution>
-                     <execution>
-                         <id>copy-native-linux-amd64</id>
-                         <phase>process-resources</phase>
-                         <goals>
-                             <goal>copy-resources</goal>
-                         </goals>
-                         <configuration>
-                             <skip>${ble.native.skip}</skip>
-                             <outputDirectory>
-                                 ${project.build.outputDirectory}/natives/linux/amd64
-                             </outputDirectory>
-                             <resources>
-                                 <resource>
-                                     <directory>${native.build.dir}/linux/lib</directory>
-                                     <includes>
-                                         <include>libble-linux.so</include>
-                                     </includes>
-                                 </resource>
-                             </resources>
-                         </configuration>
-                     </execution>
-                 </executions>
-             </plugin>
-
         </plugins>
     </build>
 
     <!-- =========================================================
          Profiles
+         =========================================================
+
+         OS-specific native build profiles
+         ──────────────────────────────────
+         Each profile is activated automatically when Maven detects the
+         matching operating system.  It adds the three CMake steps
+         (configure → build → install) and the two copy-resources steps
+         (aarch64 + amd64 paths) for the library that can be compiled on
+         that OS.  No other platform's native code is touched.
+
+         Because activation is automatic, the following commands work
+         out of the box without any extra flag:
+
+           mvn test          – compiles the host-platform native library
+                               then runs unit tests.
+           mvn install       – same, then installs the JAR locally.
+           mvn package       – same, then packages the JAR.
+
+         CI/CD packaging (final multi-platform JAR)
+         ───────────────────────────────────────────
+         The "native-bundle" profile is activated manually on the Linux
+         packaging agent after all per-OS build jobs have uploaded their
+         shared libraries to a staging directory.  It embeds all three
+         libraries (macOS dylib, Windows dll, Linux so) into the JAR in
+         a single step.
+
+           mvn package -Pnative-bundle \
+               -Dble.natives.prebuilt.dir=<path-to-staging-dir>
+
+         The staging directory must contain:
+           macos/libble-macos.dylib
+           windows/ble-windows.dll
+           linux/libble-linux.so
+
          ========================================================= -->
     <profiles>
 
-        <!-- Skip the native CMake build (e.g. on CI without Xcode / clang). -->
+        <!-- ── macOS native build ────────────────────────────────────────
+             Activated automatically on Mac OS X.
+             Compiles the CoreBluetooth Objective-C bridge as a universal
+             binary (arm64 + x86_64) and embeds it in the JAR under both
+             natives/macos/aarch64/ and natives/macos/amd64/.
+             ────────────────────────────────────────────────────────────── -->
         <profile>
-            <id>skip-native</id>
-            <properties>
-                <ble.native.skip>true</ble.native.skip>
-            </properties>
+            <id>native-macos</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+
+                            <!-- Step 1 — cmake configure -->
+                            <execution>
+                                <id>native-macos-cmake-configure</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>-S</argument>
+                                        <argument>${project.basedir}/src/main/native/macos</argument>
+                                        <argument>-B</argument>
+                                        <argument>${native.build.dir}/macos</argument>
+                                        <argument>-DCMAKE_BUILD_TYPE=Release</argument>
+                                        <argument>-DJAVA_HOME=${java.home}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                            <!-- Step 2 — cmake build -->
+                            <execution>
+                                <id>native-macos-cmake-build</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>--build</argument>
+                                        <argument>${native.build.dir}/macos</argument>
+                                        <argument>--config</argument>
+                                        <argument>Release</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                            <!-- Step 3 — cmake install (copies dylib to ${native.build.dir}/macos/lib) -->
+                            <execution>
+                                <id>native-macos-cmake-install</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>--install</argument>
+                                        <argument>${native.build.dir}/macos</argument>
+                                        <argument>--prefix</argument>
+                                        <argument>${native.build.dir}/macos</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                    <!--
+                      The universal binary covers both aarch64 and amd64 on macOS.
+                      It is placed under both arch paths so NativeLibraryLoader
+                      finds it regardless of the JVM architecture token.
+                    -->
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-native-macos-aarch64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/macos/aarch64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${native.build.dir}/macos/lib</directory>
+                                            <includes>
+                                                <include>libble-macos.dylib</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>copy-native-macos-amd64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/macos/amd64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${native.build.dir}/macos/lib</directory>
+                                            <includes>
+                                                <include>libble-macos.dylib</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- ── Windows native build ──────────────────────────────────────
+             Activated automatically on Windows.
+             Compiles the WinRT C++ BLE bridge and embeds ble-windows.dll
+             in the JAR under both natives/windows/aarch64/ and
+             natives/windows/amd64/.
+             ────────────────────────────────────────────────────────────── -->
+        <profile>
+            <id>native-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+
+                            <!-- Step 1 — cmake configure -->
+                            <execution>
+                                <id>native-windows-cmake-configure</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>-S</argument>
+                                        <argument>${project.basedir}/src/main/native/windows</argument>
+                                        <argument>-B</argument>
+                                        <argument>${native.build.dir}/windows</argument>
+                                        <argument>-DCMAKE_BUILD_TYPE=Release</argument>
+                                        <argument>-DJAVA_HOME=${java.home}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                            <!-- Step 2 — cmake build -->
+                            <execution>
+                                <id>native-windows-cmake-build</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>--build</argument>
+                                        <argument>${native.build.dir}/windows</argument>
+                                        <argument>--config</argument>
+                                        <argument>Release</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                            <!-- Step 3 — cmake install (copies dll to ${native.build.dir}/windows/lib) -->
+                            <execution>
+                                <id>native-windows-cmake-install</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>--install</argument>
+                                        <argument>${native.build.dir}/windows</argument>
+                                        <argument>--prefix</argument>
+                                        <argument>${native.build.dir}/windows</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-native-windows-aarch64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/windows/aarch64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${native.build.dir}/windows/lib</directory>
+                                            <includes>
+                                                <include>ble-windows.dll</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>copy-native-windows-amd64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/windows/amd64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${native.build.dir}/windows/lib</directory>
+                                            <includes>
+                                                <include>ble-windows.dll</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- ── Linux native build ────────────────────────────────────────
+             Activated automatically on Linux.
+             Compiles the BlueZ/GDBus C bridge and embeds libble-linux.so
+             in the JAR under both natives/linux/aarch64/ and
+             natives/linux/amd64/.
+             ────────────────────────────────────────────────────────────── -->
+        <profile>
+            <id>native-linux</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                    <name>Linux</name>
+                </os>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <executions>
+
+                            <!-- Step 1 — cmake configure -->
+                            <execution>
+                                <id>native-linux-cmake-configure</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>-S</argument>
+                                        <argument>${project.basedir}/src/main/native/linux</argument>
+                                        <argument>-B</argument>
+                                        <argument>${native.build.dir}/linux</argument>
+                                        <argument>-DCMAKE_BUILD_TYPE=Release</argument>
+                                        <argument>-DJAVA_HOME=${java.home}</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                            <!-- Step 2 — cmake build -->
+                            <execution>
+                                <id>native-linux-cmake-build</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>--build</argument>
+                                        <argument>${native.build.dir}/linux</argument>
+                                        <argument>--config</argument>
+                                        <argument>Release</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                            <!-- Step 3 — cmake install (copies .so to ${native.build.dir}/linux/lib) -->
+                            <execution>
+                                <id>native-linux-cmake-install</id>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>cmake</executable>
+                                    <arguments>
+                                        <argument>--install</argument>
+                                        <argument>${native.build.dir}/linux</argument>
+                                        <argument>--prefix</argument>
+                                        <argument>${native.build.dir}/linux</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-native-linux-aarch64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/linux/aarch64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${native.build.dir}/linux/lib</directory>
+                                            <includes>
+                                                <include>libble-linux.so</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>copy-native-linux-amd64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/linux/amd64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${native.build.dir}/linux/lib</directory>
+                                            <includes>
+                                                <include>libble-linux.so</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- ── native-bundle (CI/CD final packaging) ─────────────────────
+             Activated manually: mvn package -Pnative-bundle
+                                             -Dble.natives.prebuilt.dir=<dir>
+
+             Used by the GitHub Actions packaging job (runs on Linux) after
+             all per-OS build jobs have uploaded their shared libraries to a
+             staging directory.  Embeds all three platform libraries into the
+             JAR in a single step — no CMake compilation takes place here.
+
+             Expected staging layout under ${ble.natives.prebuilt.dir}:
+               macos/libble-macos.dylib
+               windows/ble-windows.dll
+               linux/libble-linux.so
+
+             The macOS universal binary is placed under both aarch64 and amd64
+             paths because NativeLibraryLoader resolves the path using the JVM
+             architecture token, and the binary serves both architectures.
+             Same rationale for the Windows DLL and Linux .so: each is built
+             on a single-arch runner and placed under both paths so the loader
+             always finds it.
+             ────────────────────────────────────────────────────────────── -->
+        <profile>
+            <id>native-bundle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+
+                            <!-- macOS universal binary → both arch paths -->
+                            <execution>
+                                <id>bundle-native-macos-aarch64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/macos/aarch64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${ble.natives.prebuilt.dir}/macos</directory>
+                                            <includes>
+                                                <include>libble-macos.dylib</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>bundle-native-macos-amd64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/macos/amd64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${ble.natives.prebuilt.dir}/macos</directory>
+                                            <includes>
+                                                <include>libble-macos.dylib</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+
+                            <!-- Windows DLL → both arch paths -->
+                            <execution>
+                                <id>bundle-native-windows-aarch64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/windows/aarch64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${ble.natives.prebuilt.dir}/windows</directory>
+                                            <includes>
+                                                <include>ble-windows.dll</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>bundle-native-windows-amd64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/windows/amd64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${ble.natives.prebuilt.dir}/windows</directory>
+                                            <includes>
+                                                <include>ble-windows.dll</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+
+                            <!-- Linux shared object → both arch paths -->
+                            <execution>
+                                <id>bundle-native-linux-aarch64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/linux/aarch64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${ble.natives.prebuilt.dir}/linux</directory>
+                                            <includes>
+                                                <include>libble-linux.so</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>bundle-native-linux-amd64</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>
+                                        ${project.build.outputDirectory}/natives/linux/amd64
+                                    </outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${ble.natives.prebuilt.dir}/linux</directory>
+                                            <includes>
+                                                <include>libble-linux.so</include>
+                                            </includes>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
     </profiles>

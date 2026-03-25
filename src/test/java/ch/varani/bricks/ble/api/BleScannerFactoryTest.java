@@ -1,6 +1,7 @@
 package ch.varani.bricks.ble.api;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -10,17 +11,24 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Unit tests for {@link BleScannerFactory}.
  *
- * <p>The factory detects the OS at runtime.  Because the native shared libraries
- * are not present on the unit-test classpath, the platform-specific branches all
- * throw {@link BleException}:
+ * <p>The factory detects the OS at runtime.  On the current build platform the
+ * native shared library is compiled and embedded in the JAR during the
+ * {@code generate-resources} phase (via the OS-specific Maven profile), so
+ * {@link BleScannerFactory#create()} succeeds on the host OS.  On every other
+ * platform the native library is absent and a {@link BleException} is thrown:
  * <ul>
- *   <li>macOS — native library not found in JAR</li>
- *   <li>Windows — native library not found in JAR</li>
- *   <li>Linux — native library not found in JAR</li>
+ *   <li>macOS — native library present when built on macOS; absent otherwise</li>
+ *   <li>Windows — native library present when built on Windows; absent otherwise</li>
+ *   <li>Linux — native library present when built on Linux; absent otherwise</li>
  *   <li>other OS — unsupported platform message</li>
  * </ul>
  */
@@ -46,89 +54,72 @@ class BleScannerFactoryTest {
     }
 
     /**
-     * On macOS the factory attempts to load the native library; because the
-     * dylib is either absent from the unit-test classpath, or present but with
-     * a JNI binding mismatch, a {@link BleException} is thrown. The message
-     * will contain {@code "not found in JAR"}, {@code "No BLE platform"}, or
-     * a JNI binding error string from the native layer.
+     * On macOS the native library is compiled and embedded by the {@code native-macos}
+     * Maven profile, so the factory must succeed without throwing.
      */
     @Test
-    void create_macOs_throwsBleExceptionBecauseNativeLibraryAbsent() {
-        final String saved = System.getProperty("os.name");
-        try {
-            System.setProperty("os.name", "Mac OS X");
-            final BleException ex = assertThrows(BleException.class, BleScannerFactory::create);
-            assertAll(
-                () -> assertNotNull(ex.getMessage()),
-                () -> assertTrue(
-                        ex.getMessage().contains("not found in JAR")
-                        || ex.getMessage().contains("No BLE platform")
-                        || ex.getMessage().contains("JNI binding error")
-                        || ex.getMessage().contains("method not found")
-                        || ex.getMessage().contains("Failed to link"),
-                        "Unexpected message: " + ex.getMessage())
-            );
-        } finally {
-            System.setProperty("os.name", saved);
-        }
+    @EnabledOnOs(OS.MAC)
+    void create_macOs_succeedsWithNativeLibraryPresent() {
+        assertDoesNotThrow(BleScannerFactory::create);
     }
 
     /**
-     * On Linux (via {@code os.name} containing {@code "linux"}) the factory
-     * attempts to load the native library; because {@code libble-linux.so} is
-     * absent from the unit-test classpath a {@link BleException} is thrown.
-     * Exercises the {@code osName.contains("linux")} branch of the
-     * {@code ||} condition.
+     * On Windows the native library is compiled and embedded by the {@code native-windows}
+     * Maven profile, so the factory must succeed without throwing.
      */
     @Test
-    void create_linux_throwsBleExceptionBecauseNativeLibraryAbsent() {
-        final String saved = System.getProperty("os.name");
-        try {
-            System.setProperty("os.name", "Linux");
-            final BleException ex = assertThrows(BleException.class, BleScannerFactory::create);
-            assertAll(
-                () -> assertNotNull(ex.getMessage()),
-                () -> assertTrue(
-                        ex.getMessage().contains("not found in JAR")
-                        || ex.getMessage().contains("No BLE platform")
-                        || ex.getMessage().contains("JNI binding error")
-                        || ex.getMessage().contains("method not found")
-                        || ex.getMessage().contains("Failed to link"),
-                        "Unexpected message: " + ex.getMessage())
-            );
-        } finally {
-            System.setProperty("os.name", saved);
-        }
+    @EnabledOnOs(OS.WINDOWS)
+    void create_windows_succeedsWithNativeLibraryPresent() {
+        assertDoesNotThrow(BleScannerFactory::create);
     }
 
     /**
-     * On a system whose {@code os.name} contains {@code "nux"} but not
-     * {@code "linux"} (exercising the right-hand side of the
-     * {@code osName.contains("linux") || osName.contains("nux")} condition)
-     * the factory attempts to load the native library and throws a
-     * {@link BleException} because {@code libble-linux.so} is absent from the
-     * unit-test classpath.
+     * On Linux the native library is compiled and embedded by the {@code native-linux}
+     * Maven profile, so the factory must succeed without throwing.
      */
     @Test
-    void create_nux_throwsBleExceptionBecauseNativeLibraryAbsent() {
-        final String saved = System.getProperty("os.name");
-        try {
-            // "gnunux" contains "nux" but not "linux" — triggers the right-hand branch
-            System.setProperty("os.name", "gnunux");
-            final BleException ex = assertThrows(BleException.class, BleScannerFactory::create);
-            assertAll(
-                () -> assertNotNull(ex.getMessage()),
-                () -> assertTrue(
-                        ex.getMessage().contains("not found in JAR")
-                        || ex.getMessage().contains("No BLE platform")
-                        || ex.getMessage().contains("JNI binding error")
-                        || ex.getMessage().contains("method not found")
-                        || ex.getMessage().contains("Failed to link"),
-                        "Unexpected message: " + ex.getMessage())
-            );
-        } finally {
-            System.setProperty("os.name", saved);
-        }
+    @EnabledOnOs(OS.LINUX)
+    void create_linux_succeedsWithNativeLibraryPresent() {
+        assertDoesNotThrow(BleScannerFactory::create);
+    }
+
+    /**
+     * When the OS name is forced to a foreign platform that is not the current
+     * host, the native library for that platform is absent from the JAR and the
+     * factory must throw {@link BleException}.
+     *
+     * <p>This test is skipped on macOS because "Mac OS X" is the host OS and the
+     * macOS library is present; the other two foreign values ("Linux", "gnunux")
+     * are tested instead.
+     *
+     * <p>"gnunux" contains "nux" but not "linux" — covers the right-hand
+     * Linux-detection branch in {@link BleScannerFactory}.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"Linux", "gnunux"})
+    @DisabledOnOs(OS.LINUX)
+    void create_foreignLinux_throwsBleExceptionBecauseNativeLibraryAbsent(final String osName) {
+        assertForeignOsThrows(osName);
+    }
+
+    /**
+     * Forces the OS name to Windows on a non-Windows host; the Windows DLL is
+     * absent from the JAR so the factory must throw {@link BleException}.
+     */
+    @Test
+    @DisabledOnOs(OS.WINDOWS)
+    void create_foreignWindows_throwsBleExceptionBecauseNativeLibraryAbsent() {
+        assertForeignOsThrows("Windows 11");
+    }
+
+    /**
+     * Forces the OS name to macOS on a non-macOS host; the macOS dylib is
+     * absent from the JAR so the factory must throw {@link BleException}.
+     */
+    @Test
+    @DisabledOnOs(OS.MAC)
+    void create_foreignMacOs_throwsBleExceptionBecauseNativeLibraryAbsent() {
+        assertForeignOsThrows("Mac OS X");
     }
 
     /**
@@ -153,12 +144,40 @@ class BleScannerFactoryTest {
     @Test
     void constructor_isPrivate_throwsAssertionError() throws Exception {
         final Constructor<BleScannerFactory> ctor =
-                BleScannerFactory.class.getDeclaredConstructor();
+            BleScannerFactory.class.getDeclaredConstructor();
         ctor.setAccessible(true);
         final InvocationTargetException ex =
-                assertThrows(InvocationTargetException.class, ctor::newInstance);
+            assertThrows(InvocationTargetException.class, ctor::newInstance);
         assertThrows(AssertionError.class, () -> {
             throw ex.getCause();
         });
     }
+
+    /**
+     * Helper: forces {@code os.name} to {@code osName}, calls the factory, asserts that a
+     * {@link BleException} is thrown whose message contains one of the expected error tokens,
+     * then restores the original {@code os.name}.
+     *
+     * @param osName the OS name to inject
+     */
+    private static void assertForeignOsThrows(final String osName) {
+        final String saved = System.getProperty("os.name");
+        try {
+            System.setProperty("os.name", osName);
+            final BleException ex = assertThrows(BleException.class, BleScannerFactory::create);
+            assertAll(
+                () -> assertNotNull(ex.getMessage()),
+                () -> assertTrue(
+                    ex.getMessage().contains("not found in JAR")
+                        || ex.getMessage().contains("No BLE platform")
+                        || ex.getMessage().contains("JNI binding error")
+                        || ex.getMessage().contains("method not found")
+                        || ex.getMessage().contains("Failed to link"),
+                    "Unexpected message: " + ex.getMessage())
+            );
+        } finally {
+            System.setProperty("os.name", saved);
+        }
+    }
 }
+

@@ -750,6 +750,7 @@ JNIEXPORT void JNICALL
 Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect(
         JNIEnv *env, jobject self, jlong contextPtr, jlong connectionPtr) {
 
+    (void)env;
     (void)self;
 
     BleContext           *ctx  = (BleContext *)(uintptr_t)contextPtr;
