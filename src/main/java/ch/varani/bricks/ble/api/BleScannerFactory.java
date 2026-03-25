@@ -4,7 +4,9 @@ import java.util.Locale;
 
 import org.jspecify.annotations.NonNull;
 
+import ch.varani.bricks.ble.impl.linux.LinuxBleScanner;
 import ch.varani.bricks.ble.impl.macos.MacOsBleScanner;
+import ch.varani.bricks.ble.impl.windows.WindowsBleScanner;
 
 /**
  * Factory that creates a platform-appropriate {@link BleScanner} instance.
@@ -13,6 +15,9 @@ import ch.varani.bricks.ble.impl.macos.MacOsBleScanner;
  * system property and returns the matching native implementation:
  * <ul>
  *   <li><b>macOS</b> — {@code MacOsBleScanner} backed by CoreBluetooth (JNI)</li>
+ *   <li><b>Windows</b> — {@code WindowsBleScanner} backed by the WinRT
+ *       Bluetooth LE API (JNI)</li>
+ *   <li><b>Linux</b> — {@code LinuxBleScanner} backed by BlueZ over D-Bus (JNI)</li>
  * </ul>
  *
  * <p>Usage:
@@ -42,6 +47,8 @@ public final class BleScannerFactory {
      * <p>Supported platforms:
      * <ul>
      *   <li>macOS 13+ (aarch64 / amd64) — CoreBluetooth via JNI</li>
+     *   <li>Windows 11 (amd64 / aarch64) — WinRT Bluetooth LE API via JNI</li>
+     *   <li>Linux kernel 5.10+ / BlueZ 5.50+ (amd64 / aarch64) — D-Bus via JNI</li>
      * </ul>
      *
      * @return a new platform-specific {@link BleScanner}; never {@code null}
@@ -54,9 +61,15 @@ public final class BleScannerFactory {
         if (osName.contains("mac")) {
             return new MacOsBleScanner();
         }
+        if (osName.contains("win")) {
+            return new WindowsBleScanner();
+        }
+        if (osName.contains("linux") || osName.contains("nux")) {
+            return new LinuxBleScanner();
+        }
         throw new BleException(
                 "No BLE platform implementation available for this OS ("
                 + System.getProperty("os.name", "unknown")
-                + "). Supported platforms: macOS 13+.");
+                + "). Supported platforms: macOS 13+, Windows 11, Linux (BlueZ 5.50+).");
     }
 }

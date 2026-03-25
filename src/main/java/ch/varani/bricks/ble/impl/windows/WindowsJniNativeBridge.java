@@ -1,35 +1,35 @@
-package ch.varani.bricks.ble.impl.macos;
+package ch.varani.bricks.ble.impl.windows;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Production implementation of {@link NativeBridge} that delegates every
- * operation to the corresponding JNI {@code native} method in
- * {@code libble-macos.dylib}.
+ * Production implementation of {@link WindowsNativeBridge} that delegates
+ * every operation to the corresponding JNI {@code native} method in
+ * {@code ble-windows.dll}.
  *
  * <p>This class is loaded (and its static initialiser run) only when the
- * production {@link MacOsBleScanner} public constructor is called, so the
+ * production {@link WindowsBleScanner} public constructor is called, so the
  * native library is never required during unit testing.
  *
- * <p>Thread safety: instances are stateless — all state is held in the
- * opaque C pointer values passed by callers.  Concurrent calls to different
- * pointer values are safe; concurrent calls to the same pointer value are
- * safe provided the underlying CoreBluetooth objects are accessed from their
- * designated dispatch queue (enforced on the native side).
+ * <p>Thread safety: instances are stateless — all state is held in the opaque
+ * C pointer values passed by callers.  Concurrent calls to different pointer
+ * values are safe; concurrent calls to the same pointer value are safe
+ * provided the underlying WinRT objects are accessed from their designated
+ * thread-pool thread (enforced on the native side).
  *
  * @since 1.0
  */
-final class JniNativeBridge implements NativeBridge {
+final class WindowsJniNativeBridge implements WindowsNativeBridge {
 
     /**
-     * Constructs a new {@code JniNativeBridge}.
+     * Constructs a new {@code WindowsJniNativeBridge}.
      *
      * <p>The native library must already have been loaded (by
-     * {@link ch.varani.bricks.ble.util.NativeLibraryLoader}) before any method
-     * on this instance is called.
+     * {@link ch.varani.bricks.ble.util.NativeLibraryLoader}) before any
+     * method on this instance is called.
      */
-    JniNativeBridge() {
+    WindowsJniNativeBridge() {
         // no-arg constructor: library loading is the caller's responsibility
     }
 
@@ -37,16 +37,18 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit}
-     * in {@code BleBridge.m}, which calls
-     * {@code [CBCentralManager initWithDelegate:queue:options:]}.
-     * The {@code callbacks} reference is stored by the native layer as a JNI global
-     * reference so that CoreBluetooth dispatch-queue callbacks can invoke
-     * {@link BleNativeCallbacks#onDeviceFound(String, String, int)} and
-     * {@link BleNativeCallbacks#onNotification(long, String, String, byte[])} directly.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeInit}
+     * in {@code BleBridge.cpp}, which calls
+     * {@code BluetoothLEAdvertisementWatcher()} and
+     * {@code IBluetoothAdapter.GetDefaultAsync()}.
+     * The {@code callbacks} reference is stored by the native layer as a JNI
+     * global reference so that WinRT thread-pool callbacks can invoke
+     * {@link WindowsBleNativeCallbacks#onDeviceFound(String, String, int)} and
+     * {@link WindowsBleNativeCallbacks#onNotification(long, String, String, byte[])}
+     * directly.
      */
     @Override
-    public long init(final @NonNull BleNativeCallbacks callbacks) {
+    public long init(final @NonNull WindowsBleNativeCallbacks callbacks) {
         return nativeInit(callbacks);
     }
 
@@ -54,9 +56,9 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStartScan}
-     * in {@code BleBridge.m}, which calls
-     * {@code [CBCentralManager scanForPeripheralsWithServices:options:]}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeStartScan}
+     * in {@code BleBridge.cpp}, which calls
+     * {@code BluetoothLEAdvertisementWatcher.Start()}.
      */
     @Override
     public void startScan(final long ctxPtr, final @Nullable String serviceUuid) {
@@ -67,8 +69,9 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStopScan}
-     * in {@code BleBridge.m}, which calls {@code [CBCentralManager stopScan]}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeStopScan}
+     * in {@code BleBridge.cpp}, which calls
+     * {@code BluetoothLEAdvertisementWatcher.Stop()}.
      */
     @Override
     public void stopScan(final long ctxPtr) {
@@ -79,8 +82,8 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeIsScanning}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeIsScanning}
+     * in {@code BleBridge.cpp}.
      */
     @Override
     public boolean isScanning(final long ctxPtr) {
@@ -91,23 +94,23 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeConnect}
-     * in {@code BleBridge.m}, which calls
-     * {@code [CBCentralManager connectPeripheral:options:]} and
-     * {@code [CBPeripheral discoverServices:]}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeConnect}
+     * in {@code BleBridge.cpp}, which calls
+     * {@code BluetoothLEDevice.FromBluetoothAddressAsync()} and
+     * {@code GattDeviceService.GetCharacteristicsAsync()}.
      */
     @Override
-    public long connect(final long ctxPtr, final @NonNull String peripheralUuid) {
-        return nativeConnect(ctxPtr, peripheralUuid);
+    public long connect(final long ctxPtr, final @NonNull String deviceAddress) {
+        return nativeConnect(ctxPtr, deviceAddress);
     }
 
     /**
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect}
-     * in {@code BleBridge.m}, which calls
-     * {@code [CBCentralManager cancelPeripheralConnection:]}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeDisconnect}
+     * in {@code BleBridge.cpp}, which closes the
+     * {@code BluetoothLEDevice} session.
      */
     @Override
     public void disconnect(final long ctxPtr, final long connectionPtr) {
@@ -118,10 +121,10 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse}
-     * in {@code BleBridge.m}, which calls
-     * {@code [CBPeripheral writeValue:forCharacteristic:type:]} with
-     * {@code CBCharacteristicWriteWithoutResponse}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeWriteWithoutResponse}
+     * in {@code BleBridge.cpp}, which calls
+     * {@code GattCharacteristic.WriteValueAsync()} with
+     * {@code GattWriteOption::WriteWithoutResponse}.
      */
     @Override
     public void writeWithoutResponse(
@@ -136,9 +139,9 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeReadCharacteristic}
-     * in {@code BleBridge.m}, which calls
-     * {@code [CBPeripheral readValueForCharacteristic:]}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeReadCharacteristic}
+     * in {@code BleBridge.cpp}, which calls
+     * {@code GattCharacteristic.ReadValueAsync()}.
      */
     @Override
     public byte[] readCharacteristic(
@@ -152,9 +155,9 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeSetNotify}
-     * in {@code BleBridge.m}, which calls
-     * {@code [CBPeripheral setNotifyValue:forCharacteristic:]}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeSetNotify}
+     * in {@code BleBridge.cpp}, which calls
+     * {@code GattCharacteristic.WriteClientCharacteristicConfigurationDescriptorAsync()}.
      */
     @Override
     public void setNotify(
@@ -169,8 +172,8 @@ final class JniNativeBridge implements NativeBridge {
      * {@inheritDoc}
      *
      * <p>Delegates to
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDestroy}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeDestroy}
+     * in {@code BleBridge.cpp}.
      */
     @Override
     public void destroy(final long ctxPtr) {
@@ -182,26 +185,26 @@ final class JniNativeBridge implements NativeBridge {
        ───────────────────────────────────────────────────────────────────────── */
 
     /**
-     * Allocates a {@code BleContext} and initialises {@code CBCentralManager}.
+     * Allocates a {@code BleContext} and initialises the WinRT BLE adapter.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeInit}
+     * in {@code BleBridge.cpp}.
      *
-     * @param callbacks the {@link BleNativeCallbacks} implementation that will receive
-     *                  scan results and GATT notifications from the native layer;
-     *                  stored by native as a JNI global reference for the lifetime of
-     *                  the {@code BleContext}
+     * @param callbacks the {@link WindowsBleNativeCallbacks} implementation
+     *                  that will receive scan results and GATT notifications;
+     *                  stored by native as a JNI global reference for the
+     *                  lifetime of the {@code BleContext}
      * @return opaque pointer to the allocated {@code BleContext}
      */
-    private native long nativeInit(@NonNull BleNativeCallbacks callbacks);
+    private native long nativeInit(@NonNull WindowsBleNativeCallbacks callbacks);
 
     /**
-     * Starts a BLE peripheral scan.
+     * Starts a BLE advertisement scan.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStartScan}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeStartScan}
+     * in {@code BleBridge.cpp}.
      *
      * @param ctxPtr      opaque pointer to the {@code BleContext}
      * @param serviceUuid service UUID filter, or {@code null}
@@ -209,11 +212,11 @@ final class JniNativeBridge implements NativeBridge {
     private native void nativeStartScan(long ctxPtr, @Nullable String serviceUuid);
 
     /**
-     * Stops the active BLE scan.
+     * Stops the active BLE advertisement scan.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStopScan}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeStopScan}
+     * in {@code BleBridge.cpp}.
      *
      * @param ctxPtr opaque pointer to the {@code BleContext}
      */
@@ -223,8 +226,8 @@ final class JniNativeBridge implements NativeBridge {
      * Returns whether a scan is active.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeIsScanning}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeIsScanning}
+     * in {@code BleBridge.cpp}.
      *
      * @param ctxPtr opaque pointer to the {@code BleContext}
      * @return {@code true} if scanning
@@ -235,21 +238,21 @@ final class JniNativeBridge implements NativeBridge {
      * Connects to a peripheral and returns a connection context pointer.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeConnect}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeConnect}
+     * in {@code BleBridge.cpp}.
      *
-     * @param ctxPtr         opaque pointer to the {@code BleContext}
-     * @param peripheralUuid CoreBluetooth peripheral UUID string
+     * @param ctxPtr        opaque pointer to the {@code BleContext}
+     * @param deviceAddress BLE device address string
      * @return opaque pointer to the allocated {@code BleConnectionContext}
      */
-    private native long nativeConnect(long ctxPtr, String peripheralUuid);
+    private native long nativeConnect(long ctxPtr, String deviceAddress);
 
     /**
      * Disconnects a peripheral and frees the connection context.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeDisconnect}
+     * in {@code BleBridge.cpp}.
      *
      * @param ctxPtr        opaque pointer to the {@code BleContext}
      * @param connectionPtr opaque pointer to the {@code BleConnectionContext}
@@ -260,8 +263,8 @@ final class JniNativeBridge implements NativeBridge {
      * Writes bytes to a GATT characteristic without response.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeWriteWithoutResponse}
+     * in {@code BleBridge.cpp}.
      *
      * @param connectionPtr      opaque pointer to the {@code BleConnectionContext}
      * @param serviceUuid        GATT service UUID
@@ -275,8 +278,8 @@ final class JniNativeBridge implements NativeBridge {
      * Reads the value of a GATT characteristic.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeReadCharacteristic}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeReadCharacteristic}
+     * in {@code BleBridge.cpp}.
      *
      * @param connectionPtr      opaque pointer to the {@code BleConnectionContext}
      * @param serviceUuid        GATT service UUID
@@ -290,8 +293,8 @@ final class JniNativeBridge implements NativeBridge {
      * Enables or disables GATT notifications for a characteristic.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeSetNotify}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeSetNotify}
+     * in {@code BleBridge.cpp}.
      *
      * @param connectionPtr      opaque pointer to the {@code BleConnectionContext}
      * @param serviceUuid        GATT service UUID
@@ -302,11 +305,11 @@ final class JniNativeBridge implements NativeBridge {
             long connectionPtr, String serviceUuid, String characteristicUuid, boolean enable);
 
     /**
-     * Destroys the {@code BleContext} and releases CoreBluetooth resources.
+     * Destroys the {@code BleContext} and releases WinRT resources.
      *
      * <p>Native function:
-     * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDestroy}
-     * in {@code BleBridge.m}.
+     * {@code Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeDestroy}
+     * in {@code BleBridge.cpp}.
      *
      * @param ctxPtr opaque pointer to the {@code BleContext}
      */

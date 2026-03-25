@@ -1,4 +1,4 @@
-package ch.varani.bricks.ble.impl.macos;
+package ch.varani.bricks.ble.impl.windows;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,28 +34,29 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ch.varani.bricks.ble.api.BleDevice;
 import ch.varani.bricks.ble.api.BleException;
 import ch.varani.bricks.ble.api.ScanCallback;
+
 /**
- * Unit tests for {@link MacOsBleScanner}.
+ * Unit tests for {@link WindowsBleScanner}.
  *
- * <p>The native JNI methods are never invoked: {@link NativeBridge} is
+ * <p>The native JNI methods are never invoked: {@link WindowsNativeBridge} is
  * injected as a Mockito mock via the package-private
- * {@link MacOsBleScanner#MacOsBleScanner(NativeBridge, long)} constructor.
+ * {@link WindowsBleScanner#WindowsBleScanner(WindowsNativeBridge, long)} constructor.
  */
 @ExtendWith(MockitoExtension.class)
-class MacOsBleScannerTest {
+class WindowsBleScannerTest {
 
     private static final long CTX_PTR  = 0x1000L;
     private static final long CONN_PTR = 0x2000L;
 
     @Mock
-    private NativeBridge bridge;
+    private WindowsNativeBridge bridge;
 
-    private MacOsBleScanner scanner;
+    private WindowsBleScanner scanner;
     private final List<BleDevice> found = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
-        scanner = new MacOsBleScanner(bridge, CTX_PTR);
+        scanner = new WindowsBleScanner(bridge, CTX_PTR);
         found.clear();
     }
 
@@ -64,8 +65,8 @@ class MacOsBleScannerTest {
        ───────────────────────────────────────────────────────────────────────── */
 
     @Test
-    void libraryName_constant_isBleMaxos() {
-        assertEquals("ble-macos", MacOsBleScanner.LIBRARY_NAME);
+    void libraryName_constant_isBleWindows() {
+        assertEquals("ble-windows", WindowsBleScanner.LIBRARY_NAME);
     }
 
     /* ─────────────────────────────────────────────────────────────────────────
@@ -157,33 +158,33 @@ class MacOsBleScannerTest {
     @Test
     void onDeviceFound_whenScanActive_invokesCallback() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("uuid-1", "DeviceA", -60);
+        scanner.onDeviceFound("addr-1", "DeviceA", -60);
 
         assertAll(
             () -> assertEquals(1, found.size()),
-            () -> assertEquals("uuid-1", found.get(0).id()),
+            () -> assertEquals("addr-1", found.get(0).id()),
             () -> assertEquals("DeviceA", found.get(0).name()),
             () -> assertEquals(-60, found.get(0).rssi())
         );
     }
 
     @Test
-    void onDeviceFound_sameUuid_returnsCachedDevice() throws Exception {
+    void onDeviceFound_sameAddress_returnsCachedDevice() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("uuid-same", "Dev", -50);
-        scanner.onDeviceFound("uuid-same", "Dev", -50);
+        scanner.onDeviceFound("addr-same", "Dev", -50);
+        scanner.onDeviceFound("addr-same", "Dev", -50);
 
         assertAll(
             () -> assertEquals(2, found.size()),
-            () -> assertEquals("uuid-same", found.get(0).id()),
-            () -> assertEquals("uuid-same", found.get(1).id())
+            () -> assertEquals("addr-same", found.get(0).id()),
+            () -> assertEquals("addr-same", found.get(1).id())
         );
     }
 
     @Test
     void onDeviceFound_whenNoCallback_doesNotThrow() {
         /* No startScan called — currentCallback is null. */
-        scanner.onDeviceFound("uuid-1", "Dev", -70);
+        scanner.onDeviceFound("addr-1", "Dev", -70);
         assertTrue(found.isEmpty());
     }
 
@@ -191,7 +192,7 @@ class MacOsBleScannerTest {
     void onDeviceFound_afterStopScan_doesNotDeliverToOldCallback() throws Exception {
         scanner.startScan(found::add).get();
         scanner.stopScan().get();
-        scanner.onDeviceFound("uuid-1", "Dev", -70);
+        scanner.onDeviceFound("addr-1", "Dev", -70);
 
         assertTrue(found.isEmpty());
     }
@@ -202,9 +203,9 @@ class MacOsBleScannerTest {
 
     @Test
     void connectPeripheral_success_returnsNewConnection() throws Exception {
-        when(bridge.connect(CTX_PTR, "uuid-x")).thenReturn(CONN_PTR);
+        when(bridge.connect(CTX_PTR, "addr-x")).thenReturn(CONN_PTR);
 
-        final MacOsBleConnection conn = scanner.connectPeripheral("uuid-x").get();
+        final WindowsBleConnection conn = scanner.connectPeripheral("addr-x").get();
 
         assertAll(
             () -> assertNotNull(conn),
@@ -217,14 +218,14 @@ class MacOsBleScannerTest {
     void connectPeripheral_whenBridgeThrows_futureCompletesExceptionally() {
         when(bridge.connect(anyLong(), any())).thenThrow(new RuntimeException("no BT"));
 
-        final CompletableFuture<MacOsBleConnection> future =
-                scanner.connectPeripheral("uuid-fail");
+        final CompletableFuture<WindowsBleConnection> future =
+                scanner.connectPeripheral("addr-fail");
 
         final ExecutionException ex =
                 assertThrows(ExecutionException.class, future::get);
         assertAll(
             () -> assertTrue(ex.getCause() instanceof BleException),
-            () -> assertTrue(ex.getCause().getMessage().contains("uuid-fail"))
+            () -> assertTrue(ex.getCause().getMessage().contains("addr-fail"))
         );
     }
 
@@ -300,21 +301,21 @@ class MacOsBleScannerTest {
     @Test
     void startScan_clearsKnownDevicesFromPreviousScan() throws Exception {
         scanner.startScan(found::add).get();
-        scanner.onDeviceFound("uuid-A", "Dev", -50);
+        scanner.onDeviceFound("addr-A", "Dev", -50);
 
         /* Second scan must clear the cache. */
         scanner.startScan(found::add).get();
         /*
          * After the new scan the device cache is empty; a re-discovery of
-         * uuid-A produces a fresh device object delivered to the new callback.
+         * addr-A produces a fresh device object delivered to the new callback.
          */
         final List<BleDevice> secondFound = new ArrayList<>();
         scanner.startScan(secondFound::add).get();
-        scanner.onDeviceFound("uuid-A", "Dev", -50);
+        scanner.onDeviceFound("addr-A", "Dev", -50);
 
         assertAll(
             () -> assertFalse(secondFound.isEmpty()),
-            () -> assertEquals("uuid-A", secondFound.get(0).id())
+            () -> assertEquals("addr-A", secondFound.get(0).id())
         );
     }
 
@@ -327,7 +328,7 @@ class MacOsBleScannerTest {
             throws BleException, Exception {
         scanner.startScan(found::add).get();
         scanner.close();
-        scanner.onDeviceFound("uuid-1", "Dev", -70);
+        scanner.onDeviceFound("addr-1", "Dev", -70);
 
         assertTrue(found.isEmpty());
     }
@@ -344,7 +345,7 @@ class MacOsBleScannerTest {
     }
 
     /* ─────────────────────────────────────────────────────────────────────────
-       startScan — superseded scan guard (line 142 in production code)
+       startScan — superseded scan guard (generation check)
        ───────────────────────────────────────────────────────────────────────── */
 
     @Test
@@ -360,8 +361,8 @@ class MacOsBleScannerTest {
         final CountDownLatch blockLatch = new CountDownLatch(1);
         final ExecutorService singleThread = Executors.newSingleThreadExecutor();
 
-        final MacOsBleScanner controlledScanner =
-                new MacOsBleScanner(bridge, CTX_PTR, singleThread);
+        final WindowsBleScanner controlledScanner =
+                new WindowsBleScanner(bridge, CTX_PTR, singleThread);
 
         /* Block the single executor thread so our scan task will be queued. */
         singleThread.submit(() -> {
@@ -378,7 +379,7 @@ class MacOsBleScannerTest {
         /* Read the captured generation, then bump activeScanGeneration via reflection
          * so it no longer matches what the lambda captured. */
         final Field genField =
-                MacOsBleScanner.class.getDeclaredField("activeScanGeneration");
+                WindowsBleScanner.class.getDeclaredField("activeScanGeneration");
         genField.setAccessible(true);
         genField.setLong(controlledScanner, (long) genField.get(controlledScanner) + 1L);
 
@@ -394,12 +395,12 @@ class MacOsBleScannerTest {
     }
 
     /* ─────────────────────────────────────────────────────────────────────────
-       startScan — LOG.fine lambda (line 145 in production code)
+       startScan — LOG.fine lambda
        ───────────────────────────────────────────────────────────────────────── */
 
-     @Test
+    @Test
     void startScan_withFineLogging_logsMessage() throws Exception {
-        final Logger logger = Logger.getLogger(MacOsBleScanner.class.getName());
+        final Logger logger = Logger.getLogger(WindowsBleScanner.class.getName());
         final Level savedLevel = logger.getLevel();
         try {
             logger.setLevel(Level.FINE);
@@ -425,9 +426,9 @@ class MacOsBleScannerTest {
 
     @Test
     void onNotification_withRegisteredConnection_routesToConnection() throws Exception {
-        when(bridge.connect(CTX_PTR, "uuid-x")).thenReturn(CONN_PTR);
+        when(bridge.connect(CTX_PTR, "addr-x")).thenReturn(CONN_PTR);
 
-        final MacOsBleConnection conn = scanner.connectPeripheral("uuid-x").get();
+        final WindowsBleConnection conn = scanner.connectPeripheral("addr-x").get();
         /* The connection is now registered in openConnections under CONN_PTR. */
         final byte[] value = {0x01, 0x02};
         /* Should not throw; the connection exists and its publisher map is empty

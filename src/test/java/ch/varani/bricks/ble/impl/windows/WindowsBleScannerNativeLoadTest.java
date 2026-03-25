@@ -1,4 +1,4 @@
-package ch.varani.bricks.ble.impl.macos;
+package ch.varani.bricks.ble.impl.windows;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -16,15 +16,15 @@ import ch.varani.bricks.ble.api.BleScannerFactory;
 import ch.varani.bricks.ble.util.NativeLibraryLoader;
 
 /**
- * Tests for the production paths in {@link MacOsBleScanner} and
+ * Tests for the production paths in {@link WindowsBleScanner} and
  * {@link BleScannerFactory} that require mocking the native library loading.
  *
- * <p>{@link NativeLibraryLoader#load(String)} and the {@link JniNativeBridge}
- * constructor are mocked so that no real {@code .dylib} is required, allowing
- * the public no-arg {@link MacOsBleScanner#MacOsBleScanner()} constructor and
- * the macOS branch of {@link BleScannerFactory#create()} to be exercised.
+ * <p>{@link NativeLibraryLoader#load(String)} and the {@link WindowsJniNativeBridge}
+ * constructor are mocked so that no real {@code .dll} is required, allowing
+ * the public no-arg {@link WindowsBleScanner#WindowsBleScanner()} constructor and
+ * the Windows branch of {@link BleScannerFactory#create()} to be exercised.
  */
-class MacOsBleScannerNativeLoadTest {
+class WindowsBleScannerNativeLoadTest {
 
     private static final long MOCK_CTX_PTR = 0xCAFEL;
 
@@ -36,14 +36,14 @@ class MacOsBleScannerNativeLoadTest {
     @Test
     void publicConstructor_withMockedNativeLoad_createsScanner() throws BleException {
         try (var loaderMock = mockStatic(NativeLibraryLoader.class);
-             var bridgeMock = mockConstruction(JniNativeBridge.class,
-                     (mock, ctx) -> when(mock.init(any(BleNativeCallbacks.class)))
+             var bridgeMock = mockConstruction(WindowsJniNativeBridge.class,
+                     (mock, ctx) -> when(mock.init(any(WindowsBleNativeCallbacks.class)))
                              .thenReturn(MOCK_CTX_PTR))) {
 
-            loaderMock.when(() -> NativeLibraryLoader.load(MacOsBleScanner.LIBRARY_NAME))
+            loaderMock.when(() -> NativeLibraryLoader.load(WindowsBleScanner.LIBRARY_NAME))
                       .then(inv -> null);
 
-            final MacOsBleScanner scanner = new MacOsBleScanner();
+            final WindowsBleScanner scanner = new WindowsBleScanner();
 
             assertAll(
                 () -> assertNotNull(scanner),
@@ -57,27 +57,27 @@ class MacOsBleScannerNativeLoadTest {
 
     /**
      * Verifies that {@link BleScannerFactory#create()} returns a non-null
-     * {@link BleScanner} when the OS is macOS and the native library load
+     * {@link BleScanner} when the OS is Windows and the native library load
      * is mocked.
      */
     @Test
-    void bleScannerFactory_macOs_returnsScanner() throws BleException {
+    void bleScannerFactory_windows_returnsScanner() throws BleException {
         final String savedOs = System.getProperty("os.name");
         try (var loaderMock = mockStatic(NativeLibraryLoader.class);
-             var bridgeMock = mockConstruction(JniNativeBridge.class,
-                     (mock, ctx) -> when(mock.init(any(BleNativeCallbacks.class)))
+             var bridgeMock = mockConstruction(WindowsJniNativeBridge.class,
+                     (mock, ctx) -> when(mock.init(any(WindowsBleNativeCallbacks.class)))
                              .thenReturn(MOCK_CTX_PTR))) {
 
-            loaderMock.when(() -> NativeLibraryLoader.load(MacOsBleScanner.LIBRARY_NAME))
+            loaderMock.when(() -> NativeLibraryLoader.load(WindowsBleScanner.LIBRARY_NAME))
                       .then(inv -> null);
-            System.setProperty("os.name", "Mac OS X");
+            System.setProperty("os.name", "Windows 11");
 
             final BleScanner scanner = BleScannerFactory.create();
 
             assertAll(
                 () -> assertNotNull(scanner),
                 () -> assertNotNull(bridgeMock),
-                () -> assertTrue(scanner instanceof MacOsBleScanner)
+                () -> assertTrue(scanner instanceof WindowsBleScanner)
             );
 
             scanner.close();

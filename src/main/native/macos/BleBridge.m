@@ -67,10 +67,16 @@ typedef struct {
     BleCentralDelegate     *__strong delegate;
     dispatch_queue_t        bleQueue;
 
-    /* Back-reference to the Java scanner object; used for scan callbacks. */
+    /*
+     * Global reference to the BleNativeCallbacks implementation (MacOsBleScanner).
+     * All JNI callbacks — both scan results and GATT notifications — are routed
+     * through this single object so that BleConnectionContext carries no Java
+     * references.
+     */
     JavaVM                 *jvm;
-    jobject                 scannerRef;          /* GlobalRef */
-    jmethodID               onDeviceFoundMethod;
+    jobject                 callbacksRef;         /* GlobalRef to BleNativeCallbacks */
+    jmethodID               onDeviceFoundMethod;  /* void onDeviceFound(String,String,int) */
+    jmethodID               onNotificationMethod; /* void onNotification(long,String,String,[B) */
 
     /* Signals that CBCentralManagerStatePoweredOn has been received. */
     dispatch_semaphore_t    readySemaphore;
@@ -104,10 +110,6 @@ typedef struct {
 
     /* YES if the last operation resulted in an error. */
     BOOL                    lastOpError;
-
-    /* The Java connection object — for notification callbacks. */
-    jobject                 connectionRef;       /* GlobalRef, may be 0 */
-    jmethodID               onNotificationMethod;
 } BleConnectionContext;
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -239,7 +241,7 @@ static CBCharacteristic *findCharacteristic(
     jstring jName = (*env)->NewStringUTF(env, deviceName.UTF8String);
 
     (*env)->CallVoidMethod(env,
-            _ctx->scannerRef,
+            _ctx->callbacksRef,
             _ctx->onDeviceFoundMethod,
             jId,
             jName,
@@ -402,11 +404,7 @@ static CBCharacteristic *findCharacteristic(
     }
 
     if (characteristic.isNotifying) {
-        /* Notification — deliver to Java. */
-        if (conn->connectionRef == NULL || conn->onNotificationMethod == NULL) {
-            return;
-        }
-
+        /* Notification — deliver to Java via BleNativeCallbacks.onNotification. */
         NSData *value = error == nil ? characteristic.value : nil;
         if (value == nil) {
             return;
@@ -424,9 +422,14 @@ static CBCharacteristic *findCharacteristic(
         jstring chrUuid  = (*env)->NewStringUTF(env,
                 characteristic.UUID.UUIDString.UTF8String);
 
+        /* Pass the connection pointer so the Java side can route to the
+         * correct MacOsBleConnection instance in its openConnections map. */
+        jlong connPtr = (jlong)(uintptr_t)conn;
+
         (*env)->CallVoidMethod(env,
-                conn->connectionRef,
-                conn->onNotificationMethod,
+                conn->ctx->callbacksRef,
+                conn->ctx->onNotificationMethod,
+                connPtr,
                 svcUuid,
                 chrUuid,
                 jBytes);
@@ -479,11 +482,19 @@ static CBCharacteristic *findCharacteristic(
  * Creates a CBCentralManager on a dedicated serial dispatch queue and waits
  * (up to MANAGER_READY_TIMEOUT seconds) for the hardware to become powered on.
  *
+ * callbacksObj is the BleNativeCallbacks implementation (MacOsBleScanner) whose
+ * onDeviceFound(String,String,int) and onNotification(long,String,String,[B) methods
+ * are called by the CoreBluetooth dispatch-queue threads.  A JNI global reference
+ * to it is stored in BleContext for the lifetime of the context.
+ *
  * Returns: pointer to a heap-allocated BleContext cast to jlong, or 0 on
  *          failure (in which case a Java exception has been thrown).
  */
 JNIEXPORT jlong JNICALL
-Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit(JNIEnv *env, jobject self) {
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit(
+        JNIEnv *env, jobject self, jobject callbacksObj) {
+
+    (void)self;   /* JniNativeBridge instance — not used for callbacks */
 
     BleContext *ctx = calloc(1, sizeof(BleContext));
     if (ctx == NULL) {
@@ -496,13 +507,35 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit(JNIEnv *env, job
     /* Store a reference to the JVM so that BLE-thread callbacks can attach. */
     (*env)->GetJavaVM(env, &ctx->jvm);
 
-    /* Keep a global reference to the Java scanner object for callbacks. */
-    ctx->scannerRef = (*env)->NewGlobalRef(env, self);
+    /* Keep a global reference to the BleNativeCallbacks implementation. */
+    ctx->callbacksRef = (*env)->NewGlobalRef(env, callbacksObj);
 
-    /* Look up the Java callback method: void onDeviceFound(String, String, int) */
-    jclass scannerClass = (*env)->GetObjectClass(env, self);
-    ctx->onDeviceFoundMethod = (*env)->GetMethodID(env, scannerClass,
+    /* Look up void onDeviceFound(String, String, int) */
+    jclass callbacksClass = (*env)->GetObjectClass(env, callbacksObj);
+    ctx->onDeviceFoundMethod = (*env)->GetMethodID(env, callbacksClass,
             "onDeviceFound", "(Ljava/lang/String;Ljava/lang/String;I)V");
+
+    if (ctx->onDeviceFoundMethod == NULL) {
+        (*env)->DeleteGlobalRef(env, ctx->callbacksRef);
+        free(ctx);
+        (*env)->ThrowNew(env,
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
+                "BleNativeCallbacks.onDeviceFound method not found — JNI binding error");
+        return 0L;
+    }
+
+    /* Look up void onNotification(long, String, String, byte[]) */
+    ctx->onNotificationMethod = (*env)->GetMethodID(env, callbacksClass,
+            "onNotification", "(JLjava/lang/String;Ljava/lang/String;[B)V");
+
+    if (ctx->onNotificationMethod == NULL) {
+        (*env)->DeleteGlobalRef(env, ctx->callbacksRef);
+        free(ctx);
+        (*env)->ThrowNew(env,
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
+                "BleNativeCallbacks.onNotification method not found — JNI binding error");
+        return 0L;
+    }
 
     if (ctx->onDeviceFoundMethod == NULL) {
         free(ctx);
@@ -532,7 +565,7 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit(JNIEnv *env, job
 
     if (result != 0) {
         /* Timed out — Bluetooth is likely off or unavailable. */
-        (*env)->DeleteGlobalRef(env, ctx->scannerRef);
+        (*env)->DeleteGlobalRef(env, ctx->callbacksRef);
         /* ARC will release centralManager and delegate. */
         ctx->centralManager = nil;
         ctx->delegate       = nil;
@@ -722,11 +755,6 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect(
     BleContext           *ctx  = (BleContext *)(uintptr_t)contextPtr;
     BleConnectionContext *conn = (BleConnectionContext *)(uintptr_t)connectionPtr;
 
-    if (conn->connectionRef != NULL) {
-        (*env)->DeleteGlobalRef(env, conn->connectionRef);
-        conn->connectionRef = NULL;
-    }
-
     dispatch_sync(ctx->bleQueue, ^{
         conn->peripheral.delegate = nil;
         [ctx->centralManager cancelPeripheralConnection:conn->peripheral];
@@ -875,6 +903,6 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDestroy(
         ctx->delegate       = nil;
     });
 
-    (*env)->DeleteGlobalRef(env, ctx->scannerRef);
+    (*env)->DeleteGlobalRef(env, ctx->callbacksRef);
     free(ctx);
 }

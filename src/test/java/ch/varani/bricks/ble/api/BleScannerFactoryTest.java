@@ -14,11 +14,13 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link BleScannerFactory}.
  *
- * <p>The factory detects the OS at runtime.  Because the native shared library
- * ({@code libble-macos.dylib}) is not present on the unit-test classpath, both
- * observable branches throw {@link BleException}:
+ * <p>The factory detects the OS at runtime.  Because the native shared libraries
+ * are not present on the unit-test classpath, the platform-specific branches all
+ * throw {@link BleException}:
  * <ul>
  *   <li>macOS — native library not found in JAR</li>
+ *   <li>Windows — native library not found in JAR</li>
+ *   <li>Linux — native library not found in JAR</li>
  *   <li>other OS — unsupported platform message</li>
  * </ul>
  */
@@ -55,6 +57,64 @@ class BleScannerFactoryTest {
         final String saved = System.getProperty("os.name");
         try {
             System.setProperty("os.name", "Mac OS X");
+            final BleException ex = assertThrows(BleException.class, BleScannerFactory::create);
+            assertAll(
+                () -> assertNotNull(ex.getMessage()),
+                () -> assertTrue(
+                        ex.getMessage().contains("not found in JAR")
+                        || ex.getMessage().contains("No BLE platform")
+                        || ex.getMessage().contains("JNI binding error")
+                        || ex.getMessage().contains("method not found")
+                        || ex.getMessage().contains("Failed to link"),
+                        "Unexpected message: " + ex.getMessage())
+            );
+        } finally {
+            System.setProperty("os.name", saved);
+        }
+    }
+
+    /**
+     * On Linux (via {@code os.name} containing {@code "linux"}) the factory
+     * attempts to load the native library; because {@code libble-linux.so} is
+     * absent from the unit-test classpath a {@link BleException} is thrown.
+     * Exercises the {@code osName.contains("linux")} branch of the
+     * {@code ||} condition.
+     */
+    @Test
+    void create_linux_throwsBleExceptionBecauseNativeLibraryAbsent() {
+        final String saved = System.getProperty("os.name");
+        try {
+            System.setProperty("os.name", "Linux");
+            final BleException ex = assertThrows(BleException.class, BleScannerFactory::create);
+            assertAll(
+                () -> assertNotNull(ex.getMessage()),
+                () -> assertTrue(
+                        ex.getMessage().contains("not found in JAR")
+                        || ex.getMessage().contains("No BLE platform")
+                        || ex.getMessage().contains("JNI binding error")
+                        || ex.getMessage().contains("method not found")
+                        || ex.getMessage().contains("Failed to link"),
+                        "Unexpected message: " + ex.getMessage())
+            );
+        } finally {
+            System.setProperty("os.name", saved);
+        }
+    }
+
+    /**
+     * On a system whose {@code os.name} contains {@code "nux"} but not
+     * {@code "linux"} (exercising the right-hand side of the
+     * {@code osName.contains("linux") || osName.contains("nux")} condition)
+     * the factory attempts to load the native library and throws a
+     * {@link BleException} because {@code libble-linux.so} is absent from the
+     * unit-test classpath.
+     */
+    @Test
+    void create_nux_throwsBleExceptionBecauseNativeLibraryAbsent() {
+        final String saved = System.getProperty("os.name");
+        try {
+            // "gnunux" contains "nux" but not "linux" — triggers the right-hand branch
+            System.setProperty("os.name", "gnunux");
             final BleException ex = assertThrows(BleException.class, BleScannerFactory::create);
             assertAll(
                 () -> assertNotNull(ex.getMessage()),

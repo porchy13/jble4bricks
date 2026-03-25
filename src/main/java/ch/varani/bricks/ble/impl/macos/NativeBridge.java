@@ -23,13 +23,21 @@ interface NativeBridge {
      * on a dedicated serial dispatch queue, and waits for the adapter to reach
      * {@code CBManagerStatePoweredOn}.
      *
+     * <p>The {@code callbacks} instance is stored as a JNI global reference inside
+     * the native {@code BleContext} so that CoreBluetooth dispatch-queue callbacks
+     * can invoke {@link BleNativeCallbacks#onDeviceFound(String, String, int)} and
+     * {@link BleNativeCallbacks#onNotification(long, String, String, byte[])} without
+     * holding a reference to any concrete platform class.
+     *
      * <p>Corresponds to
      * {@code Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit}
      * in {@code BleBridge.m}.
      *
+     * @param callbacks the callback target for scan results and GATT notifications;
+     *                  must not be {@code null}
      * @return an opaque pointer to the allocated {@code BleContext}, cast to {@code long}
      */
-    long init();
+    long init(@NonNull BleNativeCallbacks callbacks);
 
     /**
      * Starts a BLE scan via {@code CBCentralManager scanForPeripheralsWithServices:options:}.

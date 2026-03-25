@@ -1,4 +1,4 @@
-package ch.varani.bricks.ble.impl.macos;
+package ch.varani.bricks.ble.impl.windows;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -17,53 +17,54 @@ import ch.varani.bricks.ble.api.ScanCallback;
 import ch.varani.bricks.ble.util.NativeLibraryLoader;
 
 /**
- * macOS implementation of {@link BleScanner} backed by CoreBluetooth via JNI.
+ * Windows implementation of {@link BleScanner} backed by the WinRT Bluetooth
+ * LE API ({@code Windows.Devices.Bluetooth}) via JNI.
  *
- * <p>On construction the class loads {@code libble-macos.dylib} from the JAR
+ * <p>On construction the class loads {@code ble-windows.dll} from the JAR
  * (extracted to a temp file by {@link NativeLibraryLoader}) and calls
- * {@link NativeBridge#init(BleNativeCallbacks)} to allocate the underlying
- * {@code CBCentralManager}.
+ * {@link WindowsNativeBridge#init(WindowsBleNativeCallbacks)} to allocate the
+ * underlying {@code BluetoothLEAdvertisementWatcher} and adapter context.
  *
  * <p>All blocking native calls are dispatched on a cached thread-pool so that
  * the {@link CompletableFuture} returned to callers never blocks the JVM
  * thread that constructed the future.
  *
- * <p>This class implements {@link BleNativeCallbacks} so that the native layer
- * can call back into Java without holding a reference to any macOS-specific
- * concrete type.  {@link #onDeviceFound(String, String, int)} is invoked for
- * every discovered peripheral; {@link #onNotification(long, String, String, byte[])}
- * is invoked for every GATT notification and is routed to the correct
- * {@link MacOsBleConnection} by {@code connectionPtr}.
- * CoreBluetooth delivers both callbacks on its own internal dispatch queue,
- * not on a JVM thread, so the JNI bridge attaches that thread to the JVM
- * before making the call.
+ * <p>This class implements {@link WindowsBleNativeCallbacks} so that the
+ * native layer can call back into Java without holding a reference to any
+ * Windows-specific concrete type.
+ * {@link #onDeviceFound(String, String, int)} is invoked for every discovered
+ * peripheral; {@link #onNotification(long, String, String, byte[])} is invoked
+ * for every GATT notification and is routed to the correct
+ * {@link WindowsBleConnection} by {@code connectionPtr}.
+ * WinRT delivers both callbacks on its own thread-pool, so the JNI bridge
+ * attaches that thread to the JVM before making the call.
  *
  * <p>Thread safety: all public methods are thread-safe.
  *
  * @since 1.0
  */
-public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
+public final class WindowsBleScanner implements BleScanner, WindowsBleNativeCallbacks {
 
-    private static final Logger LOG = Logger.getLogger(MacOsBleScanner.class.getName());
+    private static final Logger LOG = Logger.getLogger(WindowsBleScanner.class.getName());
 
-    /** Base name of the native shared library (without "lib" prefix or extension). */
-    static final String LIBRARY_NAME = "ble-macos";
+    /** Base name of the native shared library (without extension). */
+    static final String LIBRARY_NAME = "ble-windows";
 
     /**
      * Default executor used to run blocking JNI calls off the caller's thread.
      *
      * <p>Tests may inject a different executor via the package-private
-     * {@link #MacOsBleScanner(NativeBridge, long, Executor)} constructor.
+     * {@link #WindowsBleScanner(WindowsNativeBridge, long, Executor)} constructor.
      */
     private static final Executor DEFAULT_EXEC =
             Executors.newCachedThreadPool(r -> {
-                final Thread t = new Thread(r, "ble-macos-worker");
+                final Thread t = new Thread(r, "ble-windows-worker");
                 t.setDaemon(true);
                 return t;
             });
 
-    /** The native bridge used for all CoreBluetooth operations. */
-    private final NativeBridge bridge;
+    /** The native bridge used for all WinRT BLE operations. */
+    private final WindowsNativeBridge bridge;
 
     /** Executor used to dispatch async BLE operations. */
     private final Executor exec;
@@ -77,19 +78,19 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
 
     /**
      * Peripherals discovered since the last {@link #startScan} call, keyed by
-     * peripheral UUID string.  Used to hand a {@link MacOsBleDevice} to the Java
-     * callback and to look up the peripheral when {@link MacOsBleDevice#connect()}
-     * is called.
+     * device address string.  Used to hand a {@link WindowsBleDevice} to the
+     * Java callback and to look up the peripheral when
+     * {@link WindowsBleDevice#connect()} is called.
      */
-    private final Map<String, MacOsBleDevice> knownDevices = new ConcurrentHashMap<>();
+    private final Map<String, WindowsBleDevice> knownDevices = new ConcurrentHashMap<>();
 
     /**
-     * Open connections keyed by the native {@code BleConnectionContext} pointer.
-     * Used by {@link #onNotification(long, String, String, byte[])} to route
-     * GATT notifications from the CoreBluetooth dispatch queue to the correct
-     * {@link MacOsBleConnection} instance.
+     * Open connections keyed by the native {@code BleConnectionContext}
+     * pointer.  Used by {@link #onNotification(long, String, String, byte[])}
+     * to route GATT notifications from the WinRT thread-pool to the correct
+     * {@link WindowsBleConnection} instance.
      */
-    private final Map<Long, MacOsBleConnection> openConnections = new ConcurrentHashMap<>();
+    private final Map<Long, WindowsBleConnection> openConnections = new ConcurrentHashMap<>();
 
     /** Counter used to detect stale callbacks after {@link #stopScan()} or {@link #close()}. */
     private final AtomicLong scanGeneration = new AtomicLong(0L);
@@ -98,40 +99,42 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
     private volatile long activeScanGeneration = 0L;
 
     /**
-     * Constructs a {@code MacOsBleScanner} by loading the native library and
-     * initialising the CoreBluetooth central manager.
+     * Constructs a {@code WindowsBleScanner} by loading the native library and
+     * initialising the WinRT Bluetooth LE adapter.
      *
      * @throws BleException if the native library cannot be loaded or the
      *                      Bluetooth adapter does not become ready in time
      */
-    public MacOsBleScanner() throws BleException {
+    public WindowsBleScanner() throws BleException {
         NativeLibraryLoader.load(LIBRARY_NAME);
-        this.bridge = new JniNativeBridge();
+        this.bridge = new WindowsJniNativeBridge();
         this.contextPtr = bridge.init(this);
         this.exec = DEFAULT_EXEC;
     }
 
     /**
-     * Package-private constructor used by tests to inject a {@link NativeBridge}
-     * mock, bypassing the real native library load and context initialisation.
+     * Package-private constructor used by tests to inject a
+     * {@link WindowsNativeBridge} mock, bypassing the real native library load
+     * and context initialisation.
      *
      * @param bridge     the native bridge to use; must not be {@code null}
      * @param contextPtr opaque pointer to a pre-allocated {@code BleContext}
      */
-    MacOsBleScanner(final @NonNull NativeBridge bridge, final long contextPtr) {
+    WindowsBleScanner(final @NonNull WindowsNativeBridge bridge, final long contextPtr) {
         this(bridge, contextPtr, DEFAULT_EXEC);
     }
 
     /**
-     * Package-private constructor used by tests to inject a {@link NativeBridge}
-     * mock and a custom {@link Executor}, bypassing native loading entirely.
+     * Package-private constructor used by tests to inject a
+     * {@link WindowsNativeBridge} mock and a custom {@link Executor},
+     * bypassing native loading entirely.
      *
      * @param bridge     the native bridge to use; must not be {@code null}
      * @param contextPtr opaque pointer to a pre-allocated {@code BleContext}
      * @param executor   executor to use for async BLE operations
      */
-    MacOsBleScanner(
-            final @NonNull NativeBridge bridge,
+    WindowsBleScanner(
+            final @NonNull WindowsNativeBridge bridge,
             final long contextPtr,
             final @NonNull Executor executor) {
         this.bridge     = bridge;
@@ -157,8 +160,8 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
     /**
      * {@inheritDoc}
      *
-     * <p>Calls {@link NativeBridge#startScan(long, String)} on the worker
-     * executor.  Any previously registered scan is implicitly replaced.
+     * <p>Calls {@link WindowsNativeBridge#startScan(long, String)} on the
+     * worker executor.  Any previously registered scan is implicitly replaced.
      */
     @Override
     public @NonNull CompletableFuture<Void> startScan(
@@ -206,8 +209,9 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
     /**
      * {@inheritDoc}
      *
-     * <p>Stops any active scan, calls {@link NativeBridge#destroy(long)}, and
-     * releases all CoreBluetooth resources.
+     * <p>Stops any active scan, calls
+     * {@link WindowsNativeBridge#destroy(long)}, and releases all WinRT BLE
+     * resources.
      */
     @Override
     public void close() throws BleException {
@@ -221,34 +225,34 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
     }
 
     /* ─────────────────────────────────────────────────────────────────────────
-       Package-visible method — called by MacOsBleDevice to initiate a connect
+       Package-visible methods — called by WindowsBleDevice and WindowsBleConnection
        ───────────────────────────────────────────────────────────────────────── */
 
     /**
      * Establishes a BLE connection to the peripheral identified by the given
-     * UUID string.
+     * device address string.
      *
-     * <p>This method is package-private so that {@link MacOsBleDevice} can
+     * <p>This method is package-private so that {@link WindowsBleDevice} can
      * delegate to it while keeping the native pointer encapsulated here.
      *
-     * @param peripheralUuid the CoreBluetooth peripheral UUID string
+     * @param deviceAddress the BLE device address string
      * @return a future that completes with the open connection
      */
     @NonNull
-    CompletableFuture<MacOsBleConnection> connectPeripheral(
-            final @NonNull String peripheralUuid) {
+    CompletableFuture<WindowsBleConnection> connectPeripheral(
+            final @NonNull String deviceAddress) {
 
         final long ptr = contextPtr;
         return CompletableFuture.supplyAsync(() -> {
             final long connPtr;
             try {
-                connPtr = bridge.connect(ptr, peripheralUuid);
+                connPtr = bridge.connect(ptr, deviceAddress);
             } catch (RuntimeException e) {
                 throw new java.util.concurrent.CompletionException(
-                        new BleException("Connection to " + peripheralUuid
+                        new BleException("Connection to " + deviceAddress
                                 + " failed: " + e.getMessage(), e));
             }
-            final MacOsBleConnection conn = new MacOsBleConnection(connPtr, ptr, this);
+            final WindowsBleConnection conn = new WindowsBleConnection(connPtr, ptr, this);
             openConnections.put(connPtr, conn);
             return conn;
         }, exec);
@@ -266,7 +270,8 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
     }
 
     /**
-     * Writes bytes to a GATT characteristic without requesting an ATT response.
+     * Writes bytes to a GATT characteristic without requesting an ATT
+     * response.
      *
      * @param connectionPtr      pointer to the native {@code BleConnectionContext}
      * @param serviceUuid        GATT service UUID string
@@ -293,7 +298,8 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
             final long connectionPtr,
             final @NonNull String serviceUuid,
             final @NonNull String characteristicUuid) {
-        final byte[] result = bridge.readCharacteristic(connectionPtr, serviceUuid, characteristicUuid);
+        final byte[] result =
+                bridge.readCharacteristic(connectionPtr, serviceUuid, characteristicUuid);
         return result != null ? result : new byte[0];
     }
 
@@ -314,18 +320,16 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
     }
 
     /* ─────────────────────────────────────────────────────────────────────────
-       BleNativeCallbacks — called by the native layer
+       WindowsBleNativeCallbacks — called by the native layer
        ───────────────────────────────────────────────────────────────────────── */
 
     /**
-     * Invoked by the native CoreBluetooth layer when a peripheral advertisement
-     * is received.
+     * Invoked by the native WinRT layer when a BLE advertisement is received.
      *
-     * <p>Corresponds to the {@code CBCentralManagerDelegate} callback
-     * {@code centralManager:didDiscoverPeripheral:advertisementData:RSSI:}
-     * in {@code BleBridge.m}.
+     * <p>Corresponds to the {@code BluetoothLEAdvertisementWatcher.Received}
+     * event handler in {@code BleBridge.cpp}.
      *
-     * @param id   the CoreBluetooth peripheral UUID string
+     * @param id   the BLE device address string
      * @param name the advertised local name (may be empty)
      * @param rssi received signal strength in dBm
      */
@@ -339,23 +343,22 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
         if (cb == null) {
             return;
         }
-        final MacOsBleDevice device = knownDevices.computeIfAbsent(
-                id, uuid -> new MacOsBleDevice(uuid, name, rssi, this));
+        final WindowsBleDevice device = knownDevices.computeIfAbsent(
+                id, addr -> new WindowsBleDevice(addr, name, rssi, this));
         cb.onDeviceFound(device);
     }
 
     /**
-     * Invoked by the native CoreBluetooth layer when a GATT characteristic
-     * notification arrives.
+     * Invoked by the native WinRT layer when a GATT characteristic notification
+     * arrives on a subscribed characteristic.
      *
-     * <p>Routes the notification to the {@link MacOsBleConnection} that owns the
-     * native connection context identified by {@code connectionPtr}.  If no
+     * <p>Routes the notification to the {@link WindowsBleConnection} that owns
+     * the native connection context identified by {@code connectionPtr}.  If no
      * matching connection is registered (e.g. it was disconnected concurrently)
      * the notification is silently discarded.
      *
-     * <p>Corresponds to the {@code CBPeripheralDelegate} callback
-     * {@code peripheral:didUpdateValueForCharacteristic:error:}
-     * in {@code BleBridge.m}.
+     * <p>Corresponds to the {@code GattCharacteristic.ValueChanged} event
+     * handler in {@code BleBridge.cpp}.
      *
      * @param connectionPtr      opaque pointer to the native {@code BleConnectionContext}
      * @param serviceUuid        the service UUID string
@@ -369,7 +372,7 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
             final @NonNull String characteristicUuid,
             final byte[] value) {
 
-        final MacOsBleConnection conn = openConnections.get(connectionPtr);
+        final WindowsBleConnection conn = openConnections.get(connectionPtr);
         if (conn != null) {
             conn.onNotification(serviceUuid, characteristicUuid, value);
         }
