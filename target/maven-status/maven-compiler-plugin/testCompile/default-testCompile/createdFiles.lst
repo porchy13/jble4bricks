@@ -1,0 +1,7 @@
+ch/varani/lego/ble/api/BleScannerFactoryTest.class
+ch/varani/lego/ble/device/buwizz/BuWizz3ProtocolConstantsTest.class
+ch/varani/lego/ble/device/buwizz/BuWizz2ProtocolConstantsTest.class
+ch/varani/lego/ble/device/lego/LegoProtocolConstantsTest.class
+ch/varani/lego/ble/device/sbrick/SBrickProtocolConstantsTest.class
+ch/varani/lego/ble/device/circuitcubes/CircuitCubesProtocolConstantsTest.class
+ch/varani/lego/ble/api/BleExceptionTest.class

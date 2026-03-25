@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE suppressions PUBLIC
+        "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+        "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    Checkstyle suppressions for test source files only.
+
+    Rules suppressed for *Test.java:
+      - MethodName       : test method names follow the pattern
+                           methodUnderTest_scenario_expectedBehaviour which uses
+                           underscores; the default MethodName pattern forbids them.
+      - MagicNumber      : test assertions use literal values (expected values)
+                           that are inherently meaningful in context and must not
+                           be extracted into named constants.
+      - MissingJavadocMethod : test methods are self-documenting through their
+                           names and do not require Javadoc.
+      - JavadocVariable  : test helper fields do not require Javadoc.
+-->
+<suppressions>
+
+    <suppress
+        checks="MethodName"
+        files=".*[\\/]src[\\/]test[\\/].*\.java"/>
+
+    <suppress
+        checks="MagicNumber"
+        files=".*[\\/]src[\\/]test[\\/].*\.java"/>
+
+    <suppress
+        checks="MissingJavadocMethod"
+        files=".*[\\/]src[\\/]test[\\/].*\.java"/>
+
+    <suppress
+        checks="JavadocVariable"
+        files=".*[\\/]src[\\/]test[\\/].*\.java"/>
+
+</suppressions>

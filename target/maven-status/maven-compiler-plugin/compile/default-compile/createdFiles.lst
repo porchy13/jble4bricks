@@ -1,0 +1,17 @@
+ch/varani/lego/ble/api/BleScannerFactory.class
+ch/varani/lego/ble/device/buwizz/BuWizz2ProtocolConstants.class
+ch/varani/lego/ble/device/circuitcubes/CircuitCubesProtocolConstants.class
+ch/varani/lego/ble/device/sbrick/SBrickProtocolConstants.class
+ch/varani/lego/ble/api/BleException.class
+ch/varani/lego/ble/api/BleDevice.class
+ch/varani/lego/ble/api/package-info.class
+ch/varani/lego/ble/api/BleScanner.class
+ch/varani/lego/ble/device/sbrick/package-info.class
+ch/varani/lego/ble/api/ScanCallback.class
+ch/varani/lego/ble/device/lego/LegoProtocolConstants.class
+ch/varani/lego/ble/api/BleConnection.class
+ch/varani/lego/ble/device/buwizz/package-info.class
+ch/varani/lego/ble/device/circuitcubes/package-info.class
+ch/varani/lego/ble/device/buwizz/BuWizz3ProtocolConstants.class
+ch/varani/lego/ble/device/fxbricks/package-info.class
+ch/varani/lego/ble/device/lego/package-info.class

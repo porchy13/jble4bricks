@@ -1,0 +1,12 @@
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/api/BleExceptionTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/api/BleScannerFactoryTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/device/buwizz/BuWizz2ProtocolConstantsTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/device/buwizz/BuWizz3ProtocolConstantsTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/device/circuitcubes/CircuitCubesProtocolConstantsTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/device/lego/LegoProtocolConstantsTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/device/sbrick/SBrickProtocolConstantsTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/impl/macos/MacOsBleConnectionTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/impl/macos/MacOsBleDeviceTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/impl/macos/MacOsBleScannerNativeLoadTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/impl/macos/MacOsBleScannerTest.java
+/Users/jvarani/Developement/Lego/Bluetooth LE API for Lego Powered Up/src/test/java/ch/varani/lego/ble/util/NativeLibraryLoaderTest.java

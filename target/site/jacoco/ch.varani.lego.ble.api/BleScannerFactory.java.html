@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BleScannerFactory.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Bluetooth LE API for Lego Powered Up</a> &gt; <a href="index.source.html" class="el_package">ch.varani.lego.ble.api</a> &gt; <span class="el_source">BleScannerFactory.java</span></div><h1>BleScannerFactory.java</h1><pre class="source lang-java linenums">package ch.varani.lego.ble.api;
+
+import java.util.Locale;
+
+import org.jspecify.annotations.NonNull;
+
+import ch.varani.lego.ble.impl.macos.MacOsBleScanner;
+
+/**
+ * Factory that creates a platform-appropriate {@link BleScanner} instance.
+ *
+ * &lt;p&gt;The factory detects the current OS at runtime via the {@code os.name}
+ * system property and returns the matching native implementation:
+ * &lt;ul&gt;
+ *   &lt;li&gt;&lt;b&gt;macOS&lt;/b&gt; — {@code MacOsBleScanner} backed by CoreBluetooth (JNI)&lt;/li&gt;
+ * &lt;/ul&gt;
+ *
+ * &lt;p&gt;Usage:
+ * &lt;pre&gt;{@code
+ * BleScanner scanner = BleScannerFactory.create();
+ * }&lt;/pre&gt;
+ *
+ * &lt;p&gt;Thread safety: {@link #create()} is thread-safe and may be called
+ * concurrently from multiple threads.
+ */
+public final class BleScannerFactory {
+
+    /**
+     * Private constructor — this is a utility class with no instances.
+     */
+<span class="fc" id="L31">    private BleScannerFactory() {</span>
+<span class="fc" id="L32">        throw new AssertionError(&quot;BleScannerFactory must not be instantiated&quot;);</span>
+    }
+
+    /**
+     * Creates and returns a new {@link BleScanner} backed by the platform BLE
+     * stack appropriate for the current operating system.
+     *
+     * &lt;p&gt;The returned scanner is not yet scanning; call
+     * {@link BleScanner#startScan(ScanCallback)} to begin discovery.
+     *
+     * &lt;p&gt;Supported platforms:
+     * &lt;ul&gt;
+     *   &lt;li&gt;macOS 13+ (aarch64 / amd64) — CoreBluetooth via JNI&lt;/li&gt;
+     * &lt;/ul&gt;
+     *
+     * @return a new platform-specific {@link BleScanner}; never {@code null}
+     * @throws BleException if the platform BLE stack cannot be initialised
+     *                      (e.g. Bluetooth hardware is absent or disabled),
+     *                      or if the current OS is not yet supported
+     */
+    public static @NonNull BleScanner create() throws BleException {
+<span class="fc" id="L53">        final String osName = System.getProperty(&quot;os.name&quot;, &quot;&quot;).toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">        if (osName.contains(&quot;mac&quot;)) {</span>
+<span class="fc" id="L55">            return new MacOsBleScanner();</span>
+        }
+<span class="fc" id="L57">        throw new BleException(</span>
+<span class="fc" id="L58">                &quot;No BLE platform implementation available for this OS (&quot;</span>
+<span class="fc" id="L59">                + System.getProperty(&quot;os.name&quot;, &quot;unknown&quot;)</span>
+                + &quot;). Supported platforms: macOS 13+.&quot;);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>

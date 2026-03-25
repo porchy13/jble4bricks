@@ -1,0 +1,15 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.device.circuitcubes,CircuitCubesProtocolConstants,0,7,0,0,0,2,0,1,0,1
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.api,BleException,0,9,0,0,0,4,0,2,0,2
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.api,BleScannerFactory,0,29,0,2,0,8,0,3,0,2
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.device.lego,LegoProtocolConstants,0,7,0,0,0,2,0,1,0,1
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.device.buwizz,BuWizz2ProtocolConstants,0,7,0,0,0,2,0,1,0,1
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.device.buwizz,BuWizz3ProtocolConstants,0,7,0,0,0,2,0,1,0,1
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.device.sbrick,SBrickProtocolConstants,0,7,0,0,0,2,0,1,0,1
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.impl.macos,MacOsBleDevice,0,34,0,0,0,10,0,6,0,6
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.impl.macos,MacOsBleScanner,0,290,0,6,0,73,0,24,0,21
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.impl.macos,MacOsBleConnection,0,265,0,10,0,70,0,23,0,18
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.impl.macos,JniNativeBridge,53,0,0,0,18,0,11,0,11,0
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.impl.macos,MacOsBleConnection.NoOpSubscription,0,7,0,0,0,3,0,3,0,3
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.impl.macos,MacOsBleConnection.CharacteristicKey,0,9,0,0,0,1,0,1,0,1
+Bluetooth LE API for Lego Powered Up,ch.varani.lego.ble.util,NativeLibraryLoader,3,187,0,16,2,53,0,20,0,12

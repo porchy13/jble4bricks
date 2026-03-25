@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    OWASP Dependency-Check suppressions file.
+
+    Add <suppress> entries here only after a reviewer has approved the risk
+    acceptance. Every entry must include a <notes> element explaining the
+    rationale.
+
+    Reference: https://jeremylong.github.io/DependencyCheck/general/suppression.html
+-->
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <!-- No suppressions at this time. -->
+</suppressions>

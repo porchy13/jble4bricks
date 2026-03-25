@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MacOsBleConnection.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Bluetooth LE API for Lego Powered Up</a> &gt; <a href="index.source.html" class="el_package">ch.varani.lego.ble.impl.macos</a> &gt; <span class="el_source">MacOsBleConnection.java</span></div><h1>MacOsBleConnection.java</h1><pre class="source lang-java linenums"><span class="fc" id="L1">package ch.varani.lego.ble.impl.macos;</span>
+
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Flow.Publisher;
+import java.util.concurrent.Flow.Subscriber;
+import java.util.concurrent.Flow.Subscription;
+import java.util.concurrent.SubmissionPublisher;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
+
+import org.jspecify.annotations.NonNull;
+
+import ch.varani.lego.ble.api.BleConnection;
+import ch.varani.lego.ble.api.BleDevice;
+import ch.varani.lego.ble.api.BleException;
+
+/**
+ * macOS implementation of {@link BleConnection} backed by CoreBluetooth via JNI.
+ *
+ * &lt;p&gt;Instances are created by {@link MacOsBleScanner#connectPeripheral(String)}
+ * after the native layer has established the BLE connection and completed GATT
+ * service and characteristic discovery.
+ *
+ * &lt;p&gt;Notification streams are implemented with {@link SubmissionPublisher} so
+ * that the reactive back-pressure semantics of {@link Publisher} are respected.
+ * Each {@code (serviceUuid, characteristicUuid)} pair gets its own publisher.
+ *
+ * &lt;p&gt;Thread safety: all public methods are thread-safe.  The native layer
+ * calls {@link #onNotification(String, String, byte[])} from the CoreBluetooth
+ * dispatch queue (a JNI-attached background thread), so the publisher must be
+ * safe for concurrent submission.
+ *
+ * @since 1.0
+ */
+final class MacOsBleConnection implements BleConnection {
+
+<span class="fc" id="L39">    private static final Logger LOG = Logger.getLogger(MacOsBleConnection.class.getName());</span>
+
+    /** Key type for the notification publisher map. */
+    private record CharacteristicKey(@NonNull String serviceUuid,
+                                     @NonNull String characteristicUuid) {}
+
+    /** Opaque pointer to the native {@code BleConnectionContext} struct. */
+    private final long connectionPtr;
+
+    /** Opaque pointer to the owning {@code BleContext} (needed for write/read calls). */
+    private final long contextPtr;
+
+    /** The scanner that owns this connection (used to delegate native calls). */
+    private final MacOsBleScanner scanner;
+
+    /** The device this connection belongs to. */
+    private final MacOsBleDevice device;
+
+    /** Whether this connection is still open. */
+<span class="fc" id="L58">    private final AtomicBoolean open = new AtomicBoolean(true);</span>
+
+    /**
+     * Per-characteristic notification publishers.  Created lazily on the first
+     * call to {@link #notifications(String, String)}.
+     */
+<span class="fc" id="L64">    private final Map&lt;CharacteristicKey, SubmissionPublisher&lt;byte[]&gt;&gt; notificationPublishers =</span>
+<span class="fc" id="L65">            new ConcurrentHashMap&lt;&gt;();</span>
+
+    /**
+     * Constructs a new {@code MacOsBleConnection}.
+     *
+     * @param connectionPtr opaque pointer to the native {@code BleConnectionContext}
+     * @param contextPtr    opaque pointer to the native {@code BleContext}
+     * @param scanner       the owning {@link MacOsBleScanner}
+     */
+<span class="fc" id="L74">    MacOsBleConnection(</span>
+            final long connectionPtr,
+            final long contextPtr,
+            final @NonNull MacOsBleScanner scanner) {
+<span class="fc" id="L78">        this.connectionPtr = connectionPtr;</span>
+<span class="fc" id="L79">        this.contextPtr    = contextPtr;</span>
+<span class="fc" id="L80">        this.scanner       = scanner;</span>
+<span class="fc" id="L81">        this.device        = null;    /* resolved lazily via scanner if needed */</span>
+<span class="fc" id="L82">    }</span>
+
+    /**
+     * Package-private constructor that also captures the {@link MacOsBleDevice}.
+     * Used by tests.
+     *
+     * @param connectionPtr opaque pointer to the native {@code BleConnectionContext}
+     * @param contextPtr    opaque pointer to the native {@code BleContext}
+     * @param scanner       the owning {@link MacOsBleScanner}
+     * @param device        the device this connection belongs to
+     */
+<span class="fc" id="L93">    MacOsBleConnection(</span>
+            final long connectionPtr,
+            final long contextPtr,
+            final @NonNull MacOsBleScanner scanner,
+            final @NonNull MacOsBleDevice device) {
+<span class="fc" id="L98">        this.connectionPtr = connectionPtr;</span>
+<span class="fc" id="L99">        this.contextPtr    = contextPtr;</span>
+<span class="fc" id="L100">        this.scanner       = scanner;</span>
+<span class="fc" id="L101">        this.device        = device;</span>
+<span class="fc" id="L102">    }</span>
+
+    /**
+     * Returns the native connection pointer (package-private; used by tests).
+     *
+     * @return opaque pointer to the {@code BleConnectionContext}
+     */
+    long connectionPtr() {
+<span class="fc" id="L110">        return connectionPtr;</span>
+    }
+
+    /**
+     * Returns the native context pointer (package-private; used by tests).
+     *
+     * @return opaque pointer to the {@code BleContext}
+     */
+    long contextPtr() {
+<span class="fc" id="L119">        return contextPtr;</span>
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       BleConnection — public API
+       ───────────────────────────────────────────────────────────────────────── */
+
+    /**
+     * {@inheritDoc}
+     *
+     * @throws IllegalStateException if called after this connection was closed
+     */
+    @Override
+    public @NonNull BleDevice device() {
+<span class="fc bfc" id="L133" title="All 2 branches covered.">        if (device != null) {</span>
+<span class="fc" id="L134">            return device;</span>
+        }
+<span class="fc" id="L136">        throw new IllegalStateException(</span>
+<span class="fc" id="L137">                &quot;Device reference not available on this connection instance&quot;);</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * &lt;p&gt;Delegates to
+     * {@link MacOsBleScanner#writeWithoutResponseNative(long, String, String, byte[])}
+     * which calls {@code CBPeripheral writeValue:forCharacteristic:type:} with
+     * {@code CBCharacteristicWriteWithoutResponse}.
+     */
+    @Override
+    public @NonNull CompletableFuture&lt;Void&gt; writeWithoutResponse(
+            final @NonNull String serviceUuid,
+            final @NonNull String characteristicUuid,
+            final @NonNull byte[] data) {
+
+<span class="fc" id="L154">        checkOpen();</span>
+<span class="fc" id="L155">        return CompletableFuture.runAsync(() -&gt;</span>
+<span class="fc" id="L156">                scanner.writeWithoutResponseNative(connectionPtr, serviceUuid,</span>
+<span class="fc" id="L157">                        characteristicUuid, data));</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * &lt;p&gt;Returns a {@link SubmissionPublisher}-backed {@link Publisher} for the
+     * given characteristic.  The same publisher is returned on repeated calls
+     * for the same {@code (serviceUuid, characteristicUuid)} pair.  If
+     * notifications have not yet been enabled on the native side they are
+     * enabled here.
+     */
+    @Override
+    public @NonNull Publisher&lt;byte[]&gt; notifications(
+            final @NonNull String serviceUuid,
+            final @NonNull String characteristicUuid) {
+
+<span class="fc" id="L174">        checkOpen();</span>
+<span class="fc" id="L175">        final CharacteristicKey key = new CharacteristicKey(serviceUuid, characteristicUuid);</span>
+<span class="fc" id="L176">        return notificationPublishers.computeIfAbsent(key, k -&gt; {</span>
+<span class="fc" id="L177">            final SubmissionPublisher&lt;byte[]&gt; pub = new SubmissionPublisher&lt;&gt;();</span>
+<span class="fc" id="L178">            scanner.setNotifyNative(connectionPtr, serviceUuid, characteristicUuid, true);</span>
+<span class="fc" id="L179">            return pub;</span>
+        });
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * &lt;p&gt;Calls {@link MacOsBleScanner#readCharacteristicNative(long, String, String)}
+     * which invokes {@code CBPeripheral readValueForCharacteristic:} and blocks
+     * until the peripheral delivers the value.
+     */
+    @Override
+    public @NonNull CompletableFuture&lt;byte[]&gt; read(
+            final @NonNull String serviceUuid,
+            final @NonNull String characteristicUuid) {
+
+<span class="fc" id="L195">        checkOpen();</span>
+<span class="fc" id="L196">        final long ptr = connectionPtr;</span>
+<span class="fc" id="L197">        return CompletableFuture.supplyAsync(() -&gt;</span>
+<span class="fc" id="L198">                scanner.readCharacteristicNative(ptr, serviceUuid, characteristicUuid));</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * &lt;p&gt;Closes all notification publishers, disables notifications on the
+     * native side, and calls
+     * {@link MacOsBleScanner#disconnectNative(long)}.
+     */
+    @Override
+    public @NonNull CompletableFuture&lt;Void&gt; disconnect() {
+<span class="fc bfc" id="L210" title="All 2 branches covered.">        if (!open.compareAndSet(true, false)) {</span>
+<span class="fc" id="L211">            return CompletableFuture.completedFuture(null);</span>
+        }
+<span class="fc" id="L213">        closeNotificationPublishers();</span>
+<span class="fc" id="L214">        final long ptr = connectionPtr;</span>
+<span class="fc" id="L215">        return CompletableFuture.runAsync(() -&gt; {</span>
+<span class="fc" id="L216">            scanner.disconnectNative(ptr);</span>
+<span class="fc" id="L217">            LOG.fine(&quot;BLE connection disconnected&quot;);</span>
+<span class="fc" id="L218">        });</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * &lt;p&gt;Calls {@link #disconnect()} and waits for it to complete.
+     */
+    @Override
+    public void close() throws BleException {
+        try {
+<span class="fc" id="L229">            disconnect().get();</span>
+<span class="fc" id="L230">        } catch (InterruptedException e) {</span>
+<span class="fc" id="L231">            Thread.currentThread().interrupt();</span>
+<span class="fc" id="L232">            throw new BleException(&quot;Disconnect interrupted&quot;, e);</span>
+<span class="fc" id="L233">        } catch (java.util.concurrent.ExecutionException e) {</span>
+<span class="fc" id="L234">            throw new BleException(&quot;Disconnect failed: &quot; + e.getMessage(), e);</span>
+        }
+<span class="fc" id="L236">    }</span>
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       Package-private — called by the JNI bridge on notification
+       ───────────────────────────────────────────────────────────────────────── */
+
+    /**
+     * Called by the native layer when a GATT notification arrives for any
+     * subscribed characteristic.
+     *
+     * &lt;p&gt;The corresponding native callback is
+     * {@code peripheral:didUpdateValueForCharacteristic:error:} in
+     * {@code BleBridge.m} when {@code characteristic.isNotifying} is {@code YES}.
+     *
+     * @param serviceUuid        the service UUID string
+     * @param characteristicUuid the characteristic UUID string
+     * @param value              the notification payload bytes
+     */
+    void onNotification(
+            final @NonNull String serviceUuid,
+            final @NonNull String characteristicUuid,
+            final @NonNull byte[] value) {
+
+<span class="fc" id="L259">        final CharacteristicKey key = new CharacteristicKey(serviceUuid, characteristicUuid);</span>
+<span class="fc" id="L260">        final SubmissionPublisher&lt;byte[]&gt; pub = notificationPublishers.get(key);</span>
+<span class="fc bfc" id="L261" title="All 2 branches covered.">        if (pub != null) {</span>
+<span class="fc" id="L262">            pub.submit(value);</span>
+        }
+<span class="fc" id="L264">    }</span>
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       Private helpers
+       ───────────────────────────────────────────────────────────────────────── */
+
+    /**
+     * Throws {@link IllegalStateException} if this connection is closed.
+     */
+    private void checkOpen() {
+<span class="fc bfc" id="L274" title="All 2 branches covered.">        if (!open.get()) {</span>
+<span class="fc" id="L275">            throw new IllegalStateException(&quot;BLE connection is already closed&quot;);</span>
+        }
+<span class="fc" id="L277">    }</span>
+
+    /**
+     * Closes every notification publisher and removes it from the map.
+     */
+    private void closeNotificationPublishers() {
+<span class="fc bfc" id="L283" title="All 2 branches covered.">        for (final Map.Entry&lt;CharacteristicKey, SubmissionPublisher&lt;byte[]&gt;&gt; entry</span>
+<span class="fc" id="L284">                : notificationPublishers.entrySet()) {</span>
+            try {
+<span class="fc" id="L286">                scanner.setNotifyNative(connectionPtr,</span>
+<span class="fc" id="L287">                        entry.getKey().serviceUuid(),</span>
+<span class="fc" id="L288">                        entry.getKey().characteristicUuid(),</span>
+<span class="fc" id="L289">                        false);</span>
+<span class="fc" id="L290">            } catch (RuntimeException e) {</span>
+<span class="fc" id="L291">                LOG.warning(&quot;Failed to disable notifications: &quot; + e.getMessage());</span>
+            }
+<span class="fc" id="L293">            entry.getValue().close();</span>
+        }
+<span class="fc" id="L295">        notificationPublishers.clear();</span>
+<span class="fc" id="L296">    }</span>
+
+    /**
+     * A no-op {@link Subscription} used internally to satisfy the
+     * {@link Publisher}/{@link Subscriber} contract during testing.
+     */
+    static final class NoOpSubscription implements Subscription {
+
+        /** The single shared instance. */
+<span class="fc" id="L305">        static final NoOpSubscription INSTANCE = new NoOpSubscription();</span>
+
+        /** Private constructor — use {@link #INSTANCE}. */
+        private NoOpSubscription() {}
+
+        @Override
+        public void request(final long n) {
+            /* no-op */
+<span class="fc" id="L313">        }</span>
+
+        @Override
+        public void cancel() {
+            /* no-op */
+<span class="fc" id="L318">        }</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.13.202504020838</span></div></body></html>
