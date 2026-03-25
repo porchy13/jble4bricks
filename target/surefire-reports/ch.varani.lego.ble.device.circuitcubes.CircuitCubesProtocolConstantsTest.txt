@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: ch.varani.lego.ble.device.circuitcubes.CircuitCubesProtocolConstantsTest
 -------------------------------------------------------------------------------
-Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.006 s -- in ch.varani.lego.ble.device.circuitcubes.CircuitCubesProtocolConstantsTest
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.004 s -- in ch.varani.lego.ble.device.circuitcubes.CircuitCubesProtocolConstantsTest

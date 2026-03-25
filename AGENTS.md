@@ -28,7 +28,7 @@ internal adapter implementations.
 | Language | Java 25 — use the latest language features where they improve clarity |
 | Build tool | Maven (no Gradle, no Bakelite, no shell scripts as primary build) |
 | Minimum Maven version | 3.9 |
-| Artifact coordinates | `ch.varani.lego:ble-api` |
+| Artifact coordinates | `ch.varani.bricks:ble-api` |
 | Target platforms | macOS 13+, Windows 11, Linux (kernel 5.10+, BlueZ 5.50+) |
 | Target architectures | amd64, aarch64 (for every supported OS) |
 
@@ -280,7 +280,7 @@ constants must be defined as named constants in the appropriate package — neve
 
 Official specification: https://lego.github.io/lego-ble-wireless-protocol-docs/
 
-All constants must live in `ch.varani.lego.ble.device.lego`.
+All constants must live in `ch.varani.bricks.ble.device.lego`.
 
 ### 12.1 Discovery
 
@@ -427,7 +427,7 @@ LWP Protocol Version uses 2-byte BCD: `MMMM MMMM mmmm mmmm`.
 
 Official specification: https://social.sbrick.com/custom/The_SBrick_BLE_Protocol.pdf (Rev. 26, 2020-10-28)
 
-All constants must live in `ch.varani.lego.ble.device.sbrick`.
+All constants must live in `ch.varani.bricks.ble.device.sbrick`.
 
 ### 13.1 Discovery
 
@@ -534,7 +534,7 @@ Special: `0x00`/`0x01` = brake, `0x02` = zero speed, `0xFE` = full speed.
 
 Reference implementation: https://github.com/made-by-simon/circuit-cubes-python-interface
 
-All constants must live in `ch.varani.lego.ble.device.circuitcubes`.
+All constants must live in `ch.varani.bricks.ble.device.circuitcubes`.
 
 ### 14.1 Discovery
 
@@ -597,7 +597,7 @@ Each motor channel requires a separate write. There is no multi-channel batching
 ## 15. BuWizz Protocol Reference
 
 All UUIDs and constants below must be defined as named constants in
-`ch.varani.lego.ble.device.buwizz` — never as inline literals.
+`ch.varani.bricks.ble.device.buwizz` — never as inline literals.
 
 ---
 

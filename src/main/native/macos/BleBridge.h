@@ -31,7 +31,7 @@ extern "C" {
  * back on every subsequent call.
  */
 JNIEXPORT jlong JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeInit(JNIEnv *env, jobject self);
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeInit(JNIEnv *env, jobject self);
 
 /**
  * nativeStartScan — asks CBCentralManager to scan for peripherals.
@@ -42,7 +42,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeInit(JNIEnv *env, jobje
  * @param serviceUuid 128-bit UUID string to filter on, or null for no filter
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeStartScan(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeStartScan(
         JNIEnv *env, jobject self, jlong contextPtr, jstring serviceUuid);
 
 /**
@@ -51,7 +51,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeStartScan(
  * Maps to: MacOsBleScanner.nativeStopScan(long contextPtr)
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeStopScan(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeStopScan(
         JNIEnv *env, jobject self, jlong contextPtr);
 
 /**
@@ -60,7 +60,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeStopScan(
  * Maps to: MacOsBleScanner.nativeIsScanning(long contextPtr)
  */
 JNIEXPORT jboolean JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeIsScanning(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeIsScanning(
         JNIEnv *env, jobject self, jlong contextPtr);
 
 /**
@@ -73,7 +73,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeIsScanning(
  * BleConnection object for the connected peripheral.
  */
 JNIEXPORT jlong JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeConnect(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeConnect(
         JNIEnv *env, jobject self, jlong contextPtr, jstring peripheralUuid);
 
 /**
@@ -82,7 +82,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeConnect(
  * Maps to: MacOsBleScanner.nativeDisconnect(long contextPtr, long connectionPtr)
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeDisconnect(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeDisconnect(
         JNIEnv *env, jobject self, jlong contextPtr, jlong connectionPtr);
 
 /**
@@ -94,7 +94,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeDisconnect(
  *              byte[] data)
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeWriteWithoutResponse(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeWriteWithoutResponse(
         JNIEnv *env, jobject self, jlong connectionPtr,
         jstring serviceUuid, jstring characteristicUuid, jbyteArray data);
 
@@ -107,7 +107,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeWriteWithoutResponse(
  * Returns a jbyteArray containing the characteristic value, or null on error.
  */
 JNIEXPORT jbyteArray JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeReadCharacteristic(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeReadCharacteristic(
         JNIEnv *env, jobject self, jlong connectionPtr,
         jstring serviceUuid, jstring characteristicUuid);
 
@@ -119,7 +119,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeReadCharacteristic(
  *              boolean enable)
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeSetNotify(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeSetNotify(
         JNIEnv *env, jobject self, jlong connectionPtr,
         jstring serviceUuid, jstring characteristicUuid, jboolean enable);
 
@@ -130,7 +130,7 @@ Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeSetNotify(
  * Maps to: MacOsBleScanner.nativeDestroy(long contextPtr)
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_MacOsBleScanner_nativeDestroy(
+Java_ch_varani_bricks_ble_impl_macos_MacOsBleScanner_nativeDestroy(
         JNIEnv *env, jobject self, jlong contextPtr);
 
 #ifdef __cplusplus

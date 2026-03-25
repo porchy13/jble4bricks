@@ -1,0 +1,6 @@
+/**
+ * Internal package — not part of the public API.
+ *
+ * <p>Contains SBrick BLE protocol constants and utilities.
+ */
+package ch.varani.bricks.ble.device.sbrick;

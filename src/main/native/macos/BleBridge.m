@@ -10,7 +10,7 @@
  * ───────────────
  * CoreBluetooth dispatches all delegate callbacks on the main run loop (or a
  * background dispatch queue if configured).  This implementation uses a
- * dedicated serial dispatch queue ("ch.varani.lego.ble") so that BLE callbacks
+ * dedicated serial dispatch queue ("ch.varani.bricks.ble") so that BLE callbacks
  * never block the application's main thread.
  *
  * JNI callbacks
@@ -40,7 +40,7 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /** Dispatch queue label used for the CoreBluetooth central manager. */
-static const char *const QUEUE_LABEL = "ch.varani.lego.ble";
+static const char *const QUEUE_LABEL = "ch.varani.bricks.ble";
 
 /** Maximum time (seconds) to wait for a CBCentralManager state change. */
 static const NSTimeInterval MANAGER_READY_TIMEOUT = 10.0;
@@ -474,7 +474,7 @@ static CBCharacteristic *findCharacteristic(
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeInit
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit
  *
  * Creates a CBCentralManager on a dedicated serial dispatch queue and waits
  * (up to MANAGER_READY_TIMEOUT seconds) for the hardware to become powered on.
@@ -483,12 +483,12 @@ static CBCharacteristic *findCharacteristic(
  *          failure (in which case a Java exception has been thrown).
  */
 JNIEXPORT jlong JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeInit(JNIEnv *env, jobject self) {
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit(JNIEnv *env, jobject self) {
 
     BleContext *ctx = calloc(1, sizeof(BleContext));
     if (ctx == NULL) {
         (*env)->ThrowNew(env,
-                (*env)->FindClass(env, "ch/varani/lego/ble/api/BleException"),
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
                 "Failed to allocate BleContext");
         return 0L;
     }
@@ -507,7 +507,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeInit(JNIEnv *env, jobje
     if (ctx->onDeviceFoundMethod == NULL) {
         free(ctx);
         (*env)->ThrowNew(env,
-                (*env)->FindClass(env, "ch/varani/lego/ble/api/BleException"),
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
                 "JniNativeBridge.onDeviceFound method not found — JNI binding error");
         return 0L;
     }
@@ -538,7 +538,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeInit(JNIEnv *env, jobje
         ctx->delegate       = nil;
         free(ctx);
         (*env)->ThrowNew(env,
-                (*env)->FindClass(env, "ch/varani/lego/ble/api/BleException"),
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
                 "Bluetooth adapter did not become ready within the timeout. "
                 "Ensure Bluetooth is enabled on this Mac.");
         return 0L;
@@ -548,14 +548,14 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeInit(JNIEnv *env, jobje
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeStartScan
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStartScan
  *
  * Calls CBCentralManager.scanForPeripheralsWithServices:options: on the BLE
  * dispatch queue.  If serviceUuid is non-null only peripherals advertising
  * that service UUID are reported.
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeStartScan(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStartScan(
         JNIEnv *env, jobject self, jlong contextPtr, jstring serviceUuid) {
 
     (void)self;
@@ -584,12 +584,12 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeStartScan(
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeStopScan
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStopScan
  *
  * Calls CBCentralManager.stopScan on the BLE dispatch queue.
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeStopScan(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStopScan(
         JNIEnv *env, jobject self, jlong contextPtr) {
 
     (void)env;
@@ -609,13 +609,13 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeStopScan(
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeIsScanning
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeIsScanning
  *
  * Returns the cached scanning flag (CBCentralManager.isScanning is not KVO-safe
  * from an arbitrary thread).
  */
 JNIEXPORT jboolean JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeIsScanning(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeIsScanning(
         JNIEnv *env, jobject self, jlong contextPtr) {
 
     (void)env;
@@ -626,7 +626,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeIsScanning(
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeConnect
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeConnect
  *
  * Retrieves (or creates) the CBPeripheral for the given UUID, asks the central
  * manager to connect, waits for the connection + service discovery to
@@ -635,7 +635,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeIsScanning(
  * Returns: pointer to BleConnectionContext cast to jlong, or 0 on failure.
  */
 JNIEXPORT jlong JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeConnect(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeConnect(
         JNIEnv *env, jobject self, jlong contextPtr, jstring peripheralUuid) {
 
     (void)self;
@@ -646,7 +646,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeConnect(
     NSUUID *nsuuid = [[NSUUID alloc] initWithUUIDString:uuidString];
     if (nsuuid == nil) {
         (*env)->ThrowNew(env,
-                (*env)->FindClass(env, "ch/varani/lego/ble/api/BleException"),
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
                 "Invalid peripheral UUID string");
         return 0L;
     }
@@ -661,7 +661,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeConnect(
 
     if (peripheral == nil) {
         (*env)->ThrowNew(env,
-                (*env)->FindClass(env, "ch/varani/lego/ble/api/BleException"),
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
                 "Peripheral not found — ensure a scan has discovered it first");
         return 0L;
     }
@@ -669,7 +669,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeConnect(
     BleConnectionContext *conn = calloc(1, sizeof(BleConnectionContext));
     if (conn == NULL) {
         (*env)->ThrowNew(env,
-                (*env)->FindClass(env, "ch/varani/lego/ble/api/BleException"),
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
                 "Failed to allocate BleConnectionContext");
         return 0L;
     }
@@ -699,7 +699,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeConnect(
         });
         free(conn);
         (*env)->ThrowNew(env,
-                (*env)->FindClass(env, "ch/varani/lego/ble/api/BleException"),
+                (*env)->FindClass(env, "ch/varani/bricks/ble/api/BleException"),
                 "Connection or service discovery failed");
         return 0L;
     }
@@ -708,13 +708,13 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeConnect(
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeDisconnect
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect
  *
  * Calls CBCentralManager.cancelPeripheralConnection and waits for the
  * disconnection callback, then frees the BleConnectionContext.
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeDisconnect(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect(
         JNIEnv *env, jobject self, jlong contextPtr, jlong connectionPtr) {
 
     (void)self;
@@ -742,13 +742,13 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeDisconnect(
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse
  *
  * Calls CBPeripheral.writeValue:forCharacteristic:type: with
  * CBCharacteristicWriteWithoutResponse.
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse(
         JNIEnv *env, jobject self, jlong connectionPtr,
         jstring serviceUuid, jstring characteristicUuid, jbyteArray data) {
 
@@ -775,7 +775,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse(
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeReadCharacteristic
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeReadCharacteristic
  *
  * Calls CBPeripheral.readValueForCharacteristic: and waits (up to
  * READ_TIMEOUT seconds) for the peripheral:didUpdateValueForCharacteristic:
@@ -784,7 +784,7 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse(
  * Returns: jbyteArray with the value, or null if the read failed.
  */
 JNIEXPORT jbyteArray JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeReadCharacteristic(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeReadCharacteristic(
         JNIEnv *env, jobject self, jlong connectionPtr,
         jstring serviceUuid, jstring characteristicUuid) {
 
@@ -824,13 +824,13 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeReadCharacteristic(
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeSetNotify
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeSetNotify
  *
  * Calls CBPeripheral.setNotifyValue:forCharacteristic: to enable or disable
  * notifications on the given characteristic.
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeSetNotify(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeSetNotify(
         JNIEnv *env, jobject self, jlong connectionPtr,
         jstring serviceUuid, jstring characteristicUuid, jboolean enable) {
 
@@ -851,14 +851,14 @@ Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeSetNotify(
 }
 
 /**
- * Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeDestroy
+ * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDestroy
  *
  * Stops any active scan, releases the CBCentralManager, and frees the
  * BleContext struct.  Must be called exactly once when the JniNativeBridge
  * is closed.
  */
 JNIEXPORT void JNICALL
-Java_ch_varani_lego_ble_impl_macos_JniNativeBridge_nativeDestroy(
+Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDestroy(
         JNIEnv *env, jobject self, jlong contextPtr) {
 
     (void)self;

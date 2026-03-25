@@ -1,0 +1,1 @@
+/usr/bin/cc -O3 -DNDEBUG -arch arm64 -arch x86_64 -mmacosx-version-min=13.0 -dynamiclib -Wl,-headerpad_max_install_names -o lib/libble-macos.dylib -install_name @rpath/libble-macos.dylib "CMakeFiles/ble-macos.dir/BleBridge.m.o"  -framework CoreBluetooth -framework Foundation

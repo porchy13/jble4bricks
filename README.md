@@ -39,7 +39,7 @@ interface. Consumers write their logic once and run it on any supported platform
 
 ```xml
 <dependency>
-    <groupId>ch.varani.lego</groupId>
+    <groupId>ch.varani.bricks</groupId>
     <artifactId>ble-api</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
