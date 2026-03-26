@@ -420,13 +420,62 @@ static void on_interfaces_added(GDBusConnection  *connection,
         JavaVM *jvm = ctx->jvm;
         JNIEnv *env = attach_thread(jvm);
         if (env != NULL) {
+            /*
+             * Extract manufacturer-specific advertisement data.
+             * BlueZ exposes this as the "ManufacturerData" property on
+             * org.bluez.Device1, whose D-Bus type is a{qv} (map from
+             * uint16 company ID to a variant holding an ay byte array).
+             * We flatten all entries into a single byte[] in wire order:
+             * 2-byte little-endian company ID followed by the payload bytes.
+             * If the property is absent, we pass an empty byte array.
+             */
+            jbyteArray jmfr = NULL;
+
+            GVariant *mfr_map = g_variant_lookup_value(dev_props,
+                    "ManufacturerData", G_VARIANT_TYPE("a{qv}"));
+            if (mfr_map != NULL) {
+                GByteArray *flat = g_byte_array_new();
+                GVariantIter mfr_iter;
+                g_variant_iter_init(&mfr_iter, mfr_map);
+                guint16   company_id;
+                GVariant *data_v;
+                while (g_variant_iter_next(&mfr_iter, "{qv}",
+                                           &company_id, &data_v)) {
+                    /* Append company ID in little-endian order */
+                    guint8 lo = (guint8) (company_id & 0xFF);
+                    guint8 hi = (guint8) ((company_id >> 8) & 0xFF);
+                    g_byte_array_append(flat, &lo, 1);
+                    g_byte_array_append(flat, &hi, 1);
+                    /* Append payload bytes (variant holds ay) */
+                    GVariant *inner = g_variant_get_variant(data_v);
+                    gsize payload_len = 0;
+                    const guint8 *payload = g_variant_get_fixed_array(
+                            inner, &payload_len, sizeof(guint8));
+                    if (payload != NULL && payload_len > 0) {
+                        g_byte_array_append(flat, payload, (guint) payload_len);
+                    }
+                    g_variant_unref(inner);
+                    g_variant_unref(data_v);
+                }
+                jmfr = (*env)->NewByteArray(env, (jsize) flat->len);
+                if (jmfr != NULL && flat->len > 0) {
+                    (*env)->SetByteArrayRegion(env, jmfr, 0,
+                            (jsize) flat->len, (const jbyte *) flat->data);
+                }
+                g_byte_array_free(flat, TRUE);
+                g_variant_unref(mfr_map);
+            } else {
+                jmfr = (*env)->NewByteArray(env, 0);
+            }
+
             jstring jpath = (*env)->NewStringUTF(env, dev_path);
             jstring jname = (*env)->NewStringUTF(env, name);
             (*env)->CallVoidMethod(env, ctx->callbacks,
                     ctx->onDeviceFoundMid,
-                    jpath, jname, (jint) rssi);
+                    jpath, jname, (jint) rssi, jmfr);
             if (jpath != NULL) { (*env)->DeleteLocalRef(env, jpath); }
             if (jname != NULL) { (*env)->DeleteLocalRef(env, jname); }
+            if (jmfr  != NULL) { (*env)->DeleteLocalRef(env, jmfr);  }
             detach_thread(jvm);
         }
 
@@ -485,7 +534,7 @@ Java_ch_varani_bricks_ble_impl_linux_LinuxJniNativeBridge_nativeInit(
     jclass cbClass = (*env)->GetObjectClass(env, callbacks);
     ctx->onDeviceFoundMid = (*env)->GetMethodID(env, cbClass,
             "onDeviceFound",
-            "(Ljava/lang/String;Ljava/lang/String;I)V");
+            "(Ljava/lang/String;Ljava/lang/String;I[B)V");
     ctx->onNotificationMid = (*env)->GetMethodID(env, cbClass,
             "onNotification",
             "(JLjava/lang/String;Ljava/lang/String;[B)V");

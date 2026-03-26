@@ -120,7 +120,8 @@ struct JniEnvGuard {
  * Fields:
  *   callbacksRef       — JNI global reference to the WindowsBleNativeCallbacks
  *                        implementation (WindowsBleScanner).
- *   onDeviceFoundMethod — cached jmethodID for onDeviceFound(String,String,int).
+ *   onDeviceFoundMethod — cached jmethodID for
+ *                        onDeviceFound(String,String,int,byte[]).
  *   onNotificationMethod — cached jmethodID for onNotification(long,String,String,[B).
  *   watcher            — the BluetoothLEAdvertisementWatcher for scanning.
  *   scanning           — atomic flag tracking whether a scan is active.
@@ -207,7 +208,8 @@ Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeInit(
     /* Cache the two callback method IDs on the BleNativeCallbacks interface. */
     jclass cls = env->GetObjectClass(callbacksObj);
     ctx->onDeviceFoundMethod = env->GetMethodID(
-            cls, "onDeviceFound", "(Ljava/lang/String;Ljava/lang/String;I)V");
+            cls, "onDeviceFound",
+            "(Ljava/lang/String;Ljava/lang/String;I[B)V");
     ctx->onNotificationMethod = env->GetMethodID(
             cls, "onNotification", "(JLjava/lang/String;Ljava/lang/String;[B)V");
     env->DeleteLocalRef(cls);
@@ -256,11 +258,42 @@ Java_ch_varani_bricks_ble_impl_windows_WindowsJniNativeBridge_nativeStartScan(
 
             jint rssi = static_cast<jint>(args.RawSignalStrengthInDBm());
 
+            /*
+             * Extract manufacturer-specific data from the advertisement payload.
+             * Windows::Devices::Bluetooth::Advertisement::
+             *     BluetoothLEAdvertisementDataSection — type 0xFF per BT spec.
+             * We concatenate all manufacturer-data sections into a single byte
+             * array (in practice there is at most one, but the API returns a
+             * collection).
+             */
+            std::vector<uint8_t> mfrBytes;
+            auto mfrSections = args.Advertisement().ManufacturerData();
+            for (auto const &section : mfrSections) {
+                /* Each section: 2-byte little-endian company ID + data */
+                uint16_t companyId = section.CompanyId();
+                mfrBytes.push_back(static_cast<uint8_t>(companyId & 0xFF));
+                mfrBytes.push_back(static_cast<uint8_t>((companyId >> 8) & 0xFF));
+                auto reader = DataReader::FromBuffer(section.Data());
+                uint32_t dataLen = reader.UnconsumedBufferLength();
+                std::vector<uint8_t> sectionData(dataLen);
+                reader.ReadBytes(sectionData);
+                mfrBytes.insert(mfrBytes.end(), sectionData.begin(), sectionData.end());
+            }
+            jbyteArray jmfr = guard.env->NewByteArray(
+                    static_cast<jsize>(mfrBytes.size()));
+            if (!mfrBytes.empty()) {
+                guard.env->SetByteArrayRegion(jmfr, 0,
+                        static_cast<jsize>(mfrBytes.size()),
+                        reinterpret_cast<const jbyte *>(mfrBytes.data()));
+            }
+
             guard.env->CallVoidMethod(
-                    ctx->callbacksRef, ctx->onDeviceFoundMethod, jid, jname, rssi);
+                    ctx->callbacksRef, ctx->onDeviceFoundMethod,
+                    jid, jname, rssi, jmfr);
 
             guard.env->DeleteLocalRef(jid);
             guard.env->DeleteLocalRef(jname);
+            guard.env->DeleteLocalRef(jmfr);
         });
 
     ctx->watcher.Start();
