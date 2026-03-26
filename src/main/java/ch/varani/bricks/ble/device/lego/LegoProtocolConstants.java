@@ -26,18 +26,186 @@ public final class LegoProtocolConstants {
     // GATT Service and Characteristic UUIDs
     // =========================================================================
 
-    /** 128-bit UUID of the LEGO Hub GATT service. */
+    /** 128-bit UUID of the LEGO Hub GATT service (LWP3 — City Hub, Technic Hub, …). */
     public static final String HUB_SERVICE_UUID =
             "00001623-1212-efde-1623-785feabcd123";
 
     /**
-     * 128-bit UUID of the LEGO Hub GATT characteristic.
+     * 128-bit UUID of the LEGO Hub GATT characteristic (LWP3).
      *
      * <p>Supports Write Without Response (or Write With Response on iOS) and Notify.
      * All upstream and downstream messages use this single characteristic.
      */
     public static final String HUB_CHARACTERISTIC_UUID =
             "00001624-1212-efde-1623-785feabcd123";
+
+    // ── WeDo 2.0 proprietary GATT UUIDs (NOT LWP3) ───────────────────────────
+    //
+    // The WeDo 2.0 hub does NOT use the LWP3 protocol.  It has its own set of
+    // dedicated GATT characteristics, one per function.  All UUIDs belong to
+    // the WeDo 2.0 service (00001523-...).
+    //
+    // Reference: nathankellenicki/node-poweredup — src/consts.ts and
+    //            src/hubs/wedo2smarthub.ts
+
+    /** 128-bit UUID of the WeDo 2.0 primary GATT service (notifications). */
+    public static final String WEDO2_SERVICE_UUID =
+            "00001523-1212-efde-1523-785feabcd123";
+
+    /**
+     * 128-bit UUID of the WeDo 2.0 secondary GATT service.
+     *
+     * <p>The write characteristics {@link #WEDO2_PORT_TYPE_WRITE_UUID} and
+     * {@link #WEDO2_MOTOR_VALUE_WRITE_UUID} live in this service, not in
+     * {@link #WEDO2_SERVICE_UUID}.
+     * Reference: nathankellenicki/node-poweredup — src/consts.ts {@code WEDO2_SMART_HUB_2}.
+     */
+    public static final String WEDO2_SERVICE_2_UUID =
+            "00004f0e-1212-efde-1523-785feabcd123";
+
+    /**
+     * Hub name characteristic (read/write).
+     *
+     * <p><b>Not</b> a general-purpose command channel — writing motor commands
+     * here will rename the hub, not move the motor.
+     */
+    public static final String WEDO2_NAME_UUID =
+            "00001524-1212-efde-1523-785feabcd123";
+
+    /**
+     * Button + general-notification characteristic (notify).
+     *
+     * <p>Subscribe here to receive button-state change notifications.
+     */
+    public static final String WEDO2_BUTTON_UUID =
+            "00001526-1212-efde-1523-785feabcd123";
+
+    /**
+     * Port-type attachment/detachment notification characteristic (notify).
+     *
+     * <p>Subscribe to receive events when a peripheral is plugged in or out.
+     */
+    public static final String WEDO2_PORT_TYPE_UUID =
+            "00001527-1212-efde-1523-785feabcd123";
+
+    /** Low-voltage-alert notification characteristic. */
+    public static final String WEDO2_LOW_VOLTAGE_ALERT_UUID =
+            "00001528-1212-efde-1523-785feabcd123";
+
+    /** High-current-alert notification characteristic. */
+    public static final String WEDO2_HIGH_CURRENT_ALERT_UUID =
+            "00001529-1212-efde-1523-785feabcd123";
+
+    /** Low-signal-alert notification characteristic. */
+    public static final String WEDO2_LOW_SIGNAL_ALERT_UUID =
+            "0000152a-1212-efde-1523-785feabcd123";
+
+    /** Disconnect characteristic (write to request hub disconnect). */
+    public static final String WEDO2_DISCONNECT_UUID =
+            "0000152b-1212-efde-1523-785feabcd123";
+
+    /**
+     * Sensor-value notification characteristic (notify).
+     *
+     * <p>Subscribe to receive sensor readings.  Each notification payload
+     * starts with the port ID followed by the value bytes.
+     */
+    public static final String WEDO2_SENSOR_VALUE_UUID =
+            "00001560-1212-efde-1523-785feabcd123";
+
+    /** Sensor value-format characteristic (write). */
+    public static final String WEDO2_VALUE_FORMAT_UUID =
+            "00001561-1212-efde-1523-785feabcd123";
+
+    /**
+     * Sensor-subscription configuration characteristic (write).
+     *
+     * <p>Write an 11-byte subscribe/unsubscribe command here to start or stop
+     * receiving sensor readings on {@link #WEDO2_SENSOR_VALUE_UUID}.
+     *
+     * <p>Subscribe command format:
+     * <pre>
+     * [0x01, 0x02, portId, deviceType, mode, 0x01, 0x00, 0x00, 0x00, 0x00, 0x01]
+     * </pre>
+     * Unsubscribe: same bytes but last byte = {@code 0x00}.
+     */
+    public static final String WEDO2_PORT_TYPE_WRITE_UUID =
+            "00001563-1212-efde-1523-785feabcd123";
+
+    /**
+     * Motor command characteristic (write without response).
+     *
+     * <p>Write a 4-byte command here to control a motor:
+     * <pre>
+     * [portId, typeId, mode, power]
+     * </pre>
+     * where {@code power} is a signed byte in the range −100 to +100.
+     */
+    public static final String WEDO2_MOTOR_VALUE_WRITE_UUID =
+            "00001565-1212-efde-1523-785feabcd123";
+
+    // ── WeDo 2.0 — battery (standard BLE Battery Service) ────────────────────
+
+    /**
+     * Standard BLE Battery Service UUID ({@code 0x180F}).
+     *
+     * <p>Used by the WeDo 2.0 hub to expose battery level.
+     */
+    public static final String WEDO2_BATTERY_SERVICE_UUID =
+            "0000180f-0000-1000-8000-00805f9b34fb";
+
+    /**
+     * Standard BLE Battery Level characteristic UUID ({@code 0x2A19}).
+     *
+     * <p>Read or subscribe to get the battery percentage (0–100) as a single
+     * unsigned byte.
+     */
+    public static final String WEDO2_BATTERY_LEVEL_UUID =
+            "00002a19-0000-1000-8000-00805f9b34fb";
+
+    // ── WeDo 2.0 — port IDs ───────────────────────────────────────────────────
+
+    /**
+     * WeDo 2.0 physical port A identifier ({@code 0x01}).
+     *
+     * <p>In the WeDo 2.0 protocol ports are numbered 1-based
+     * (node-poweredup convention: PORT_A = 1, PORT_B = 2).
+     */
+    public static final int WEDO2_PORT_A = 0x01;
+
+    /**
+     * WeDo 2.0 physical port B identifier ({@code 0x02}).
+     */
+    public static final int WEDO2_PORT_B = 0x02;
+
+    // ── WeDo 2.0 — device type IDs ────────────────────────────────────────────
+
+    /**
+     * WeDo 2.0 device type: Simple/Medium Linear Motor ({@code 0x01}).
+     *
+     * <p>Used as {@code typeId} in the 4-byte motor command written to
+     * {@link #WEDO2_MOTOR_VALUE_WRITE_UUID}.
+     */
+    public static final int WEDO2_MOTOR_TYPE_ID = 0x01;
+
+    /**
+     * WeDo 2.0 device type: Motion/Distance Sensor ({@code 0x23} = 35).
+     *
+     * <p>Used as {@code deviceType} in the sensor-subscription command written
+     * to {@link #WEDO2_PORT_TYPE_WRITE_UUID}.
+     */
+    public static final int WEDO2_MOTION_SENSOR_TYPE_ID = 0x23;
+
+    /**
+     * WeDo 2.0 device type: RGB LED ({@code 0x22} = 34).
+     *
+     * <p>The internal RGB LED is also addressed through
+     * {@link #WEDO2_MOTOR_VALUE_WRITE_UUID} using a 4-byte command where the
+     * power byte encodes the colour index (0–10).  For direct RGB colour control
+     * use a separate LED characteristic if available, or rely on the colour-index
+     * mode.
+     */
+    public static final int WEDO2_RGB_LED_TYPE_ID = 0x22;
 
     // =========================================================================
     // Message Types (LWP3 §3)

@@ -106,4 +106,84 @@ class LegoProtocolConstantsTest {
             () -> assertEquals(0x03, LegoProtocolConstants.MANUFACTURER_ID_MSB)
         );
     }
+
+    @Test
+    void wedo2ServiceUuids_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(
+                    "00001523-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_SERVICE_UUID),
+            () -> assertEquals(
+                    "00004f0e-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_SERVICE_2_UUID)
+        );
+    }
+
+    @Test
+    void wedo2CharacteristicUuids_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(
+                    "00001524-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_NAME_UUID),
+            () -> assertEquals(
+                    "00001526-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_BUTTON_UUID),
+            () -> assertEquals(
+                    "00001527-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_PORT_TYPE_UUID),
+            () -> assertEquals(
+                    "00001528-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_LOW_VOLTAGE_ALERT_UUID),
+            () -> assertEquals(
+                    "00001529-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_HIGH_CURRENT_ALERT_UUID),
+            () -> assertEquals(
+                    "0000152a-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_LOW_SIGNAL_ALERT_UUID),
+            () -> assertEquals(
+                    "0000152b-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_DISCONNECT_UUID),
+            () -> assertEquals(
+                    "00001560-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_SENSOR_VALUE_UUID),
+            () -> assertEquals(
+                    "00001561-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_VALUE_FORMAT_UUID),
+            () -> assertEquals(
+                    "00001563-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_PORT_TYPE_WRITE_UUID),
+            () -> assertEquals(
+                    "00001565-1212-efde-1523-785feabcd123",
+                    LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID)
+        );
+    }
+
+    @Test
+    void wedo2BatteryUuids_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(
+                    "0000180f-0000-1000-8000-00805f9b34fb",
+                    LegoProtocolConstants.WEDO2_BATTERY_SERVICE_UUID),
+            () -> assertEquals(
+                    "00002a19-0000-1000-8000-00805f9b34fb",
+                    LegoProtocolConstants.WEDO2_BATTERY_LEVEL_UUID)
+        );
+    }
+
+    @Test
+    void wedo2PortIds_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(0x01, LegoProtocolConstants.WEDO2_PORT_A),
+            () -> assertEquals(0x02, LegoProtocolConstants.WEDO2_PORT_B)
+        );
+    }
+
+    @Test
+    void wedo2DeviceTypeIds_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(0x01, LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID),
+            () -> assertEquals(0x23, LegoProtocolConstants.WEDO2_MOTION_SENSOR_TYPE_ID),
+            () -> assertEquals(0x22, LegoProtocolConstants.WEDO2_RGB_LED_TYPE_ID)
+        );
+    }
 }

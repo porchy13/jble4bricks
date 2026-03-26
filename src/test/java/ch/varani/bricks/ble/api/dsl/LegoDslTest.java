@@ -482,6 +482,69 @@ class LegoDslTest {
     }
 
     // =========================================================================
+    // writeRaw — default constructor routes to HUB_SERVICE_UUID / HUB_CHARACTERISTIC_UUID
+    // =========================================================================
+
+    @Test
+    void writeRaw_defaultConstructor_routesToDefaultUuids() {
+        final byte[] payload = {0x05, 0x00, 0x01, 0x06, 0x05};
+        dsl.writeRaw(payload);
+
+        final ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+        verify(connection).writeWithoutResponse(
+                eq(LegoProtocolConstants.HUB_SERVICE_UUID),
+                eq(LegoProtocolConstants.HUB_CHARACTERISTIC_UUID),
+                captor.capture());
+        assertArrayEquals(payload, captor.getValue());
+    }
+
+    // =========================================================================
+    // 4-arg constructor — custom UUIDs
+    // =========================================================================
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void fourArgConstructor_writeRaw_routesToCustomWriteCharacteristic() {
+        final String customSvc   = "00001523-1212-efde-1523-785feabcd123";
+        final String customWrite = "00001565-1212-efde-1523-785feabcd123";
+        final String customNotify = "00001526-1212-efde-1523-785feabcd123";
+
+        final BleConnection conn2 = mock(BleConnection.class);
+        when(conn2.writeWithoutResponse(any(), any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(null));
+        when(conn2.notifications(any(), any())).thenReturn(mock(Publisher.class));
+
+        final LegoDsl wedo2Dsl = new LegoDsl(conn2, customSvc, customWrite, customNotify);
+        final byte[] payload = {0x04, 0x00, 0x02, 0x01};
+        wedo2Dsl.writeRaw(payload);
+
+        final ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+        verify(conn2).writeWithoutResponse(
+                eq(customSvc),
+                eq(customWrite),
+                captor.capture());
+        assertArrayEquals(payload, captor.getValue());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void fourArgConstructor_notifications_routesToCustomNotifyCharacteristic() {
+        final String customSvc    = "00001523-1212-efde-1523-785feabcd123";
+        final String customWrite  = "00001565-1212-efde-1523-785feabcd123";
+        final String customNotify = "00001526-1212-efde-1523-785feabcd123";
+
+        final BleConnection conn2 = mock(BleConnection.class);
+        final Publisher<byte[]> publisher = mock(Publisher.class);
+        when(conn2.writeWithoutResponse(any(), any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(null));
+        when(conn2.notifications(customSvc, customNotify)).thenReturn(publisher);
+
+        final LegoDsl wedo2Dsl = new LegoDsl(conn2, customSvc, customWrite, customNotify);
+
+        assertSame(publisher, wedo2Dsl.notifications());
+    }
+
+    // =========================================================================
     // Helpers
     // =========================================================================
 

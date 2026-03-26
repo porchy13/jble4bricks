@@ -191,6 +191,15 @@ static CBCharacteristic *findCharacteristic(
                     return characteristic;
                 }
             }
+            /* Log all available characteristics when the requested one is not found. */
+            NSMutableString *available = [NSMutableString string];
+            for (CBCharacteristic *c in service.characteristics) {
+                [available appendFormat:@"%@ ", c.UUID.UUIDString];
+            }
+            os_log_error(BLE_LOG_GATT,
+                    "findCharacteristic: chr %{public}@ not found in svc %{public}@. Available: [%{public}@]",
+                    characteristicUuidString, serviceUuidString, available);
+            return nil;
         }
     }
     return nil;

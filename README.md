@@ -130,8 +130,69 @@ try (BrickDsl dsl = BrickDsl.open()) {
     lego.requestPortInfo(0x00, 0x01).get();
     lego.requestPortModeInfo(0x00, 0x00, 0x04).get();
 
+    // Send a raw LWP message (must be a complete, valid LWP packet)
+    lego.writeRaw(new byte[]{ 0x05, 0x00, 0x01, 0x06, 0x05 }).get();
+
     lego.done();
 }
+```
+
+### WeDo 2.0 hub (custom GATT UUIDs)
+
+The WeDo 2.0 hub does not use LWP3 UUIDs. It exposes separate write and notify
+characteristics. Use the 4-argument `LegoDsl` constructor to supply custom service and
+characteristic UUIDs:
+
+```java
+import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+
+try (BrickDsl dsl = BrickDsl.open()) {
+    BleConnection connection = dsl.scan()
+        .forWeDo2()
+        .timeoutSeconds(10)
+        .first()
+        .thenConnect()
+        .connection();
+
+    LegoDsl wedo2 = new LegoDsl(
+        connection,
+        LegoProtocolConstants.WEDO2_SERVICE_UUID,          // primary service (notifications)
+        LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID, // write characteristic
+        LegoProtocolConstants.WEDO2_BUTTON_UUID             // notify characteristic
+    );
+
+    // Subscribe to button / notification events
+    wedo2.notifications().subscribe(subscriber);
+
+    // Send a raw motor command: [portId, typeId, mode, power]
+    wedo2.writeRaw(new byte[]{
+        (byte) LegoProtocolConstants.WEDO2_PORT_A,
+        (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
+        0x01,   // mode
+        (byte) 75  // power (signed, −100 to 100)
+    }).get();
+
+    wedo2.done();
+}
+```
+
+Key WeDo 2.0 constants in `LegoProtocolConstants`:
+
+| Constant | Value | Description |
+|---|---|---|
+| `WEDO2_SERVICE_UUID` | `00001523-…` | Primary GATT service (notifications) |
+| `WEDO2_SERVICE_2_UUID` | `00004f0e-…` | Secondary GATT service (write characteristics) |
+| `WEDO2_MOTOR_VALUE_WRITE_UUID` | `00001565-…` | Motor command characteristic (write) |
+| `WEDO2_PORT_TYPE_WRITE_UUID` | `00001563-…` | Sensor subscription characteristic (write) |
+| `WEDO2_BUTTON_UUID` | `00001526-…` | Button/general notification characteristic |
+| `WEDO2_SENSOR_VALUE_UUID` | `00001560-…` | Sensor value notification characteristic |
+| `WEDO2_BATTERY_SERVICE_UUID` | `0000180f-…` | Standard BLE Battery Service |
+| `WEDO2_BATTERY_LEVEL_UUID` | `00002a19-…` | Standard BLE Battery Level characteristic |
+| `WEDO2_PORT_A` | `0x01` | Port A identifier |
+| `WEDO2_PORT_B` | `0x02` | Port B identifier |
+| `WEDO2_MOTOR_TYPE_ID` | `0x01` | Simple/Medium Linear Motor device type |
+| `WEDO2_MOTION_SENSOR_TYPE_ID` | `0x23` | Motion/Distance Sensor device type |
+| `WEDO2_RGB_LED_TYPE_ID` | `0x22` | RGB LED device type |
 ```
 
 ### SBrick

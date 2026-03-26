@@ -35,13 +35,54 @@ public final class LegoDsl {
 
     private final BleConnection connection;
 
+    /** GATT service UUID used for all reads, writes and notifications. */
+    private final String serviceUuid;
+
+    /** GATT characteristic UUID used for write (downstream) operations. */
+    private final String writeCharacteristicUuid;
+
+    /** GATT characteristic UUID used for notify (upstream) operations. */
+    private final String notifyCharacteristicUuid;
+
     /**
-     * Creates a {@code LegoDsl} wrapping the given connection.
+     * Creates a {@code LegoDsl} wrapping the given connection using the
+     * default LWP3 GATT service and characteristic UUIDs.
      *
      * @param connection the active BLE connection; must not be {@code null}
      */
     LegoDsl(@NonNull BleConnection connection) {
-        this.connection = connection;
+        this(connection,
+             LegoProtocolConstants.HUB_SERVICE_UUID,
+             LegoProtocolConstants.HUB_CHARACTERISTIC_UUID,
+             LegoProtocolConstants.HUB_CHARACTERISTIC_UUID);
+    }
+
+    /**
+     * Creates a {@code LegoDsl} wrapping the given connection using custom
+     * GATT service and characteristic UUIDs, with separate write and notify
+     * characteristics.
+     *
+     * <p>Use this constructor for hubs that implement the LEGO Wireless
+     * Protocol over non-standard GATT UUIDs — e.g. the WeDo 2.0 hub which
+     * uses LWP2 UUIDs and exposes separate write ({@code 00001524-...}) and
+     * notify ({@code 00001526-...}) characteristics.
+     *
+     * @param connection              the active BLE connection; must not be {@code null}
+     * @param serviceUuid             GATT service UUID; must not be {@code null}
+     * @param writeCharacteristicUuid GATT characteristic UUID used for write (downstream);
+     *                                must not be {@code null}
+     * @param notifyCharacteristicUuid GATT characteristic UUID used for notify (upstream);
+     *                                must not be {@code null}
+     */
+    public LegoDsl(
+            @NonNull BleConnection connection,
+            @NonNull String serviceUuid,
+            @NonNull String writeCharacteristicUuid,
+            @NonNull String notifyCharacteristicUuid) {
+        this.connection              = connection;
+        this.serviceUuid             = serviceUuid;
+        this.writeCharacteristicUuid = writeCharacteristicUuid;
+        this.notifyCharacteristicUuid = notifyCharacteristicUuid;
     }
 
     // =========================================================================
@@ -56,9 +97,7 @@ public final class LegoDsl {
      * @return a publisher of raw upstream message bytes; never {@code null}
      */
     public @NonNull Publisher<byte[]> notifications() {
-        return connection.notifications(
-                LegoProtocolConstants.HUB_SERVICE_UUID,
-                LegoProtocolConstants.HUB_CHARACTERISTIC_UUID);
+        return connection.notifications(serviceUuid, notifyCharacteristicUuid);
     }
 
     // =========================================================================
@@ -387,16 +426,28 @@ public final class LegoDsl {
     private static final int IDX_SUB_COMMAND = 5;
 
     /**
+     * Writes a raw LWP message payload to the hub characteristic.
+     *
+     * <p>Use this method to send protocol messages that are not yet covered
+     * by a named DSL method (e.g. {@code PORT_INPUT_FORMAT_SETUP_SINGLE} for
+     * sensor configuration).  The payload must be a complete, valid LWP message
+     * including the length, hub-ID, and message-type bytes.
+     *
+     * @param payload the raw bytes to write; must not be {@code null} or empty
+     * @return a future that completes when the write is submitted
+     */
+    public @NonNull CompletableFuture<Void> writeRaw(byte[] payload) {
+        return connection.writeWithoutResponse(serviceUuid, writeCharacteristicUuid, payload);
+    }
+
+    /**
      * Writes {@code payload} to the LEGO hub characteristic.
      *
      * @param payload the raw bytes to write
      * @return a future that completes when the write is submitted
      */
     private @NonNull CompletableFuture<Void> write(byte[] payload) {
-        return connection.writeWithoutResponse(
-                LegoProtocolConstants.HUB_SERVICE_UUID,
-                LegoProtocolConstants.HUB_CHARACTERISTIC_UUID,
-                payload);
+        return writeRaw(payload);
     }
 
     // =========================================================================
