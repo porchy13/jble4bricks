@@ -348,6 +348,12 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
             final int rssi,
             final byte[] manufacturerData) {
 
+        // Always register the device so that connectPeripheral() can look it up
+        // even when the scan stops (currentCallback nulled) just before this
+        // callback fires — which is the normal fast-path after the first match.
+        final MacOsBleDevice device = knownDevices.computeIfAbsent(
+                id, uuid -> new MacOsBleDevice(uuid, name, rssi, manufacturerData, this));
+
         final ScanCallback cb = currentCallback;
         if (cb == null) {
             LOG.fine(() -> "onDeviceFound: no active scan, discarding device: " + id);
@@ -355,8 +361,6 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
         }
         LOG.info(() -> "Device found: id=" + id + " name='" + name + "' rssi=" + rssi
                 + " mfrData=[" + HexFormat.of().withUpperCase().formatHex(manufacturerData) + "]");
-        final MacOsBleDevice device = knownDevices.computeIfAbsent(
-                id, uuid -> new MacOsBleDevice(uuid, name, rssi, manufacturerData, this));
         cb.onDeviceFound(device);
     }
 

@@ -449,4 +449,29 @@ class MacOsBleScannerTest {
             logger.setLevel(savedLevel);
         }
     }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       connectPeripheral — knownDevice != null branch (line 255–256 in production)
+       ───────────────────────────────────────────────────────────────────────── */
+
+    @Test
+    void connectPeripheral_withKnownDevice_returnsConnectionWithDevice() throws Exception {
+        /*
+         * Pre-populate knownDevices by simulating a scan result for "uuid-x"
+         * before calling connectPeripheral.  This exercises the
+         * {@code knownDevice != null} branch of the ternary at line 255.
+         */
+        scanner.startScan(found::add).get();
+        scanner.onDeviceFound("uuid-x", "DevX", -55, new byte[0]);
+
+        when(bridge.connect(CTX_PTR, "uuid-x")).thenReturn(CONN_PTR);
+
+        final MacOsBleConnection conn = scanner.connectPeripheral("uuid-x").get();
+
+        assertAll(
+            () -> assertNotNull(conn),
+            () -> assertEquals(CONN_PTR, conn.connectionPtr()),
+            () -> assertEquals(CTX_PTR, conn.contextPtr())
+        );
+    }
 }
