@@ -263,7 +263,7 @@ public final class LegoProtocolConstants {
     public static final int MOTOR_CMD_WRITE_DIRECT_MODE_DATA = 0x51;
 
     // =========================================================================
-    // System Type and Device Number encoding (manufacturer data byte 4)
+    // System Type and Device Number encoding (manufacturer data byte index MANUFACTURER_DATA_IDX_SYSTEM_TYPE = 3)
     // =========================================================================
 
     /** Device: WeDo 2.0 Hub (SSS=000, DDDDD=00000). */

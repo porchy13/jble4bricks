@@ -2,8 +2,9 @@ package ch.varani.bricks.ble.device.lego;
 
 /**
  * Enumeration of known LEGO Powered Up hub types, identified by the
- * System Type and Device Number byte (byte index 4) of the 10-byte
- * manufacturer-specific advertisement payload.
+ * System Type and Device Number byte (byte index
+ * {@link LegoProtocolConstants#MANUFACTURER_DATA_IDX_SYSTEM_TYPE} = 3)
+ * of the manufacturer-specific advertisement payload.
  *
  * <p>The encoding is {@code SSS DDDDD} where the three high bits select
  * the system family and the five low bits select the device within that
@@ -86,9 +87,10 @@ public enum LegoHubType {
 
     /**
      * The raw {@code System Type and Device Number} byte as broadcast in the
-     * LEGO manufacturer-specific advertisement payload (byte index 4 of the
-     * 10-byte payload, or index 6 of the full AD record including Length and
-     * Data Type prefix bytes).
+     * LEGO manufacturer-specific advertisement payload (byte index
+     * {@link LegoProtocolConstants#MANUFACTURER_DATA_IDX_SYSTEM_TYPE} = 3
+     * of the payload as received from CoreBluetooth / BlueZ, i.e. after
+     * stripping the AD Length and AD Type 0xFF prefix bytes).
      */
     private final int systemTypeDeviceByte;
 

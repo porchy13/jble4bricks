@@ -494,6 +494,148 @@ try {
 
 ---
 
+## Diagnosing Connection Problems
+
+The library uses `java.util.logging` (JUL) for diagnostics. All loggers follow the naming
+convention `ch.varani.bricks.ble.<ClassName>`. No third-party logging framework is required.
+
+### Log levels
+
+| Level | What is logged |
+|---|---|
+| `INFO` | Important lifecycle events: scan started/stopped, device discovered, connection established or failed, disconnection. Enabled by default. |
+| `FINE` | Verbose per-operation details: every BLE write, read, and notification subscription. Disabled by default. |
+| `WARNING` | Recoverable errors that do not abort the current operation: failed to stop scan, interrupted wait, failed to disable notifications on close. |
+
+### Enable verbose logging at runtime
+
+Add a `logging.properties` file to your classpath (or pass it with
+`-Djava.util.logging.config.file=...`) and set the desired level:
+
+```properties
+# Enable INFO for all library loggers (already on by default)
+ch.varani.bricks.ble.level=INFO
+
+# Enable FINE to see every BLE write, read, and notification subscription
+ch.varani.bricks.ble.level=FINE
+
+# Direct output to the console
+handlers=java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level=FINE
+java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter
+```
+
+Or configure programmatically before calling any library method:
+
+```java
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+// Enable FINE level for the entire library
+Logger.getLogger("ch.varani.bricks.ble").setLevel(Level.FINE);
+
+// Or scope it to a single class
+Logger.getLogger("ch.varani.bricks.ble.impl.macos.MacOsBleScanner").setLevel(Level.FINE);
+```
+
+### Reading the log output
+
+A typical successful connection sequence at `INFO` level looks like this:
+
+```
+INFO  ScanDsl          Starting scan: serviceUuidFilter=00001623-... deviceFilter=none count=1 timeout=10s
+INFO  MacOsBleScanner  Device found: id=A1B2C3D4-... name='Technic Hub' rssi=-62 mfrData=10 bytes
+INFO  ScanDsl          Scan completed: found 1 device(s)
+INFO  MacOsBleDevice   Initiating connection to device: id=A1B2C3D4-... name='Technic Hub'
+INFO  MacOsBleScanner  Connecting to peripheral: A1B2C3D4-...
+INFO  MacOsBleConnection BLE connection established: connPtr=0x600003e80040
+```
+
+With `FINE` level enabled you also see each operation:
+
+```
+FINE  MacOsBleConnection Write: chr=00001624-... svc=00001623-... len=5 bytes
+FINE  MacOsBleConnection Enabling notifications: chr=00001624-... svc=00001623-...
+FINE  MacOsBleConnection Read: chr=00001624-... svc=00001623-...
+INFO  MacOsBleConnection BLE connection disconnected
+```
+
+### Common failure patterns
+
+**Scan times out — no device found**
+
+```
+INFO  ScanDsl  Starting scan: serviceUuidFilter=00001623-... count=1 timeout=10s
+INFO  ScanDsl  Scan completed: found 0 device(s)          ← or BleException timeout
+```
+
+Causes and checks:
+- The hub is not powered on, or the battery is too low to advertise.
+- Bluetooth is disabled on the host — check `centralManagerDidUpdateState` messages on macOS
+  (visible in the native `os_log` stream, see below).
+- The hub is already connected to another host.
+- The GATT service UUID filter is too restrictive — try `forService(null)` (no filter) to
+  confirm the device is visible at all.
+
+**Connection established but service discovery fails**
+
+```
+WARNING MacOsBleScanner  Connection to A1B2C3D4-... failed: Connection or service discovery failed
+```
+
+Causes and checks:
+- The hub firmware does not expose the expected GATT service; verify the UUID constants in
+  `LegoProtocolConstants` / `SBrickProtocolConstants` etc.
+- A stale connection from a previous session was not cleanly closed — power-cycle the hub.
+
+**Device found but rejected by filter**
+
+At `FINE` level you will see:
+
+```
+FINE  ScanDsl  Device rejected by filter: A1B2C3D4-...
+```
+
+This means the device passed the OS-level GATT service UUID filter but failed the Java-side
+`deviceFilter` (e.g. `withDeviceId`, `forLegoHubType`). Check that:
+- The device identifier string matches exactly (case-sensitive on most platforms).
+- The manufacturer data payload is long enough and contains the expected System Type byte.
+
+**Stale callback after scan stop**
+
+```
+FINE  MacOsBleScanner  onDeviceFound: no active scan, discarding device: A1B2C3D4-...
+```
+
+This is informational — the OS delivered an advertisement just after `stopScan()` was called.
+No action is required; the device is discarded.
+
+### Reading native logs on macOS
+
+The CoreBluetooth layer writes to the system `os_log` stream under the subsystem
+`ch.varani.bricks.ble`. Read them with the `log` command-line tool or Console.app:
+
+```bash
+# Stream live BLE events (all categories)
+log stream --predicate 'subsystem == "ch.varani.bricks.ble"' --level debug
+
+# Filter to connection events only
+log stream --predicate 'subsystem == "ch.varani.bricks.ble" AND category == "connect"' --level debug
+
+# Filter to scan / discovery events only
+log stream --predicate 'subsystem == "ch.varani.bricks.ble" AND category == "scan"' --level debug
+
+# Filter to GATT operations only
+log stream --predicate 'subsystem == "ch.varani.bricks.ble" AND category == "gatt"' --level debug
+```
+
+These messages include adapter state transitions (Bluetooth on/off/resetting), discovered
+peripheral UUIDs with RSSI, connect/disconnect events with error descriptions, and GATT
+service and characteristic discovery results — enough to diagnose any problem without
+attaching a debugger.
+
+---
+
 ## Building from Source
 
 ```bash

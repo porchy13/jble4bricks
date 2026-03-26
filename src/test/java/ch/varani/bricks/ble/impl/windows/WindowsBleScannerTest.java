@@ -436,4 +436,18 @@ class WindowsBleScannerTest {
         scanner.onNotification(conn.connectionPtr(), "svc", "chr", value);
         assertNotNull(conn);
     }
+
+    @Test
+    void onDeviceFound_noCallback_fineLevelLog_lambdaExecuted() {
+        final Logger logger = Logger.getLogger(WindowsBleScanner.class.getName());
+        final Level savedLevel = logger.getLevel();
+        logger.setLevel(Level.FINE);
+        try {
+            /* No startScan — currentCallback is null; FINE log lambda must execute. */
+            scanner.onDeviceFound("addr-fine", "Dev", -70, new byte[0]);
+            assertTrue(found.isEmpty());
+        } finally {
+            logger.setLevel(savedLevel);
+        }
+    }
 }

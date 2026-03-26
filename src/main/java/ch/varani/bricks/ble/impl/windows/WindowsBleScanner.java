@@ -242,18 +242,22 @@ public final class WindowsBleScanner implements BleScanner, WindowsBleNativeCall
     CompletableFuture<WindowsBleConnection> connectPeripheral(
             final @NonNull String deviceAddress) {
 
+        LOG.info(() -> "Connecting to peripheral: " + deviceAddress);
         final long ptr = contextPtr;
         return CompletableFuture.supplyAsync(() -> {
             final long connPtr;
             try {
                 connPtr = bridge.connect(ptr, deviceAddress);
             } catch (RuntimeException e) {
+                LOG.warning(() -> "Connection to " + deviceAddress + " failed: " + e.getMessage());
                 throw new java.util.concurrent.CompletionException(
                         new BleException("Connection to " + deviceAddress
                                 + " failed: " + e.getMessage(), e));
             }
             final WindowsBleConnection conn = new WindowsBleConnection(connPtr, ptr, this);
             openConnections.put(connPtr, conn);
+            LOG.info(() -> "Connected to peripheral: " + deviceAddress
+                    + " (connPtr=0x" + Long.toHexString(connPtr) + ")");
             return conn;
         }, exec);
     }
@@ -344,8 +348,11 @@ public final class WindowsBleScanner implements BleScanner, WindowsBleNativeCall
 
         final ScanCallback cb = currentCallback;
         if (cb == null) {
+            LOG.fine(() -> "onDeviceFound: no active scan, discarding device: " + id);
             return;
         }
+        LOG.info(() -> "Device found: id=" + id + " name='" + name + "' rssi=" + rssi
+                + " mfrData=" + manufacturerData.length + " bytes");
         final WindowsBleDevice device = knownDevices.computeIfAbsent(
                 id, addr -> new WindowsBleDevice(addr, name, rssi, manufacturerData, this));
         cb.onDeviceFound(device);

@@ -15,6 +15,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
@@ -495,5 +498,198 @@ class ScanDslTest {
                 .forLegoHubType(LegoHubType.CITY_HUB);
 
         assertTrue(dsl.deviceFilter().test(device));
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       stopScanAndAwait — error handling branches
+       ───────────────────────────────────────────────────────────────────────── */
+
+    /**
+     * Verifies that an {@link InterruptedException} thrown by
+     * {@code scanner.stopScan().get()} is swallowed (not propagated) and that
+     * the thread's interrupt flag is restored.
+     */
+    @Test
+    void collect_stopScanInterrupted_doesNotPropagateAndRestoresInterruptFlag()
+            throws BleException, InterruptedException {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+
+        when(scanner.startScan(isNull(), any(ScanCallback.class)))
+                .thenAnswer(inv -> {
+                    final ScanCallback cb = inv.getArgument(1);
+                    cb.onDeviceFound(device);
+                    return CompletableFuture.completedFuture(null);
+                });
+
+        // stopScan returns a future that, when get() is called, interrupts the
+        // calling thread and then throws InterruptedException.
+        when(scanner.stopScan()).thenAnswer(inv -> {
+            final CompletableFuture<Void> f = new CompletableFuture<>() {
+                @Override
+                public Void get() throws InterruptedException {
+                    Thread.currentThread().interrupt();
+                    throw new InterruptedException("stop interrupted");
+                }
+            };
+            return f;
+        });
+
+        final AtomicReference<Boolean> interruptFlag = new AtomicReference<>();
+        final AtomicReference<List<BleDevice>> result = new AtomicReference<>();
+
+        // Run in a fresh thread so the interrupt flag does not leak
+        final Thread thread = new Thread(() -> {
+            try {
+                result.set(new ScanDsl(scanner).collect(1));
+            } catch (BleException ex) {
+                result.set(null);
+            }
+            interruptFlag.set(Thread.currentThread().isInterrupted());
+        });
+        thread.start();
+        thread.join(5000);
+
+        assertNotNull(result.get(), "collect() should succeed despite stopScan interruption");
+        assertEquals(Boolean.TRUE, interruptFlag.get(),
+                "Interrupt flag should be restored after stopScanAndAwait");
+    }
+
+    /**
+     * Verifies that an {@link ExecutionException} thrown by
+     * {@code scanner.stopScan().get()} is swallowed (not propagated) and
+     * {@code collect} still returns normally.
+     */
+    @Test
+    void collect_stopScanExecutionException_doesNotPropagate() throws BleException {
+        final BleScanner scanner = mock(BleScanner.class);
+        final BleDevice device = mock(BleDevice.class);
+
+        when(scanner.startScan(isNull(), any(ScanCallback.class)))
+                .thenAnswer(inv -> {
+                    final ScanCallback cb = inv.getArgument(1);
+                    cb.onDeviceFound(device);
+                    return CompletableFuture.completedFuture(null);
+                });
+
+        // stopScan returns a future that fails with a RuntimeException.
+        final CompletableFuture<Void> failedStop = new CompletableFuture<>();
+        failedStop.completeExceptionally(new RuntimeException("stop failed"));
+        when(scanner.stopScan()).thenReturn(failedStop);
+
+        final List<BleDevice> found = new ScanDsl(scanner).collect(1);
+
+        assertNotNull(found);
+        assertEquals(1, found.size());
+    }
+
+    /* ─────────────────────────────────────────────────────────────────────────
+       LOG.fine lambda coverage — mfrData branches + filter paths at FINE level
+       ───────────────────────────────────────────────────────────────────────── */
+
+    /**
+     * FINE-level lambda: mfrData is empty (length == 0) → hex is "" and byte3 is "n/a (len=0)".
+     * Also exercises: device rejected by filter, device accepted by filter.
+     */
+    @Test
+    void onDeviceFound_filterRejectsDevice_fineLogLambdaExecuted() throws BleException {
+        final Logger scanDslLogger = Logger.getLogger(ScanDsl.class.getName());
+        final Level savedLevel = scanDslLogger.getLevel();
+        scanDslLogger.setLevel(Level.FINE);
+        try {
+            final BleScanner scanner = mock(BleScanner.class);
+            final BleDevice rejected = mock(BleDevice.class);
+            final BleDevice accepted = mock(BleDevice.class);
+            when(rejected.id()).thenReturn("rejected-id");
+            when(rejected.name()).thenReturn("Rejected");
+            when(rejected.manufacturerData()).thenReturn(new byte[0]);
+            when(accepted.id()).thenReturn("accepted-id");
+            when(accepted.name()).thenReturn("Accepted");
+            when(accepted.manufacturerData()).thenReturn(new byte[0]);
+
+            when(scanner.startScan(isNull(), any(ScanCallback.class)))
+                    .thenAnswer(inv -> {
+                        final ScanCallback cb = inv.getArgument(1);
+                        cb.onDeviceFound(rejected);
+                        cb.onDeviceFound(accepted);
+                        return CompletableFuture.completedFuture(null);
+                    });
+            when(scanner.stopScan()).thenReturn(CompletableFuture.completedFuture(null));
+
+            final List<BleDevice> result =
+                    new ScanDsl(scanner).withDeviceId("accepted-id").collect(1);
+
+            assertEquals(1, result.size());
+            assertEquals("accepted-id", result.get(0).id());
+        } finally {
+            scanDslLogger.setLevel(savedLevel);
+        }
+    }
+
+    /**
+     * FINE-level lambda: mfrData has fewer than MANUFACTURER_DATA_MIN_LENGTH bytes →
+     * byte3 reports "n/a (len=N)".
+     */
+    @Test
+    void onDeviceFound_fineLevelLog_mfrDataShort_byte3ReportsLength() throws BleException {
+        final Logger scanDslLogger = Logger.getLogger(ScanDsl.class.getName());
+        final Level savedLevel = scanDslLogger.getLevel();
+        scanDslLogger.setLevel(Level.FINE);
+        try {
+            final BleScanner scanner = mock(BleScanner.class);
+            final BleDevice device = mock(BleDevice.class);
+            when(device.id()).thenReturn("dev-short");
+            when(device.name()).thenReturn("Short");
+            /* 2 bytes — below MANUFACTURER_DATA_MIN_LENGTH (4) */
+            when(device.manufacturerData()).thenReturn(new byte[]{0x01, 0x02});
+
+            when(scanner.startScan(isNull(), any(ScanCallback.class)))
+                    .thenAnswer(inv -> {
+                        final ScanCallback cb = inv.getArgument(1);
+                        cb.onDeviceFound(device);
+                        return CompletableFuture.completedFuture(null);
+                    });
+            when(scanner.stopScan()).thenReturn(CompletableFuture.completedFuture(null));
+
+            final List<BleDevice> result = new ScanDsl(scanner).collect(1);
+
+            assertEquals(1, result.size());
+        } finally {
+            scanDslLogger.setLevel(savedLevel);
+        }
+    }
+
+    /**
+     * FINE-level lambda: mfrData has at least MANUFACTURER_DATA_MIN_LENGTH bytes →
+     * byte3 is formatted as "0xXX".
+     */
+    @Test
+    void onDeviceFound_fineLevelLog_mfrDataFull_byte3FormattedAsHex() throws BleException {
+        final Logger scanDslLogger = Logger.getLogger(ScanDsl.class.getName());
+        final Level savedLevel = scanDslLogger.getLevel();
+        scanDslLogger.setLevel(Level.FINE);
+        try {
+            final BleScanner scanner = mock(BleScanner.class);
+            final BleDevice device = mock(BleDevice.class);
+            when(device.id()).thenReturn("dev-full");
+            when(device.name()).thenReturn("Full");
+            /* 10 bytes — LEGO full manufacturer data, byte[3] = 0x20 */
+            when(device.manufacturerData()).thenReturn(
+                    new byte[]{(byte) 0x97, 0x03, 0x00, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00});
+
+            when(scanner.startScan(isNull(), any(ScanCallback.class)))
+                    .thenAnswer(inv -> {
+                        final ScanCallback cb = inv.getArgument(1);
+                        cb.onDeviceFound(device);
+                        return CompletableFuture.completedFuture(null);
+                    });
+            when(scanner.stopScan()).thenReturn(CompletableFuture.completedFuture(null));
+
+            final List<BleDevice> result = new ScanDsl(scanner).collect(1);
+
+            assertEquals(1, result.size());
+        } finally {
+            scanDslLogger.setLevel(savedLevel);
+        }
     }
 }

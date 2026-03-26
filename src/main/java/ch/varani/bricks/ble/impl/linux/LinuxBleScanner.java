@@ -240,18 +240,22 @@ public final class LinuxBleScanner implements BleScanner, LinuxBleNativeCallback
      */
     @NonNull
     CompletableFuture<LinuxBleConnection> connectDevice(final @NonNull String devicePath) {
+        LOG.info(() -> "Connecting to device: " + devicePath);
         final long ptr = contextPtr;
         return CompletableFuture.supplyAsync(() -> {
             final long connPtr;
             try {
                 connPtr = bridge.connect(ptr, devicePath);
             } catch (RuntimeException e) {
+                LOG.warning(() -> "Connection to " + devicePath + " failed: " + e.getMessage());
                 throw new java.util.concurrent.CompletionException(
                         new BleException("Connection to " + devicePath
                                 + " failed: " + e.getMessage(), e));
             }
             final LinuxBleConnection conn = new LinuxBleConnection(connPtr, ptr, this);
             openConnections.put(connPtr, conn);
+            LOG.info(() -> "Connected to device: " + devicePath
+                    + " (connPtr=0x" + Long.toHexString(connPtr) + ")");
             return conn;
         }, exec);
     }
@@ -343,8 +347,11 @@ public final class LinuxBleScanner implements BleScanner, LinuxBleNativeCallback
 
         final ScanCallback cb = currentCallback;
         if (cb == null) {
+            LOG.fine(() -> "onDeviceFound: no active scan, discarding device: " + id);
             return;
         }
+        LOG.info(() -> "Device found: id=" + id + " name='" + name + "' rssi=" + rssi
+                + " mfrData=" + manufacturerData.length + " bytes");
         final LinuxBleDevice device = knownDevices.computeIfAbsent(
                 id, path -> new LinuxBleDevice(path, name, rssi, manufacturerData, this));
         cb.onDeviceFound(device);

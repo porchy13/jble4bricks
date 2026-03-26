@@ -1,12 +1,14 @@
 package ch.varani.bricks.ble.api.dsl;
 
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
+import java.util.logging.Logger;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -37,6 +39,8 @@ import ch.varani.bricks.ble.device.sbrick.SBrickProtocolConstants;
  * not be shared across threads.
  */
 public final class ScanDsl {
+
+    private static final Logger LOG = Logger.getLogger(ScanDsl.class.getName());
 
     /** Default scan timeout in seconds (no timeout by default). */
     private static final long NO_TIMEOUT = 0L;
@@ -81,6 +85,23 @@ public final class ScanDsl {
      *
      * <p>Sets the service UUID filter to
      * {@link LegoProtocolConstants#HUB_SERVICE_UUID}.
+     *
+     * <p><b>WeDo 2.0 compatibility note:</b> the WeDo 2.0 hub does <em>not</em>
+     * include the LWP3 service UUID ({@value LegoProtocolConstants#HUB_SERVICE_UUID})
+     * in its BLE advertisement packet.  On macOS this UUID is passed directly to
+     * {@code CBCentralManager.scanForPeripherals(withServices:)}, which means
+     * CoreBluetooth will silently suppress WeDo 2.0 devices and {@link #collect}
+     * will time out without finding any hub.  When scanning for WeDo 2.0 hubs,
+     * use {@link #forWeDo2()} alone (without this method):
+     * <pre>{@code
+     * dsl.scan()
+     *    .forWeDo2()        // manufacturer-data filter only — no OS-level UUID filter
+     *    .timeoutSeconds(15)
+     *    .first();
+     * }</pre>
+     * For all other LEGO hubs (City Hub, Technic Hub, …) combining
+     * {@code forLegoHubs()} with the hub-type filter is both correct and more
+     * efficient as the OS-level filter reduces radio traffic.
      *
      * @return this builder for chaining
      */
@@ -317,6 +338,11 @@ public final class ScanDsl {
      * Starts a scan and blocks until {@code count} devices have been discovered
      * or the configured timeout elapses, then stops the scan.
      *
+     * <p>The timeout set via {@link #timeoutSeconds(long)} is a <em>total</em>
+     * budget shared across both the scan-start phase and the discovery phase.
+     * A deadline is computed at the moment {@code collect} is called, and both
+     * phases together must complete within that deadline.
+     *
      * @param count the number of devices to collect; must be ≥ 1
      * @return an immutable list of at most {@code count} discovered devices;
      *         never {@code null}
@@ -333,29 +359,97 @@ public final class ScanDsl {
         final List<BleDevice> devices = new ArrayList<>();
         final CompletableFuture<Void> done = new CompletableFuture<>();
 
+        LOG.info(() -> "Starting scan: serviceUuidFilter=" + serviceUuidFilter
+                + " deviceFilter=" + (deviceFilter != null ? "set" : "none")
+                + " count=" + count
+                + " timeout=" + (timeoutSeconds > NO_TIMEOUT ? timeoutSeconds + "s" : "none"));
+
+        /*
+         * Record the deadline in nanoseconds before starting the scan so that
+         * the timeout budget is shared (not doubled) across the startScan and
+         * discovery phases.
+         */
+        final long deadlineNanos = timeoutSeconds > NO_TIMEOUT
+                ? System.nanoTime() + TimeUnit.SECONDS.toNanos(timeoutSeconds)
+                : Long.MAX_VALUE;
+
         final CompletableFuture<Void> scanStarted = scanner.startScan(
                 serviceUuidFilter,
-                device -> {
-                    if (deviceFilter != null && !deviceFilter.test(device)) {
-                        return;
-                    }
-                    synchronized (devices) {
-                        if (devices.size() < maxDevices) {
-                            devices.add(device);
-                        }
-                        if (devices.size() >= maxDevices) {
-                            done.complete(null);
-                        }
-                    }
-                });
+                device -> onDeviceFound(device, devices, done));
 
         try {
-            if (timeoutSeconds > NO_TIMEOUT) {
-                scanStarted.get(timeoutSeconds, TimeUnit.SECONDS);
-                done.get(timeoutSeconds, TimeUnit.SECONDS);
-            } else {
+            awaitWithDeadline(scanStarted, done, deadlineNanos, count);
+        } finally {
+            stopScanAndAwait();
+        }
+
+        final List<BleDevice> result = List.copyOf(devices);
+        LOG.info(() -> "Scan completed: found " + result.size() + " device(s)");
+        return result;
+    }
+
+    /**
+     * Callback invoked by the scanner for each discovered peripheral.
+     *
+     * <p>Applies the device filter, appends matching devices to the collection
+     * list, and completes {@code done} once enough devices have been found.
+     *
+     * @param device  the discovered peripheral
+     * @param devices the shared accumulator list (guarded by its own monitor)
+     * @param done    the future to complete once {@link #maxDevices} devices are collected
+     */
+    private void onDeviceFound(
+            final @NonNull BleDevice device,
+            final @NonNull List<BleDevice> devices,
+            final @NonNull CompletableFuture<Void> done) {
+        final byte[] mfrData = device.manufacturerData();
+        LOG.fine(() -> {
+            final String hex = mfrDataHex(mfrData);
+            final String byte3 = mfrData.length >= LegoProtocolConstants.MANUFACTURER_DATA_MIN_LENGTH
+                    ? String.format("0x%02X", mfrData[LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE])
+                    : "n/a (len=" + mfrData.length + ")";
+            return "onDeviceFound pre-filter: id=" + device.id()
+                    + " name='" + device.name() + "'"
+                    + " mfrData=[" + hex + "]"
+                    + " byte[3]=" + byte3;
+        });
+        if (deviceFilter != null && !deviceFilter.test(device)) {
+            LOG.fine(() -> "Device rejected by filter: " + device.id());
+            return;
+        }
+        LOG.fine(() -> "Device accepted by filter: " + device.id());
+        synchronized (devices) {
+            if (devices.size() < maxDevices) {
+                devices.add(device);
+            }
+            if (devices.size() >= maxDevices) {
+                done.complete(null);
+            }
+        }
+    }
+
+    /**
+     * Waits for {@code scanStarted} then {@code done}, respecting the given
+     * nanosecond deadline.  When {@code deadlineNanos} is {@link Long#MAX_VALUE}
+     * the waits are unbounded.
+     *
+     * @param scanStarted   future that completes once the scan has been started
+     * @param done          future that completes once enough devices are found
+     * @param deadlineNanos absolute deadline in nanoseconds ({@link Long#MAX_VALUE} = no limit)
+     * @param count         number of devices expected (used in the error message)
+     * @throws BleException if either future times out, is interrupted, or fails
+     */
+    private void awaitWithDeadline(
+            final @NonNull CompletableFuture<Void> scanStarted,
+            final @NonNull CompletableFuture<Void> done,
+            final long deadlineNanos,
+            final int count) throws BleException {
+        try {
+            if (deadlineNanos == Long.MAX_VALUE) {
                 scanStarted.get();
                 done.get();
+            } else {
+                awaitWithTimeout(scanStarted, done, deadlineNanos);
             }
         } catch (TimeoutException ex) {
             throw new BleException(
@@ -368,11 +462,51 @@ public final class ScanDsl {
         } catch (ExecutionException ex) {
             throw new BleException("Scan failed: " + ex.getCause().getMessage(),
                     ex.getCause());
-        } finally {
-            scanner.stopScan();
         }
+    }
 
-        return List.copyOf(devices);
+    /**
+     * Waits for {@code scanStarted} then {@code done} using the remaining time
+     * before {@code deadlineNanos}.
+     *
+     * <p>If the remaining time is zero or negative when either {@code get} call
+     * is reached, {@code CompletableFuture.get} will immediately throw
+     * {@link java.util.concurrent.TimeoutException}, so no explicit guard is needed.
+     *
+     * @param scanStarted   the scan-start future
+     * @param done          the discovery-complete future
+     * @param deadlineNanos absolute deadline in nanoseconds
+     * @throws InterruptedException if interrupted while waiting
+     * @throws ExecutionException   if a future completes exceptionally
+     * @throws TimeoutException     if the deadline is exceeded
+     */
+    private static void awaitWithTimeout(
+            final @NonNull CompletableFuture<Void> scanStarted,
+            final @NonNull CompletableFuture<Void> done,
+            final long deadlineNanos)
+            throws InterruptedException, ExecutionException, TimeoutException {
+
+        scanStarted.get(deadlineNanos - System.nanoTime(), TimeUnit.NANOSECONDS);
+        done.get(deadlineNanos - System.nanoTime(), TimeUnit.NANOSECONDS);
+    }
+
+    /**
+     * Calls {@link BleScanner#stopScan()} and blocks until it completes.
+     *
+     * <p>Blocking here ensures that no stale {@code onDeviceFound} callbacks
+     * can fire after {@link #collect} returns, and that a subsequent scan
+     * starts from a clean state.  Errors are logged but not propagated so
+     * that the original exception (if any) is preserved.
+     */
+    private void stopScanAndAwait() {
+        try {
+            scanner.stopScan().get();
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            LOG.warning("Interrupted while waiting for scan to stop");
+        } catch (ExecutionException ee) {
+            LOG.warning("Error stopping scan: " + ee.getCause().getMessage());
+        }
     }
 
     /**
@@ -397,5 +531,19 @@ public final class ScanDsl {
     @Nullable
     Predicate<BleDevice> deviceFilter() {
         return deviceFilter;
+    }
+
+    /**
+     * Formats a byte array as an uppercase hex string with no separator.
+     * Returns an empty string for an empty array.
+     *
+     * @param data a non-null byte array (callers guarantee non-null via {@code @NonNull})
+     * @return uppercase hex string, or {@code ""} if {@code data} is empty
+     */
+    private static String mfrDataHex(final byte @NonNull [] data) {
+        if (data.length == 0) {
+            return "";
+        }
+        return HexFormat.of().withUpperCase().formatHex(data);
     }
 }

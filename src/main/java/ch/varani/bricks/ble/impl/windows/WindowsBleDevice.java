@@ -2,6 +2,7 @@ package ch.varani.bricks.ble.impl.windows;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 import org.jspecify.annotations.NonNull;
 
@@ -23,6 +24,8 @@ import ch.varani.bricks.ble.api.BleDevice;
  * @since 1.0
  */
 final class WindowsBleDevice implements BleDevice {
+
+    private static final Logger LOG = Logger.getLogger(WindowsBleDevice.class.getName());
 
     /** The BLE device address string (stable identifier on Windows). */
     private final String deviceAddress;
@@ -114,6 +117,8 @@ final class WindowsBleDevice implements BleDevice {
      */
     @Override
     public @NonNull CompletableFuture<BleConnection> connect() {
+        LOG.info(() -> "Initiating connection to device: id=" + deviceAddress
+                + " name='" + deviceName + "'");
         return owner.connectPeripheral(deviceAddress).thenApply(conn -> (BleConnection) conn);
     }
 }

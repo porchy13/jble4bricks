@@ -2,6 +2,7 @@ package ch.varani.bricks.ble.impl.linux;
 
 import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
+import java.util.logging.Logger;
 
 import org.jspecify.annotations.NonNull;
 
@@ -24,6 +25,8 @@ import ch.varani.bricks.ble.api.BleDevice;
  * @since 1.0
  */
 final class LinuxBleDevice implements BleDevice {
+
+    private static final Logger LOG = Logger.getLogger(LinuxBleDevice.class.getName());
 
     /** The BlueZ D-Bus object path (stable identifier on Linux). */
     private final String devicePath;
@@ -113,6 +116,8 @@ final class LinuxBleDevice implements BleDevice {
      */
     @Override
     public @NonNull CompletableFuture<BleConnection> connect() {
+        LOG.info(() -> "Initiating connection to device: id=" + devicePath
+                + " name='" + deviceName + "'");
         return owner.connectDevice(devicePath).thenApply(conn -> (BleConnection) conn);
     }
 }

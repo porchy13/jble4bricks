@@ -442,4 +442,19 @@ class LinuxBleScannerTest {
         scanner.onNotification(conn.connectionPtr(), "svc", "chr", value);
         assertNotNull(conn);
     }
+
+    @Test
+    void onDeviceFound_noCallback_fineLevelLog_lambdaExecuted() {
+        final Logger logger = Logger.getLogger(LinuxBleScanner.class.getName());
+        final Level savedLevel = logger.getLevel();
+        logger.setLevel(Level.FINE);
+        try {
+            /* No startScan — currentCallback is null; FINE log lambda must execute. */
+            scanner.onDeviceFound(
+                    "/org/bluez/hci0/dev_AA_BB_CC_DD_EE_FF", "Dev", -70, new byte[0]);
+            assertTrue(found.isEmpty());
+        } finally {
+            logger.setLevel(savedLevel);
+        }
+    }
 }

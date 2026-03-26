@@ -19,6 +19,8 @@ import java.util.concurrent.Flow.Publisher;
 import java.util.concurrent.Flow.Subscriber;
 import java.util.concurrent.Flow.Subscription;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -307,5 +309,22 @@ class WindowsBleConnectionTest {
             WindowsBleConnection.NoOpSubscription.INSTANCE,
             WindowsBleConnection.NoOpSubscription.INSTANCE
         );
+    }
+
+    @Test
+    void fineLevelLogs_writeNotificationsRead_lambdasExecuted() throws Exception {
+        final Logger logger = Logger.getLogger(WindowsBleConnection.class.getName());
+        final Level savedLevel = logger.getLevel();
+        logger.setLevel(Level.FINE);
+        try {
+            org.mockito.Mockito.when(bridge.readCharacteristic(CONN_PTR, SVC, CHR))
+                    .thenReturn(new byte[]{0x01});
+
+            connection.writeWithoutResponse(SVC, CHR, new byte[]{0x42}).get();
+            connection.notifications(SVC, CHR);
+            connection.read(SVC, CHR).get();
+        } finally {
+            logger.setLevel(savedLevel);
+        }
     }
 }

@@ -1,5 +1,6 @@
 package ch.varani.bricks.ble.impl.macos;
 
+import java.util.HexFormat;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -238,18 +239,22 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
     CompletableFuture<MacOsBleConnection> connectPeripheral(
             final @NonNull String peripheralUuid) {
 
+        LOG.info(() -> "Connecting to peripheral: " + peripheralUuid);
         final long ptr = contextPtr;
         return CompletableFuture.supplyAsync(() -> {
             final long connPtr;
             try {
                 connPtr = bridge.connect(ptr, peripheralUuid);
             } catch (RuntimeException e) {
+                LOG.warning(() -> "Connection to " + peripheralUuid + " failed: " + e.getMessage());
                 throw new java.util.concurrent.CompletionException(
                         new BleException("Connection to " + peripheralUuid
                                 + " failed: " + e.getMessage(), e));
             }
             final MacOsBleConnection conn = new MacOsBleConnection(connPtr, ptr, this);
             openConnections.put(connPtr, conn);
+            LOG.info(() -> "Connected to peripheral: " + peripheralUuid
+                    + " (connPtr=0x" + Long.toHexString(connPtr) + ")");
             return conn;
         }, exec);
     }
@@ -342,8 +347,11 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
 
         final ScanCallback cb = currentCallback;
         if (cb == null) {
+            LOG.fine(() -> "onDeviceFound: no active scan, discarding device: " + id);
             return;
         }
+        LOG.info(() -> "Device found: id=" + id + " name='" + name + "' rssi=" + rssi
+                + " mfrData=[" + HexFormat.of().withUpperCase().formatHex(manufacturerData) + "]");
         final MacOsBleDevice device = knownDevices.computeIfAbsent(
                 id, uuid -> new MacOsBleDevice(uuid, name, rssi, manufacturerData, this));
         cb.onDeviceFound(device);

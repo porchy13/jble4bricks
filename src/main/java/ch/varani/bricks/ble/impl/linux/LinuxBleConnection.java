@@ -82,6 +82,8 @@ final class LinuxBleConnection implements BleConnection {
         this.contextPtr    = contextPtr;
         this.scanner       = scanner;
         this.device        = null;    /* resolved lazily via scanner if needed */
+        LOG.info(() -> "BLE connection established: connPtr=0x"
+                + Long.toHexString(connectionPtr));
     }
 
     /**
@@ -102,6 +104,8 @@ final class LinuxBleConnection implements BleConnection {
         this.contextPtr    = contextPtr;
         this.scanner       = scanner;
         this.device        = device;
+        LOG.info(() -> "BLE connection established: connPtr=0x"
+                + Long.toHexString(connectionPtr));
     }
 
     /**
@@ -155,6 +159,8 @@ final class LinuxBleConnection implements BleConnection {
             final byte[] data) {
 
         checkOpen();
+        LOG.fine(() -> "Write: chr=" + characteristicUuid + " svc=" + serviceUuid
+                + " len=" + data.length + " bytes");
         return CompletableFuture.runAsync(() ->
                 scanner.writeWithoutResponseNative(connectionPtr, serviceUuid,
                         characteristicUuid, data));
@@ -178,6 +184,8 @@ final class LinuxBleConnection implements BleConnection {
         checkOpen();
         final CharacteristicKey key = new CharacteristicKey(serviceUuid, characteristicUuid);
         return notificationPublishers.computeIfAbsent(key, k -> {
+            LOG.fine(() -> "Enabling notifications: chr=" + characteristicUuid
+                    + " svc=" + serviceUuid);
             final SubmissionPublisher<byte[]> pub = new SubmissionPublisher<>();
             scanner.setNotifyNative(connectionPtr, serviceUuid, characteristicUuid, true);
             return pub;
@@ -198,6 +206,7 @@ final class LinuxBleConnection implements BleConnection {
             final @NonNull String characteristicUuid) {
 
         checkOpen();
+        LOG.fine(() -> "Read: chr=" + characteristicUuid + " svc=" + serviceUuid);
         final long ptr = connectionPtr;
         return CompletableFuture.supplyAsync(() ->
                 scanner.readCharacteristicNative(ptr, serviceUuid, characteristicUuid));
@@ -219,7 +228,7 @@ final class LinuxBleConnection implements BleConnection {
         final long ptr = connectionPtr;
         return CompletableFuture.runAsync(() -> {
             scanner.disconnectNative(ptr);
-            LOG.fine("BLE connection disconnected");
+            LOG.info("BLE connection disconnected");
         });
     }
 

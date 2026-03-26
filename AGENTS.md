@@ -1019,3 +1019,36 @@ accurate at all times:
 
 A pull request that modifies `api/` or `api/dsl/` and does **not** update `README.md` is
 incomplete and must not be merged.
+
+---
+
+## 17. Logging Convention
+
+All new code must include sufficient log traces to diagnose problems without attaching a debugger.
+
+### Java (JUL — `java.util.logging`)
+
+- Logger declaration: `private static final Logger LOG = Logger.getLogger(ClassName.class.getName())`
+- `INFO` — important lifecycle events visible by default: scan started/stopped, device discovered,
+  connection established/failed/disconnected.
+- `FINE` — verbose details disabled by default: each BLE write, read, notification subscription.
+- `WARNING` — recoverable non-fatal errors (e.g. failed to stop scan, interrupted while waiting).
+- `SEVERE` — not introduced directly; fatal errors throw a documented exception instead.
+- Always use lambda-form log calls (`LOG.fine(() -> ...)`) to avoid string construction overhead
+  when the level is disabled.
+- Never use `e.printStackTrace()` or bare `System.out` / `System.err` — always log through `LOG`.
+
+### Native — macOS (Objective-C / CoreBluetooth)
+
+- Use `os_log` with subsystem `ch.varani.bricks.ble`.
+- Categories: `scan` (adapter state, discovery), `connect` (connect/disconnect lifecycle),
+  `gatt` (service/characteristic discovery, reads, writes).
+- `os_log_info` for normal lifecycle events; `os_log_error` for failures.
+- Always log `error.localizedDescription` when an `NSError *` is non-nil — never suppress it
+  with `(void)error`.
+
+### Native — Linux (C / D-Bus / BlueZ) and Windows (C++ / WinRT)
+
+- Follow the same principle as macOS.
+- Until a structured logging facility is chosen for each platform, use `fprintf(stderr, ...)` with
+  a `[BLE]` prefix so output is capturable and distinguishable from application stderr.

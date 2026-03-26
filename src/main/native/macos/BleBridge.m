@@ -31,9 +31,26 @@
 
 @import Foundation;
 @import CoreBluetooth;
+@import os.log;
 
 #include "BleBridge.h"
 #include <stdatomic.h>
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Logging — os_log categories
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/** os_log subsystem for all BLE bridge log messages. */
+static const char *const LOG_SUBSYSTEM = "ch.varani.bricks.ble";
+
+/** os_log category for scan-related events. */
+static os_log_t BLE_LOG_SCAN;
+
+/** os_log category for connection lifecycle events. */
+static os_log_t BLE_LOG_CONNECT;
+
+/** os_log category for GATT service/characteristic events. */
+static os_log_t BLE_LOG_GATT;
 
 /* ═══════════════════════════════════════════════════════════════════════════
    Constants
@@ -185,14 +202,34 @@ static CBCharacteristic *findCharacteristic(
 
 @implementation BleCentralDelegate {
     BleContext *_ctx;
+    /*
+     * Per-peripheral manufacturer-data cache (UUID string → NSData).
+     *
+     * CoreBluetooth splits advertisement payloads across multiple callbacks and
+     * omits fields that have not changed since the previous scan window.  In
+     * practice this means that CBAdvertisementDataManufacturerDataKey is often
+     * absent for peripherals that the OS already knows (e.g. previously paired
+     * or recently seen devices).  We cache the last non-nil value so that every
+     * callback fired by didDiscoverPeripheral carries usable manufacturer data.
+     *
+     * The cache is cleared at the start of each scan so stale data from a
+     * previous scan session cannot leak into a new one.
+     */
+    NSMutableDictionary<NSString *, NSData *> *_mfrDataCache;
 }
 
 - (instancetype)initWithContext:(BleContext *)ctx {
     self = [super init];
     if (self) {
         _ctx = ctx;
+        _mfrDataCache = [NSMutableDictionary dictionary];
     }
     return self;
+}
+
+/** Clears the manufacturer-data cache.  Must be called before each new scan. */
+- (void)clearMfrDataCache {
+    [_mfrDataCache removeAllObjects];
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
@@ -207,8 +244,27 @@ static CBCharacteristic *findCharacteristic(
  * that nativeInit can unblock and return.
  */
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central {
-    if (central.state == CBManagerStatePoweredOn) {
-        dispatch_semaphore_signal(_ctx->readySemaphore);
+    switch (central.state) {
+        case CBManagerStatePoweredOn:
+            os_log_info(BLE_LOG_SCAN, "Bluetooth adapter state: PoweredOn");
+            dispatch_semaphore_signal(_ctx->readySemaphore);
+            break;
+        case CBManagerStatePoweredOff:
+            os_log_error(BLE_LOG_SCAN, "Bluetooth adapter state: PoweredOff");
+            break;
+        case CBManagerStateUnauthorized:
+            os_log_error(BLE_LOG_SCAN, "Bluetooth adapter state: Unauthorized");
+            break;
+        case CBManagerStateUnsupported:
+            os_log_error(BLE_LOG_SCAN, "Bluetooth adapter state: Unsupported");
+            break;
+        case CBManagerStateResetting:
+            os_log_info(BLE_LOG_SCAN, "Bluetooth adapter state: Resetting");
+            break;
+        default:
+            os_log_info(BLE_LOG_SCAN, "Bluetooth adapter state: Unknown (%ld)",
+                    (long)central.state);
+            break;
     }
 }
 
@@ -237,6 +293,27 @@ static CBCharacteristic *findCharacteristic(
 
     /* Extract raw manufacturer-specific advertisement data (may be nil). */
     NSData *mfrData = advertisementData[CBAdvertisementDataManufacturerDataKey];
+
+    /*
+     * CoreBluetooth caches advertisement payloads and may omit fields that
+     * have not changed since the last scan window.  Update the per-peripheral
+     * cache when fresh data arrives; fall back to the cached value otherwise.
+     */
+    if (mfrData != nil) {
+        _mfrDataCache[deviceId] = mfrData;
+    } else {
+        mfrData = _mfrDataCache[deviceId];  /* nil if never seen */
+    }
+
+    /* Log advertised service UUIDs for diagnostic purposes (not yet passed to Java). */
+    NSArray<CBUUID *> *serviceUuids = advertisementData[CBAdvertisementDataServiceUUIDsKey];
+    NSMutableString *uuidLog = [NSMutableString string];
+    for (CBUUID *u in serviceUuids) { [uuidLog appendFormat:@"%@ ", u.UUIDString]; }
+
+    os_log_info(BLE_LOG_SCAN,
+            "Peripheral discovered: id=%{public}@ name='%{public}@' rssi=%d mfrData=%zu bytes serviceUuids=[%{public}@]",
+            deviceId, deviceName, rssi, mfrData != nil ? mfrData.length : (NSUInteger)0,
+            uuidLog.length > 0 ? uuidLog : @"");
 
     BOOL attached = NO;
     JNIEnv *env = attachCurrentThread(_ctx->jvm, &attached);
@@ -283,6 +360,9 @@ static CBCharacteristic *findCharacteristic(
 
     (void)central;
 
+    os_log_info(BLE_LOG_CONNECT, "Peripheral connected: id=%{public}@",
+            peripheral.identifier.UUIDString);
+
     BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
     if (conn == nil) {
         return;
@@ -299,7 +379,11 @@ static CBCharacteristic *findCharacteristic(
     error:(NSError *)error {
 
     (void)central;
-    (void)error;
+
+    os_log_error(BLE_LOG_CONNECT,
+            "Peripheral connection failed: id=%{public}@ error=%{public}@",
+            peripheral.identifier.UUIDString,
+            error != nil ? error.localizedDescription : @"(no error details)");
 
     BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
     if (conn == nil) {
@@ -317,7 +401,15 @@ static CBCharacteristic *findCharacteristic(
     error:(NSError *)error {
 
     (void)central;
-    (void)error;
+
+    if (error != nil) {
+        os_log_info(BLE_LOG_CONNECT,
+                "Peripheral disconnected: id=%{public}@ error=%{public}@",
+                peripheral.identifier.UUIDString, error.localizedDescription);
+    } else {
+        os_log_info(BLE_LOG_CONNECT, "Peripheral disconnected: id=%{public}@",
+                peripheral.identifier.UUIDString);
+    }
 
     BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
     if (conn == nil) {
@@ -344,10 +436,17 @@ static CBCharacteristic *findCharacteristic(
     }
 
     if (error != nil) {
+        os_log_error(BLE_LOG_GATT,
+                "Service discovery failed: id=%{public}@ error=%{public}@",
+                peripheral.identifier.UUIDString, error.localizedDescription);
         conn->lastOpError = YES;
         dispatch_semaphore_signal(conn->discoveryDone);
         return;
     }
+
+    os_log_info(BLE_LOG_GATT, "Services discovered: id=%{public}@ count=%lu",
+            peripheral.identifier.UUIDString,
+            (unsigned long)peripheral.services.count);
 
     if (peripheral.services.count == 0) {
         dispatch_semaphore_signal(conn->discoveryDone);
@@ -370,18 +469,26 @@ static CBCharacteristic *findCharacteristic(
     didDiscoverCharacteristicsForService:(CBService *)service
     error:(NSError *)error {
 
-    (void)service;
-
     BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
     if (conn == nil) {
         return;
     }
 
     if (error != nil) {
+        os_log_error(BLE_LOG_GATT,
+                "Characteristic discovery failed: id=%{public}@ svc=%{public}@ error=%{public}@",
+                peripheral.identifier.UUIDString,
+                service.UUID.UUIDString, error.localizedDescription);
         conn->lastOpError = YES;
         dispatch_semaphore_signal(conn->discoveryDone);
         return;
     }
+
+    os_log_info(BLE_LOG_GATT,
+            "Characteristics discovered: id=%{public}@ svc=%{public}@ count=%lu",
+            peripheral.identifier.UUIDString,
+            service.UUID.UUIDString,
+            (unsigned long)service.characteristics.count);
 
     /* Check if every service now has its characteristics populated. */
     BOOL allDone = YES;
@@ -510,6 +617,13 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit(
 
     (void)self;   /* JniNativeBridge instance — not used for callbacks */
 
+    /* Initialise os_log objects on first call. */
+    BLE_LOG_SCAN    = os_log_create(LOG_SUBSYSTEM, "scan");
+    BLE_LOG_CONNECT = os_log_create(LOG_SUBSYSTEM, "connect");
+    BLE_LOG_GATT    = os_log_create(LOG_SUBSYSTEM, "gatt");
+
+    os_log_info(BLE_LOG_SCAN, "nativeInit: allocating BleContext");
+
     BleContext *ctx = calloc(1, sizeof(BleContext));
     if (ctx == NULL) {
         (*env)->ThrowNew(env,
@@ -579,6 +693,10 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeInit(
 
     if (result != 0) {
         /* Timed out — Bluetooth is likely off or unavailable. */
+        os_log_error(BLE_LOG_SCAN,
+                "nativeInit timed out waiting for Bluetooth adapter "
+                "(state=%ld). Ensure Bluetooth is enabled.",
+                (long)ctx->centralManager.state);
         (*env)->DeleteGlobalRef(env, ctx->callbacksRef);
         /* ARC will release centralManager and delegate. */
         ctx->centralManager = nil;
@@ -616,6 +734,12 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStartScan(
         services = @[[CBUUID UUIDWithString:uuidString]];
     }
 
+    os_log_info(BLE_LOG_SCAN, "nativeStartScan: serviceUuid=%{public}@",
+            uuidString != nil ? uuidString : @"(all)");
+
+    /* Clear stale manufacturer-data cache from any previous scan. */
+    [ctx->delegate clearMfrDataCache];
+
     dispatch_async(ctx->bleQueue, ^{
         [ctx->centralManager
                 scanForPeripheralsWithServices:services
@@ -643,6 +767,8 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeStopScan(
     (void)self;
 
     BleContext *ctx = (BleContext *)(uintptr_t)contextPtr;
+
+    os_log_info(BLE_LOG_SCAN, "nativeStopScan");
 
     dispatch_async(ctx->bleQueue, ^{
         [ctx->centralManager stopScan];
@@ -689,6 +815,8 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeConnect(
 
     BleContext *ctx = (BleContext *)(uintptr_t)contextPtr;
     NSString *uuidString = nsStringFromJString(env, peripheralUuid);
+
+    os_log_info(BLE_LOG_CONNECT, "nativeConnect: uuid=%{public}@", uuidString);
 
     NSUUID *nsuuid = [[NSUUID alloc] initWithUUIDString:uuidString];
     if (nsuuid == nil) {
@@ -741,6 +869,15 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeConnect(
                     (int64_t)(CONNECT_TIMEOUT * NSEC_PER_SEC)));
 
     if (discoveryResult != 0 || conn->lastOpError) {
+        if (discoveryResult != 0) {
+            os_log_error(BLE_LOG_CONNECT,
+                    "nativeConnect timed out waiting for service discovery: uuid=%{public}@",
+                    uuidString);
+        } else {
+            os_log_error(BLE_LOG_CONNECT,
+                    "nativeConnect failed (connection or discovery error): uuid=%{public}@",
+                    uuidString);
+        }
         dispatch_sync(ctx->bleQueue, ^{
             [ctx->centralManager cancelPeripheralConnection:peripheral];
         });
@@ -751,12 +888,14 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeConnect(
         return 0L;
     }
 
+    os_log_info(BLE_LOG_CONNECT,
+            "nativeConnect succeeded: uuid=%{public}@ connPtr=0x%lx",
+            uuidString, (unsigned long)(uintptr_t)conn);
+
     return (jlong)(uintptr_t)conn;
 }
 
 /**
- * Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect
- *
  * Calls CBCentralManager.cancelPeripheralConnection and waits for the
  * disconnection callback, then frees the BleConnectionContext.
  */
@@ -813,6 +952,10 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse(
             [conn->peripheral writeValue:nsData
                        forCharacteristic:chr
                                     type:CBCharacteristicWriteWithoutResponse];
+        } else {
+            os_log_error(BLE_LOG_GATT,
+                    "nativeWriteWithoutResponse: characteristic not found svc=%{public}@ chr=%{public}@",
+                    svcStr, chrStr);
         }
     });
 }
@@ -857,6 +1000,15 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeReadCharacteristic(
                     (int64_t)(READ_TIMEOUT * NSEC_PER_SEC)));
 
     if (result != 0 || conn->lastOpError || conn->lastReadValue == nil) {
+        if (result != 0) {
+            os_log_error(BLE_LOG_GATT,
+                    "nativeReadCharacteristic timed out: svc=%{public}@ chr=%{public}@",
+                    svcStr, chrStr);
+        } else {
+            os_log_error(BLE_LOG_GATT,
+                    "nativeReadCharacteristic failed: svc=%{public}@ chr=%{public}@",
+                    svcStr, chrStr);
+        }
         return NULL;
     }
 
