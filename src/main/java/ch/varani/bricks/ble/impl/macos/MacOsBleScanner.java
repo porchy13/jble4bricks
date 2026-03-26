@@ -241,6 +241,7 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
 
         LOG.info(() -> "Connecting to peripheral: " + peripheralUuid);
         final long ptr = contextPtr;
+        final MacOsBleDevice knownDevice = knownDevices.get(peripheralUuid);
         return CompletableFuture.supplyAsync(() -> {
             final long connPtr;
             try {
@@ -251,7 +252,9 @@ public final class MacOsBleScanner implements BleScanner, BleNativeCallbacks {
                         new BleException("Connection to " + peripheralUuid
                                 + " failed: " + e.getMessage(), e));
             }
-            final MacOsBleConnection conn = new MacOsBleConnection(connPtr, ptr, this);
+            final MacOsBleConnection conn = knownDevice != null
+                    ? new MacOsBleConnection(connPtr, ptr, this, knownDevice)
+                    : new MacOsBleConnection(connPtr, ptr, this);
             openConnections.put(connPtr, conn);
             LOG.info(() -> "Connected to peripheral: " + peripheralUuid
                     + " (connPtr=0x" + Long.toHexString(connPtr) + ")");

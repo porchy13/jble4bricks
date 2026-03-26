@@ -216,6 +216,24 @@ static CBCharacteristic *findCharacteristic(
      * previous scan session cannot leak into a new one.
      */
     NSMutableDictionary<NSString *, NSData *> *_mfrDataCache;
+
+    /*
+     * Active connection map (peripheral UUID string → NSValue wrapping BleConnectionContext *).
+     *
+     * CBPeripheral.delegate is declared as a 'weak' property by the CoreBluetooth
+     * framework.  Assigning a plain malloc'd C struct to it via __bridge causes
+     * objc_storeWeak to crash because the pointer has no Objective-C runtime
+     * metadata (no isa, no weak-reference side-table entry).
+     *
+     * Instead, BleCentralDelegate itself (a proper ObjC object) is always set as
+     * the peripheral delegate.  The BleConnectionContext* for each active
+     * connection is looked up from this map using the peripheral's UUID string as
+     * the key whenever a delegate callback fires.
+     *
+     * Access must happen on ctx->bleQueue (same queue that drives all CoreBluetooth
+     * callbacks), so no additional locking is needed.
+     */
+    NSMutableDictionary<NSString *, NSValue *> *_connMap;
 }
 
 - (instancetype)initWithContext:(BleContext *)ctx {
@@ -223,6 +241,7 @@ static CBCharacteristic *findCharacteristic(
     if (self) {
         _ctx = ctx;
         _mfrDataCache = [NSMutableDictionary dictionary];
+        _connMap      = [NSMutableDictionary dictionary];
     }
     return self;
 }
@@ -230,6 +249,33 @@ static CBCharacteristic *findCharacteristic(
 /** Clears the manufacturer-data cache.  Must be called before each new scan. */
 - (void)clearMfrDataCache {
     [_mfrDataCache removeAllObjects];
+}
+
+/**
+ * Registers a BleConnectionContext for the given peripheral so that delegate
+ * callbacks can recover it by UUID.  Must be called on ctx->bleQueue.
+ */
+- (void)registerConnection:(BleConnectionContext *)conn
+             forPeripheral:(CBPeripheral *)peripheral {
+    NSString *key = peripheral.identifier.UUIDString;
+    _connMap[key] = [NSValue valueWithPointer:conn];
+}
+
+/**
+ * Removes the BleConnectionContext registration for the given peripheral.
+ * Must be called on ctx->bleQueue before the conn struct is freed.
+ */
+- (void)unregisterConnectionForPeripheral:(CBPeripheral *)peripheral {
+    [_connMap removeObjectForKey:peripheral.identifier.UUIDString];
+}
+
+/**
+ * Returns the BleConnectionContext for the given peripheral, or NULL if none
+ * is registered.  Must be called on ctx->bleQueue.
+ */
+- (BleConnectionContext *)connectionForPeripheral:(CBPeripheral *)peripheral {
+    NSValue *val = _connMap[peripheral.identifier.UUIDString];
+    return val ? (BleConnectionContext *)val.pointerValue : NULL;
 }
 
 /* ───────────────────────────────────────────────────────────────────────────
@@ -363,7 +409,7 @@ static CBCharacteristic *findCharacteristic(
     os_log_info(BLE_LOG_CONNECT, "Peripheral connected: id=%{public}@",
             peripheral.identifier.UUIDString);
 
-    BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
+    BleConnectionContext *conn = [self connectionForPeripheral:peripheral];
     if (conn == nil) {
         return;
     }
@@ -385,7 +431,7 @@ static CBCharacteristic *findCharacteristic(
             peripheral.identifier.UUIDString,
             error != nil ? error.localizedDescription : @"(no error details)");
 
-    BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
+    BleConnectionContext *conn = [self connectionForPeripheral:peripheral];
     if (conn == nil) {
         return;
     }
@@ -411,7 +457,7 @@ static CBCharacteristic *findCharacteristic(
                 peripheral.identifier.UUIDString);
     }
 
-    BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
+    BleConnectionContext *conn = [self connectionForPeripheral:peripheral];
     if (conn == nil) {
         return;
     }
@@ -430,7 +476,7 @@ static CBCharacteristic *findCharacteristic(
 - (void)peripheral:(CBPeripheral *)peripheral
     didDiscoverServices:(NSError *)error {
 
-    BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
+    BleConnectionContext *conn = [self connectionForPeripheral:peripheral];
     if (conn == nil) {
         return;
     }
@@ -469,7 +515,7 @@ static CBCharacteristic *findCharacteristic(
     didDiscoverCharacteristicsForService:(CBService *)service
     error:(NSError *)error {
 
-    BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
+    BleConnectionContext *conn = [self connectionForPeripheral:peripheral];
     if (conn == nil) {
         return;
     }
@@ -519,7 +565,7 @@ static CBCharacteristic *findCharacteristic(
     didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
     error:(NSError *)error {
 
-    BleConnectionContext *conn = (__bridge BleConnectionContext *)peripheral.delegate;
+    BleConnectionContext *conn = [self connectionForPeripheral:peripheral];
     if (conn == nil) {
         return;
     }
@@ -856,9 +902,14 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeConnect(
     conn->readDone      = dispatch_semaphore_create(0);
     conn->lastOpError   = NO;
 
-    /* Set the peripheral delegate to this connection context (bridged ptr). */
+    /* Register the connection context in the delegate's map and set the
+     * peripheral delegate to the central delegate (a proper ObjC object).
+     * Using __bridge to cast conn directly to id<CBPeripheralDelegate> would
+     * crash on macOS 15+ because CBPeripheral.delegate is 'weak' and
+     * objc_storeWeak requires a real Objective-C object with an isa pointer. */
     dispatch_sync(ctx->bleQueue, ^{
-        peripheral.delegate = (__bridge id<CBPeripheralDelegate>)conn;
+        [ctx->delegate registerConnection:conn forPeripheral:peripheral];
+        peripheral.delegate = ctx->delegate;
         [ctx->centralManager connectPeripheral:peripheral options:nil];
     });
 
@@ -910,6 +961,7 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect(
     BleConnectionContext *conn = (BleConnectionContext *)(uintptr_t)connectionPtr;
 
     dispatch_sync(ctx->bleQueue, ^{
+        [ctx->delegate unregisterConnectionForPeripheral:conn->peripheral];
         conn->peripheral.delegate = nil;
         [ctx->centralManager cancelPeripheralConnection:conn->peripheral];
     });
