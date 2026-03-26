@@ -305,11 +305,54 @@ public final class LegoProtocolConstants {
     /** Hub property: Battery Type. */
     public static final int HUB_PROP_BATTERY_TYPE = 0x07;
 
+    /**
+     * Hub property: Manufacturer Name ({@code 0x08}).
+     *
+     * <p>Operations: Request Update, Update.
+     */
+    public static final int HUB_PROP_MANUFACTURER_NAME = 0x08;
+
+    /**
+     * Hub property: Radio Firmware Version ({@code 0x09}).
+     *
+     * <p>Operations: Request Update, Update.
+     */
+    public static final int HUB_PROP_RADIO_FIRMWARE_VERSION = 0x09;
+
+    /**
+     * Hub property: LEGO Wireless Protocol Version ({@code 0x0A}).
+     *
+     * <p>Operations: Request Update, Update.
+     * Encoded as 2-byte BCD: {@code MMMM MMMM mmmm mmmm}.
+     */
+    public static final int HUB_PROP_LWP_VERSION = 0x0A;
+
     /** Hub property: System Type ID. */
     public static final int HUB_PROP_SYSTEM_TYPE_ID = 0x0B;
 
+    /**
+     * Hub property: Hardware Network ID ({@code 0x0C}).
+     *
+     * <p>Operations: Set, Request Update, Update.
+     */
+    public static final int HUB_PROP_HW_NETWORK_ID = 0x0C;
+
     /** Hub property: Primary MAC Address. */
     public static final int HUB_PROP_PRIMARY_MAC = 0x0D;
+
+    /**
+     * Hub property: Secondary MAC Address ({@code 0x0E}).
+     *
+     * <p>Operations: Request Update, Update.
+     */
+    public static final int HUB_PROP_SECONDARY_MAC = 0x0E;
+
+    /**
+     * Hub property: Hardware Network Family ({@code 0x0F}).
+     *
+     * <p>Operations: Set, Request Update, Update.
+     */
+    public static final int HUB_PROP_HW_NETWORK_FAMILY = 0x0F;
 
     // =========================================================================
     // Hub Property Operations (LWP3 §3.5.1)
@@ -348,6 +391,29 @@ public final class LegoProtocolConstants {
 
     /** Hub action: VCC port control off. */
     public static final int HUB_ACTION_VCC_PORT_OFF = 0x04;
+
+    /**
+     * Hub action: Activate busy indication ({@code 0x05}).
+     *
+     * <p>Downstream only. Signals the hub to show a "busy" LED state.
+     */
+    public static final int HUB_ACTION_ACTIVATE_BUSY_INDICATION = 0x05;
+
+    /**
+     * Hub action: Reset busy indication ({@code 0x06}).
+     *
+     * <p>Downstream only. Clears the "busy" LED state set by
+     * {@link #HUB_ACTION_ACTIVATE_BUSY_INDICATION}.
+     */
+    public static final int HUB_ACTION_RESET_BUSY_INDICATION = 0x06;
+
+    /**
+     * Hub action: Shutdown ({@code 0x2F}).
+     *
+     * <p>Downstream only. Instructs the hub to power off immediately without
+     * sending an upstream "will switch off" notification.
+     */
+    public static final int HUB_ACTION_SHUTDOWN = 0x2F;
 
     /** Hub action (upstream): hub will switch off. */
     public static final int HUB_ACTION_WILL_SWITCH_OFF = 0x30;
@@ -455,6 +521,45 @@ public final class LegoProtocolConstants {
     /** Device: Mario Hub (SSS=011, DDDDD=00000). */
     public static final int DEVICE_MARIO_HUB = 0x60;
 
+    // ── BLE manufacturer data hub-model IDs (node-poweredup BLEManufacturerData) ─
+    //
+    // These are the numeric identifiers reported in the manufacturer-specific
+    // advertisement payload to distinguish hub models.  They map to the values
+    // in the node-poweredup BLEManufacturerData enum and match the LWP3
+    // System Type + Device Number byte encoding where applicable.
+    //
+    // Reference: nathankellenicki/node-poweredup — src/consts.ts BLEManufacturerData
+
+    /** BLE manufacturer data ID for the Duplo Train Base ({@code 32} = {@code 0x20}). */
+    public static final int BLE_MFR_ID_DUPLO_TRAIN_BASE = 32;
+
+    /** BLE manufacturer data ID for the Boost Move Hub ({@code 64} = {@code 0x40}). */
+    public static final int BLE_MFR_ID_MOVE_HUB = 64;
+
+    /** BLE manufacturer data ID for the 2-Port City Hub ({@code 65} = {@code 0x41}). */
+    public static final int BLE_MFR_ID_HUB = 65;
+
+    /** BLE manufacturer data ID for the Remote Control handset ({@code 66} = {@code 0x42}). */
+    public static final int BLE_MFR_ID_REMOTE_CONTROL = 66;
+
+    /** BLE manufacturer data ID for the Mario Hub ({@code 67} = {@code 0x43}). */
+    public static final int BLE_MFR_ID_MARIO = 67;
+
+    /**
+     * BLE manufacturer data ID for the Technic Medium (Control+) Hub ({@code 128} = {@code 0x80}).
+     *
+     * <p>Note: this value differs from {@link #DEVICE_TECHNIC_HUB} ({@code 0x50}).
+     * {@link #DEVICE_TECHNIC_HUB} encodes the LWP3 System Type + Device Number byte
+     * as defined in the official LEGO BLE Wireless Protocol 3.0 specification.
+     * This constant is the numeric hub-model identifier reported in the advertisement
+     * payload as catalogued by node-poweredup and may be used in a different byte
+     * position or protocol layer.
+     */
+    public static final int BLE_MFR_ID_TECHNIC_MEDIUM_HUB = 128;
+
+    /** BLE manufacturer data ID for the Technic Small Hub ({@code 131} = {@code 0x83}). */
+    public static final int BLE_MFR_ID_TECHNIC_SMALL_HUB = 131;
+
     /**
      * Byte index within the LEGO manufacturer-specific advertisement payload
      * (after stripping the AD Length and AD Type prefix) at which the System
@@ -512,6 +617,618 @@ public final class LegoProtocolConstants {
      * If bit 7 is set the length occupies two bytes.
      */
     public static final int LENGTH_TWO_BYTE_FLAG = 0x80;
+
+    // =========================================================================
+    // Device Type IDs (LWP3 §3.18 — IO Type ID / node-poweredup DeviceType)
+    // =========================================================================
+    //
+    // These IDs are reported in Hub Attached I/O messages (message type 0x04)
+    // and identify the peripheral connected to a port.
+    //
+    // Reference: LEGO BLE Wireless Protocol 3.0 §3.18 and
+    //            nathankellenicki/node-poweredup — src/consts.ts DeviceType
+
+    /** Device type: unknown / not identified ({@code 0}). */
+    public static final int DEVICE_TYPE_UNKNOWN = 0;
+
+    /** Device type: Simple / Medium Linear Motor ({@code 1}). */
+    public static final int DEVICE_TYPE_SIMPLE_MEDIUM_LINEAR_MOTOR = 1;
+
+    /** Device type: Train Motor ({@code 2}). */
+    public static final int DEVICE_TYPE_TRAIN_MOTOR = 2;
+
+    /** Device type: Light ({@code 8}). */
+    public static final int DEVICE_TYPE_LIGHT = 8;
+
+    /** Device type: Voltage Sensor ({@code 20}). */
+    public static final int DEVICE_TYPE_VOLTAGE_SENSOR = 20;
+
+    /** Device type: Current Sensor ({@code 21}). */
+    public static final int DEVICE_TYPE_CURRENT_SENSOR = 21;
+
+    /** Device type: Piezo Buzzer ({@code 22}). */
+    public static final int DEVICE_TYPE_PIEZO_BUZZER = 22;
+
+    /** Device type: Hub LED ({@code 23}). */
+    public static final int DEVICE_TYPE_HUB_LED = 23;
+
+    /** Device type: Tilt Sensor ({@code 34}). */
+    public static final int DEVICE_TYPE_TILT_SENSOR = 34;
+
+    /** Device type: Motion / Distance Sensor ({@code 35}). */
+    public static final int DEVICE_TYPE_MOTION_SENSOR = 35;
+
+    /** Device type: Color and Distance Sensor ({@code 37}). */
+    public static final int DEVICE_TYPE_COLOR_DISTANCE_SENSOR = 37;
+
+    /** Device type: Medium Linear Motor ({@code 38}). */
+    public static final int DEVICE_TYPE_MEDIUM_LINEAR_MOTOR = 38;
+
+    /** Device type: Move Hub Medium Linear Motor ({@code 39}). */
+    public static final int DEVICE_TYPE_MOVE_HUB_MEDIUM_LINEAR_MOTOR = 39;
+
+    /** Device type: Move Hub Tilt Sensor ({@code 40}). */
+    public static final int DEVICE_TYPE_MOVE_HUB_TILT_SENSOR = 40;
+
+    /** Device type: Duplo Train Base Motor ({@code 41}). */
+    public static final int DEVICE_TYPE_DUPLO_TRAIN_BASE_MOTOR = 41;
+
+    /** Device type: Duplo Train Base Speaker ({@code 42}). */
+    public static final int DEVICE_TYPE_DUPLO_TRAIN_BASE_SPEAKER = 42;
+
+    /** Device type: Duplo Train Base Color Sensor ({@code 43}). */
+    public static final int DEVICE_TYPE_DUPLO_TRAIN_BASE_COLOR_SENSOR = 43;
+
+    /** Device type: Duplo Train Base Speedometer ({@code 44}). */
+    public static final int DEVICE_TYPE_DUPLO_TRAIN_BASE_SPEEDOMETER = 44;
+
+    /** Device type: Technic Large Linear Motor / Control+ ({@code 46}). */
+    public static final int DEVICE_TYPE_TECHNIC_LARGE_LINEAR_MOTOR = 46;
+
+    /** Device type: Technic XLarge Linear Motor / Control+ ({@code 47}). */
+    public static final int DEVICE_TYPE_TECHNIC_XLARGE_LINEAR_MOTOR = 47;
+
+    /** Device type: Technic Medium Angular Motor / Spike Prime ({@code 48}). */
+    public static final int DEVICE_TYPE_TECHNIC_MEDIUM_ANGULAR_MOTOR = 48;
+
+    /** Device type: Technic Large Angular Motor / Spike Prime ({@code 49}). */
+    public static final int DEVICE_TYPE_TECHNIC_LARGE_ANGULAR_MOTOR = 49;
+
+    /** Device type: Technic Medium Hub Gesture Sensor ({@code 54}). */
+    public static final int DEVICE_TYPE_TECHNIC_MEDIUM_HUB_GEST_SENSOR = 54;
+
+    /** Device type: Remote Control Button ({@code 55}). */
+    public static final int DEVICE_TYPE_REMOTE_CONTROL_BUTTON = 55;
+
+    /** Device type: Remote Control RSSI ({@code 56}). */
+    public static final int DEVICE_TYPE_REMOTE_CONTROL_RSSI = 56;
+
+    /** Device type: Technic Medium Hub Accelerometer ({@code 57}). */
+    public static final int DEVICE_TYPE_TECHNIC_MEDIUM_HUB_ACCELEROMETER = 57;
+
+    /** Device type: Technic Medium Hub Gyro Sensor ({@code 58}). */
+    public static final int DEVICE_TYPE_TECHNIC_MEDIUM_HUB_GYRO_SENSOR = 58;
+
+    /** Device type: Technic Medium Hub Tilt Sensor ({@code 59}). */
+    public static final int DEVICE_TYPE_TECHNIC_MEDIUM_HUB_TILT_SENSOR = 59;
+
+    /** Device type: Technic Medium Hub Temperature Sensor ({@code 60}). */
+    public static final int DEVICE_TYPE_TECHNIC_MEDIUM_HUB_TEMPERATURE_SENSOR = 60;
+
+    /** Device type: Technic Color Sensor / Spike Prime ({@code 61}). */
+    public static final int DEVICE_TYPE_TECHNIC_COLOR_SENSOR = 61;
+
+    /** Device type: Technic Distance Sensor / Spike Prime ({@code 62}). */
+    public static final int DEVICE_TYPE_TECHNIC_DISTANCE_SENSOR = 62;
+
+    /** Device type: Technic Force Sensor / Spike Prime ({@code 63}). */
+    public static final int DEVICE_TYPE_TECHNIC_FORCE_SENSOR = 63;
+
+    /** Device type: Technic 3×3 Color Light Matrix / Spike Essential ({@code 64}). */
+    public static final int DEVICE_TYPE_TECHNIC_3X3_COLOR_LIGHT_MATRIX = 64;
+
+    /** Device type: Technic Small Angular Motor / Spike Essential ({@code 65}). */
+    public static final int DEVICE_TYPE_TECHNIC_SMALL_ANGULAR_MOTOR = 65;
+
+    /** Device type: Mario Accelerometer ({@code 71}). */
+    public static final int DEVICE_TYPE_MARIO_ACCELEROMETER = 71;
+
+    /** Device type: Mario Barcode Sensor ({@code 73}). */
+    public static final int DEVICE_TYPE_MARIO_BARCODE_SENSOR = 73;
+
+    /** Device type: Mario Pants Sensor ({@code 74}). */
+    public static final int DEVICE_TYPE_MARIO_PANTS_SENSOR = 74;
+
+    /** Device type: Technic Medium Angular Motor Grey / Mindstorms ({@code 75}). */
+    public static final int DEVICE_TYPE_TECHNIC_MEDIUM_ANGULAR_MOTOR_GREY = 75;
+
+    /** Device type: Technic Large Angular Motor Grey / Control+ ({@code 76}). */
+    public static final int DEVICE_TYPE_TECHNIC_LARGE_ANGULAR_MOTOR_GREY = 76;
+
+    // =========================================================================
+    // IO Type IDs (LWP3 §3.18 — low-level hardware type identifiers)
+    // =========================================================================
+    //
+    // These 16-bit identifiers are the raw IO Type IDs reported in Port
+    // Information messages and map directly to the LWP3 §3.18 table.
+    //
+    // Reference: LEGO BLE Wireless Protocol 3.0 §3.18 and
+    //            nathankellenicki/node-poweredup — src/consts.ts IOTypeID
+
+    /** IO Type: Motor ({@code 0x0001}). */
+    public static final int IO_TYPE_MOTOR = 0x0001;
+
+    /** IO Type: System Train Motor ({@code 0x0002}). */
+    public static final int IO_TYPE_SYSTEM_TRAIN_MOTOR = 0x0002;
+
+    /** IO Type: Button ({@code 0x0005}). */
+    public static final int IO_TYPE_BUTTON = 0x0005;
+
+    /** IO Type: LED Light ({@code 0x0008}). */
+    public static final int IO_TYPE_LED_LIGHT = 0x0008;
+
+    /** IO Type: Voltage sensor ({@code 0x0014}). */
+    public static final int IO_TYPE_VOLTAGE = 0x0014;
+
+    /** IO Type: Current sensor ({@code 0x0015}). */
+    public static final int IO_TYPE_CURRENT = 0x0015;
+
+    /** IO Type: Piezo Tone / Sound ({@code 0x0016}). */
+    public static final int IO_TYPE_PIEZO_TONE_SOUND = 0x0016;
+
+    /** IO Type: RGB Light ({@code 0x0017}). */
+    public static final int IO_TYPE_RGB_LIGHT = 0x0017;
+
+    /** IO Type: External Tilt Sensor ({@code 0x0022}). */
+    public static final int IO_TYPE_EXTERNAL_TILT_SENSOR = 0x0022;
+
+    /** IO Type: Motion Sensor ({@code 0x0023}). */
+    public static final int IO_TYPE_MOTION_SENSOR = 0x0023;
+
+    /** IO Type: Vision / Color-Distance Sensor ({@code 0x0025}). */
+    public static final int IO_TYPE_VISION_SENSOR = 0x0025;
+
+    /** IO Type: External Motor ({@code 0x0026}). */
+    public static final int IO_TYPE_EXTERNAL_MOTOR = 0x0026;
+
+    /** IO Type: Internal Motor ({@code 0x0027}). */
+    public static final int IO_TYPE_INTERNAL_MOTOR = 0x0027;
+
+    /** IO Type: Internal Tilt ({@code 0x0028}). */
+    public static final int IO_TYPE_INTERNAL_TILT = 0x0028;
+
+    // =========================================================================
+    // Color constants (LWP3 LED colour index)
+    // =========================================================================
+    //
+    // These indices are used when setting LED colour via the Hub LED device
+    // (device type {@link #DEVICE_TYPE_HUB_LED}).
+    //
+    // Reference: nathankellenicki/node-poweredup — src/consts.ts Color
+
+    /** LED colour: Black ({@code 0}). */
+    public static final int COLOR_BLACK = 0;
+
+    /** LED colour: Pink ({@code 1}). */
+    public static final int COLOR_PINK = 1;
+
+    /** LED colour: Purple ({@code 2}). */
+    public static final int COLOR_PURPLE = 2;
+
+    /** LED colour: Blue ({@code 3}). */
+    public static final int COLOR_BLUE = 3;
+
+    /** LED colour: Light Blue ({@code 4}). */
+    public static final int COLOR_LIGHT_BLUE = 4;
+
+    /** LED colour: Cyan ({@code 5}). */
+    public static final int COLOR_CYAN = 5;
+
+    /** LED colour: Green ({@code 6}). */
+    public static final int COLOR_GREEN = 6;
+
+    /** LED colour: Yellow ({@code 7}). */
+    public static final int COLOR_YELLOW = 7;
+
+    /** LED colour: Orange ({@code 8}). */
+    public static final int COLOR_ORANGE = 8;
+
+    /** LED colour: Red ({@code 9}). */
+    public static final int COLOR_RED = 9;
+
+    /** LED colour: White ({@code 10}). */
+    public static final int COLOR_WHITE = 10;
+
+    /** LED colour: None / off ({@code 255}). */
+    public static final int COLOR_NONE = 255;
+
+    // =========================================================================
+    // Button State constants
+    // =========================================================================
+    //
+    // These values are reported in Hub Property Update payloads when the hub
+    // button property ({@link #HUB_PROP_BUTTON}) is subscribed.
+    //
+    // Reference: nathankellenicki/node-poweredup — src/consts.ts ButtonState
+
+    /** Button state: Released ({@code 0}). */
+    public static final int BUTTON_STATE_RELEASED = 0;
+
+    /** Button state: Up ({@code 1}) — used by Remote Control handset. */
+    public static final int BUTTON_STATE_UP = 1;
+
+    /** Button state: Pressed ({@code 2}). */
+    public static final int BUTTON_STATE_PRESSED = 2;
+
+    /** Button state: Stop ({@code 127}) — used by Remote Control handset. */
+    public static final int BUTTON_STATE_STOP = 127;
+
+    /** Button state: Down ({@code 255}) — used by Remote Control handset. */
+    public static final int BUTTON_STATE_DOWN = 255;
+
+    // =========================================================================
+    // Braking Style constants (LWP3 motor end-state / braking mode)
+    // =========================================================================
+    //
+    // These values are passed in the end-state field of motor output commands.
+    //
+    // Reference: nathankellenicki/node-poweredup — src/consts.ts BrakingStyle
+
+    /** Braking style: Float / coast (motor allowed to spin freely, {@code 0}). */
+    public static final int BRAKING_STYLE_FLOAT = 0;
+
+    /** Braking style: Hold position (motor actively holds current position, {@code 126}). */
+    public static final int BRAKING_STYLE_HOLD = 126;
+
+    /** Braking style: Brake (motor actively brakes to stop, {@code 127}). */
+    public static final int BRAKING_STYLE_BRAKE = 127;
+
+    // =========================================================================
+    // Error Codes (LWP3 §3.12 — Generic Error Messages)
+    // =========================================================================
+    //
+    // These codes are carried in Generic Error messages (message type 0x05).
+    //
+    // Reference: LEGO BLE Wireless Protocol 3.0 §3.12 and
+    //            nathankellenicki/node-poweredup — src/consts.ts ErrorCode
+
+    /** Error code: ACK — command acknowledged ({@code 0x01}). */
+    public static final int ERROR_CODE_ACK = 0x01;
+
+    /** Error code: MACK — message acknowledged ({@code 0x02}). */
+    public static final int ERROR_CODE_MACK = 0x02;
+
+    /** Error code: Buffer overflow ({@code 0x03}). */
+    public static final int ERROR_CODE_BUFFER_OVERFLOW = 0x03;
+
+    /** Error code: Timeout ({@code 0x04}). */
+    public static final int ERROR_CODE_TIMEOUT = 0x04;
+
+    /** Error code: Command not recognised ({@code 0x05}). */
+    public static final int ERROR_CODE_COMMAND_NOT_RECOGNIZED = 0x05;
+
+    /** Error code: Invalid use ({@code 0x06}). */
+    public static final int ERROR_CODE_INVALID_USE = 0x06;
+
+    /** Error code: Overcurrent ({@code 0x07}). */
+    public static final int ERROR_CODE_OVERCURRENT = 0x07;
+
+    /** Error code: Internal error ({@code 0x08}). */
+    public static final int ERROR_CODE_INTERNAL_ERROR = 0x08;
+
+    // =========================================================================
+    // Command Feedback (LWP3 §3.28 — Port Output Command Feedback)
+    // =========================================================================
+    //
+    // These values appear in Port Output Command Feedback messages
+    // (message type {@link #MSG_PORT_OUTPUT_COMMAND_FEEDBACK}).
+    //
+    // Reference: nathankellenicki/node-poweredup — src/consts.ts CommandFeedback
+
+    /** Feedback: Transmission pending — waiting for previous command ({@code 0x00}). */
+    public static final int FEEDBACK_TRANSMISSION_PENDING = 0x00;
+
+    /** Feedback: Transmission busy — waiting for device ACK ({@code 0x10}). */
+    public static final int FEEDBACK_TRANSMISSION_BUSY = 0x10;
+
+    /** Feedback: Transmission discarded — interrupt received ({@code 0x44}). */
+    public static final int FEEDBACK_TRANSMISSION_DISCARDED = 0x44;
+
+    /** Feedback: Execution pending — waiting for previous command to complete ({@code 0x20}). */
+    public static final int FEEDBACK_EXECUTION_PENDING = 0x20;
+
+    /** Feedback: Execution busy — device is executing command ({@code 0x21}). */
+    public static final int FEEDBACK_EXECUTION_BUSY = 0x21;
+
+    /** Feedback: Execution completed — device reported success ({@code 0x22}). */
+    public static final int FEEDBACK_EXECUTION_COMPLETED = 0x22;
+
+    /** Feedback: Execution discarded — device discarded command ({@code 0x24}). */
+    public static final int FEEDBACK_EXECUTION_DISCARDED = 0x24;
+
+    /** Feedback: Feedback disabled — not implemented for this command ({@code 0x26}). */
+    public static final int FEEDBACK_DISABLED = 0x26;
+
+    /** Feedback: Feedback missing — device disconnected or failed to report ({@code 0x66}). */
+    public static final int FEEDBACK_MISSING = 0x66;
+
+    // =========================================================================
+    // Mode Information Types (LWP3 §3.20.4)
+    // =========================================================================
+    //
+    // Used in Port Mode Information Request messages (message type 0x22) to
+    // specify which mode-information field to query.
+    //
+    // Reference: LEGO BLE Wireless Protocol 3.0 §3.20.4 and
+    //            nathankellenicki/node-poweredup — src/consts.ts ModeInformationType
+
+    /** Mode information type: Name ({@code 0x00}). */
+    public static final int MODE_INFO_NAME = 0x00;
+
+    /** Mode information type: RAW value range ({@code 0x01}). */
+    public static final int MODE_INFO_RAW = 0x01;
+
+    /** Mode information type: Percent value range ({@code 0x02}). */
+    public static final int MODE_INFO_PCT = 0x02;
+
+    /** Mode information type: SI value range ({@code 0x03}). */
+    public static final int MODE_INFO_SI = 0x03;
+
+    /** Mode information type: Symbol string ({@code 0x04}). */
+    public static final int MODE_INFO_SYMBOL = 0x04;
+
+    /** Mode information type: Mapping flags ({@code 0x05}). */
+    public static final int MODE_INFO_MAPPING = 0x05;
+
+    /** Mode information type: Used internally ({@code 0x06}). */
+    public static final int MODE_INFO_USED_INTERNALLY = 0x06;
+
+    /** Mode information type: Motor bias ({@code 0x07}). */
+    public static final int MODE_INFO_MOTOR_BIAS = 0x07;
+
+    /** Mode information type: Capability bits ({@code 0x08}). */
+    public static final int MODE_INFO_CAPABILITY_BITS = 0x08;
+
+    /** Mode information type: Value format ({@code 0x80}). */
+    public static final int MODE_INFO_VALUE_FORMAT = 0x80;
+
+    // =========================================================================
+    // H/W Network Command Types (LWP3 §3.8)
+    // =========================================================================
+    //
+    // Sub-command types within H/W Network Command messages
+    // (message type {@link #MSG_HW_NETWORK_COMMANDS}).
+    //
+    // Reference: LEGO BLE Wireless Protocol 3.0 §3.8 and
+    //            nathankellenicki/node-poweredup — src/consts.ts HWNetWorkCommandType
+
+    /** H/W Network command: Connection Request ({@code 0x02}). */
+    public static final int HW_NET_CMD_CONNECTION_REQUEST = 0x02;
+
+    /** H/W Network command: Family Request ({@code 0x03}). */
+    public static final int HW_NET_CMD_FAMILY_REQUEST = 0x03;
+
+    /** H/W Network command: Family Set ({@code 0x04}). */
+    public static final int HW_NET_CMD_FAMILY_SET = 0x04;
+
+    /** H/W Network command: Join Denied ({@code 0x05}). */
+    public static final int HW_NET_CMD_JOIN_DENIED = 0x05;
+
+    /** H/W Network command: Get Family ({@code 0x06}). */
+    public static final int HW_NET_CMD_GET_FAMILY = 0x06;
+
+    /** H/W Network command: Family ({@code 0x07}). */
+    public static final int HW_NET_CMD_FAMILY = 0x07;
+
+    /** H/W Network command: Get Sub-Family ({@code 0x08}). */
+    public static final int HW_NET_CMD_GET_SUBFAMILY = 0x08;
+
+    /** H/W Network command: Sub-Family ({@code 0x09}). */
+    public static final int HW_NET_CMD_SUBFAMILY = 0x09;
+
+    /** H/W Network command: Sub-Family Set ({@code 0x0A}). */
+    public static final int HW_NET_CMD_SUBFAMILY_SET = 0x0A;
+
+    /** H/W Network command: Get Extended Family ({@code 0x0B}). */
+    public static final int HW_NET_CMD_GET_EXTENDED_FAMILY = 0x0B;
+
+    /** H/W Network command: Extended Family ({@code 0x0C}). */
+    public static final int HW_NET_CMD_EXTENDED_FAMILY = 0x0C;
+
+    /** H/W Network command: Extended Family Set ({@code 0x0D}). */
+    public static final int HW_NET_CMD_EXTENDED_FAMILY_SET = 0x0D;
+
+    /** H/W Network command: Reset Long-Press Timing ({@code 0x0E}). */
+    public static final int HW_NET_CMD_RESET_LONG_PRESS_TIMING = 0x0E;
+
+    // =========================================================================
+    // Port Input Format Setup Sub-Commands (LWP3 §3.19.4)
+    // =========================================================================
+    //
+    // Used in Port Input Format Setup (Combined Mode) messages
+    // (message type {@link #MSG_PORT_INPUT_FORMAT_SETUP_COMBINED}).
+    //
+    // Reference: LEGO BLE Wireless Protocol 3.0 §3.19.4 and
+    //            nathankellenicki/node-poweredup — src/consts.ts PortInputFormatSetupSubCommand
+
+    /** Sub-command: Set Mode and Dataset Combinations ({@code 0x01}). */
+    public static final int PORT_INPUT_SUB_CMD_SET_MODE_AND_DATASET_COMBINATIONS = 0x01;
+
+    /** Sub-command: Lock LPF2 Device for Setup ({@code 0x02}). */
+    public static final int PORT_INPUT_SUB_CMD_LOCK_LPF2_DEVICE_FOR_SETUP = 0x02;
+
+    /** Sub-command: Unlock and Start with Multi-Update Enabled ({@code 0x03}). */
+    public static final int PORT_INPUT_SUB_CMD_UNLOCK_AND_START_MULTI_UPDATE_ENABLED = 0x03;
+
+    /** Sub-command: Unlock and Start with Multi-Update Disabled ({@code 0x04}). */
+    public static final int PORT_INPUT_SUB_CMD_UNLOCK_AND_START_MULTI_UPDATE_DISABLED = 0x04;
+
+    /** Sub-command: Not Used ({@code 0x05}). */
+    public static final int PORT_INPUT_SUB_CMD_NOT_USED = 0x05;
+
+    /** Sub-command: Reset Sensor ({@code 0x06}). */
+    public static final int PORT_INPUT_SUB_CMD_RESET_SENSOR = 0x06;
+
+    // =========================================================================
+    // Duplo Train Base Sound IDs
+    // =========================================================================
+    //
+    // These IDs are sent as the payload of a WriteDirectModeData command
+    // ({@link #MOTOR_CMD_WRITE_DIRECT_MODE_DATA}) to the Duplo Train Base
+    // Speaker device type ({@link #DEVICE_TYPE_DUPLO_TRAIN_BASE_SPEAKER}).
+    //
+    // Reference: nathankellenicki/node-poweredup — src/consts.ts DuploTrainBaseSound
+
+    /** Duplo Train Base sound: Brake ({@code 3}). */
+    public static final int DUPLO_SOUND_BRAKE = 3;
+
+    /** Duplo Train Base sound: Station Departure ({@code 5}). */
+    public static final int DUPLO_SOUND_STATION_DEPARTURE = 5;
+
+    /** Duplo Train Base sound: Water Refill ({@code 7}). */
+    public static final int DUPLO_SOUND_WATER_REFILL = 7;
+
+    /** Duplo Train Base sound: Horn ({@code 9}). */
+    public static final int DUPLO_SOUND_HORN = 9;
+
+    /** Duplo Train Base sound: Steam ({@code 10}). */
+    public static final int DUPLO_SOUND_STEAM = 10;
+
+    // =========================================================================
+    // Hub virtual port IDs (per hub — internal sensors and LEDs)
+    // =========================================================================
+    //
+    // These port IDs are not physical connectors; they address the built-in
+    // sensors and LED of each hub model.
+    //
+    // Reference: nathankellenicki/node-poweredup hub source files
+
+    // ── Move Hub (Boost) ──────────────────────────────────────────────────────
+
+    /** Move Hub: physical port A ({@code 0}). */
+    public static final int MOVE_HUB_PORT_A = 0x00;
+
+    /** Move Hub: physical port B ({@code 1}). */
+    public static final int MOVE_HUB_PORT_B = 0x01;
+
+    /** Move Hub: physical port C ({@code 2}). */
+    public static final int MOVE_HUB_PORT_C = 0x02;
+
+    /** Move Hub: physical port D ({@code 3}). */
+    public static final int MOVE_HUB_PORT_D = 0x03;
+
+    /** Move Hub: internal Hub LED ({@code 50}). */
+    public static final int MOVE_HUB_PORT_LED = 0x32;
+
+    /** Move Hub: internal Tilt Sensor ({@code 58}). */
+    public static final int MOVE_HUB_PORT_TILT_SENSOR = 0x3A;
+
+    /** Move Hub: internal Current Sensor ({@code 59}). */
+    public static final int MOVE_HUB_PORT_CURRENT_SENSOR = 0x3B;
+
+    /** Move Hub: internal Voltage Sensor ({@code 60}). */
+    public static final int MOVE_HUB_PORT_VOLTAGE_SENSOR = 0x3C;
+
+    // ── City Hub (2-Port Hub) ─────────────────────────────────────────────────
+
+    /** City Hub: physical port A ({@code 0}). */
+    public static final int CITY_HUB_PORT_A = 0x00;
+
+    /** City Hub: physical port B ({@code 1}). */
+    public static final int CITY_HUB_PORT_B = 0x01;
+
+    /** City Hub: internal Hub LED ({@code 50}). */
+    public static final int CITY_HUB_PORT_LED = 0x32;
+
+    /** City Hub: internal Current Sensor ({@code 59}). */
+    public static final int CITY_HUB_PORT_CURRENT_SENSOR = 0x3B;
+
+    /** City Hub: internal Voltage Sensor ({@code 60}). */
+    public static final int CITY_HUB_PORT_VOLTAGE_SENSOR = 0x3C;
+
+    // ── Remote Control handset ────────────────────────────────────────────────
+
+    /** Remote Control: left button port ({@code 0}). */
+    public static final int REMOTE_PORT_LEFT = 0x00;
+
+    /** Remote Control: right button port ({@code 1}). */
+    public static final int REMOTE_PORT_RIGHT = 0x01;
+
+    /** Remote Control: internal Hub LED ({@code 52}). */
+    public static final int REMOTE_PORT_LED = 0x34;
+
+    /** Remote Control: internal Voltage Sensor ({@code 59}). */
+    public static final int REMOTE_PORT_VOLTAGE_SENSOR = 0x3B;
+
+    /** Remote Control: RSSI sensor ({@code 60}). */
+    public static final int REMOTE_PORT_RSSI = 0x3C;
+
+    // ── Technic Hub (Control+) ────────────────────────────────────────────────
+
+    /** Technic Hub: physical port A ({@code 0}). */
+    public static final int TECHNIC_HUB_PORT_A = 0x00;
+
+    /** Technic Hub: physical port B ({@code 1}). */
+    public static final int TECHNIC_HUB_PORT_B = 0x01;
+
+    /** Technic Hub: physical port C ({@code 2}). */
+    public static final int TECHNIC_HUB_PORT_C = 0x02;
+
+    /** Technic Hub: physical port D ({@code 3}). */
+    public static final int TECHNIC_HUB_PORT_D = 0x03;
+
+    /** Technic Hub: internal Hub LED ({@code 50}). */
+    public static final int TECHNIC_HUB_PORT_LED = 0x32;
+
+    /** Technic Hub: internal Current Sensor ({@code 59}). */
+    public static final int TECHNIC_HUB_PORT_CURRENT_SENSOR = 0x3B;
+
+    /** Technic Hub: internal Voltage Sensor ({@code 60}). */
+    public static final int TECHNIC_HUB_PORT_VOLTAGE_SENSOR = 0x3C;
+
+    /** Technic Hub: internal Accelerometer ({@code 97}). */
+    public static final int TECHNIC_HUB_PORT_ACCELEROMETER = 0x61;
+
+    /** Technic Hub: internal Gyro Sensor ({@code 98}). */
+    public static final int TECHNIC_HUB_PORT_GYRO_SENSOR = 0x62;
+
+    /** Technic Hub: internal Tilt Sensor ({@code 99}). */
+    public static final int TECHNIC_HUB_PORT_TILT_SENSOR = 0x63;
+
+    // ── WeDo 2.0 — additional virtual ports ───────────────────────────────────
+
+    /** WeDo 2.0 internal Current Sensor port ({@code 3}). */
+    public static final int WEDO2_PORT_CURRENT_SENSOR = 0x03;
+
+    /** WeDo 2.0 internal Voltage Sensor port ({@code 4}). */
+    public static final int WEDO2_PORT_VOLTAGE_SENSOR = 0x04;
+
+    /** WeDo 2.0 internal Piezo Buzzer port ({@code 5}). */
+    public static final int WEDO2_PORT_PIEZO_BUZZER = 0x05;
+
+    /** WeDo 2.0 internal Hub LED port ({@code 6}). */
+    public static final int WEDO2_PORT_LED = 0x06;
+
+    // ── WeDo 2.0 — Device Information service and Firmware Revision ───────────
+
+    /**
+     * Standard BLE Device Information Service UUID ({@code 0x180A}).
+     *
+     * <p>Present on the WeDo 2.0 hub (and many other BLE devices).
+     * Contains characteristics such as Firmware Revision String.
+     */
+    public static final String WEDO2_DEVICE_INFO_SERVICE_UUID =
+            "0000180a-0000-1000-8000-00805f9b34fb";
+
+    /**
+     * Standard BLE Firmware Revision String characteristic UUID ({@code 0x2A26}).
+     *
+     * <p>Read to get the firmware version string from the WeDo 2.0 hub.
+     * Reference: nathankellenicki/node-poweredup — src/consts.ts
+     * {@code BLECharacteristic.WEDO2_FIRMWARE_REVISION}.
+     */
+    public static final String WEDO2_FIRMWARE_REVISION_UUID =
+            "00002a26-0000-1000-8000-00805f9b34fb";
 
     // =========================================================================
     // Constructor

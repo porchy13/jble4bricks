@@ -1052,3 +1052,32 @@ All new code must include sufficient log traces to diagnose problems without att
 - Follow the same principle as macOS.
 - Until a structured logging facility is chosen for each platform, use `fprintf(stderr, ...)` with
   a `[BLE]` prefix so output is capturable and distinguishable from application stderr.
+
+---
+
+## 18. External Reference: node-poweredup
+
+[**node-poweredup**](https://github.com/nathankellenicki/node-poweredup) by Nathan Kellenicki
+(MIT licence) is an authoritative community implementation of the LEGO Wireless Protocol 3.0 and
+several companion protocols. It is used as a secondary cross-reference when the official LEGO BLE
+Wireless Protocol 3.0 specification is ambiguous or silent on a detail.
+
+### How to use this reference
+
+- When adding or verifying LEGO protocol constants, cross-check against
+  `src/consts.ts` in the node-poweredup repository.
+- Prefer the official LEGO BLE Wireless Protocol 3.0 specification when the two sources disagree.
+  Document any discrepancy in a comment on the affected constant.
+- All constants derived from node-poweredup must cite it explicitly in their Javadoc comment
+  (e.g. "Reference: nathankellenicki/node-poweredup — src/consts.ts `BLEManufacturerData`").
+
+### Credit requirement
+
+Any new file or section that incorporates values sourced from node-poweredup must include
+the following attribution comment at the top of the relevant section:
+
+```
+// Reference: nathankellenicki/node-poweredup (MIT) — https://github.com/nathankellenicki/node-poweredup
+```
+
+This credit must also appear in README.md under the "Acknowledgements" section.

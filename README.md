@@ -764,6 +764,16 @@ See [AGENTS.md](AGENTS.md) for the full set of coding standards and agent guidel
 
 ---
 
+## Acknowledgements
+
+- [**node-poweredup**](https://github.com/nathankellenicki/node-poweredup) by Nathan Kellenicki
+  (MIT licence) — a community JavaScript implementation of the LEGO Wireless Protocol 3.0 and
+  related protocols. Several LEGO protocol constants in this library were cross-referenced
+  against node-poweredup's `src/consts.ts` to verify and supplement the official LEGO BLE
+  Wireless Protocol 3.0 specification.
+
+---
+
 ## License
 
 This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
