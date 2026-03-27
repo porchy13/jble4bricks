@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesChannel;
 import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesProtocolConstants;
 
 /**
@@ -60,7 +61,7 @@ class CircuitCubesDslTest {
 
     @Test
     void motorForward_posiveVelocity_sendsForwardCommand() {
-        dsl.motorForward(CircuitCubesProtocolConstants.CHANNEL_A, 100);
+        dsl.motorForward(CircuitCubesChannel.A, 100);
 
         // magnitude = 55 + 100 = 155; sign = '+'
         verifyWriteString("+155a");
@@ -68,7 +69,7 @@ class CircuitCubesDslTest {
 
     @Test
     void motorForward_velocityAboveMax_clampsToMax() {
-        dsl.motorForward(CircuitCubesProtocolConstants.CHANNEL_B,
+        dsl.motorForward(CircuitCubesChannel.B,
                 CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY + 50);
 
         // magnitude = 55 + 200 = 255; sign = '+'
@@ -78,7 +79,7 @@ class CircuitCubesDslTest {
     @Test
     void motorForward_negativeVelocityArg_usesAbsValue() {
         // motorForward wraps with Math.abs so -50 becomes forward 50
-        dsl.motorForward(CircuitCubesProtocolConstants.CHANNEL_C, -50);
+        dsl.motorForward(CircuitCubesChannel.C, -50);
 
         verifyWriteString("+105c");
     }
@@ -89,7 +90,7 @@ class CircuitCubesDslTest {
 
     @Test
     void motorReverse_positiveVelocity_sendsReverseCommand() {
-        dsl.motorReverse(CircuitCubesProtocolConstants.CHANNEL_A, 100);
+        dsl.motorReverse(CircuitCubesChannel.A, 100);
 
         // magnitude = 55 + 100 = 155; sign = '-'
         verifyWriteString("-155a");
@@ -97,7 +98,7 @@ class CircuitCubesDslTest {
 
     @Test
     void motorReverse_velocityAboveMax_clampsToMax() {
-        dsl.motorReverse(CircuitCubesProtocolConstants.CHANNEL_B,
+        dsl.motorReverse(CircuitCubesChannel.B,
                 CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY + 1);
 
         verifyWriteString("-255b");
@@ -109,7 +110,7 @@ class CircuitCubesDslTest {
 
     @Test
     void motorStop_sendsStopCommand() {
-        dsl.motorStop(CircuitCubesProtocolConstants.CHANNEL_A);
+        dsl.motorStop(CircuitCubesChannel.A);
 
         verifyWriteString("+000a");
     }
@@ -120,14 +121,14 @@ class CircuitCubesDslTest {
 
     @Test
     void sendMotorCommand_zero_sendsStopCommand() {
-        dsl.sendMotorCommand(CircuitCubesProtocolConstants.CHANNEL_A, 0);
+        dsl.sendMotorCommand(CircuitCubesChannel.A, 0);
 
         verifyWriteString("+000a");
     }
 
     @Test
     void sendMotorCommand_positive_sendsForwardCommand() {
-        dsl.sendMotorCommand(CircuitCubesProtocolConstants.CHANNEL_B, 1);
+        dsl.sendMotorCommand(CircuitCubesChannel.B, 1);
 
         // magnitude = 55 + 1 = 56
         verifyWriteString("+056b");
@@ -135,7 +136,7 @@ class CircuitCubesDslTest {
 
     @Test
     void sendMotorCommand_negative_sendsReverseCommand() {
-        dsl.sendMotorCommand(CircuitCubesProtocolConstants.CHANNEL_C, -1);
+        dsl.sendMotorCommand(CircuitCubesChannel.C, -1);
 
         // magnitude = 55 + 1 = 56
         verifyWriteString("-056c");
@@ -143,7 +144,7 @@ class CircuitCubesDslTest {
 
     @Test
     void sendMotorCommand_exceedsMaxPositive_clampsToMax() {
-        dsl.sendMotorCommand(CircuitCubesProtocolConstants.CHANNEL_A,
+        dsl.sendMotorCommand(CircuitCubesChannel.A,
                 CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY + 100);
 
         verifyWriteString("+255a");
@@ -151,7 +152,7 @@ class CircuitCubesDslTest {
 
     @Test
     void sendMotorCommand_exceedsMaxNegative_clampsToNegativeMax() {
-        dsl.sendMotorCommand(CircuitCubesProtocolConstants.CHANNEL_A,
+        dsl.sendMotorCommand(CircuitCubesChannel.A,
                 -(CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY + 100));
 
         verifyWriteString("-255a");
@@ -159,7 +160,7 @@ class CircuitCubesDslTest {
 
     @Test
     void sendMotorCommand_atMaxPositive_sendsMaxMagnitude() {
-        dsl.sendMotorCommand(CircuitCubesProtocolConstants.CHANNEL_A,
+        dsl.sendMotorCommand(CircuitCubesChannel.A,
                 CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY);
 
         verifyWriteString("+255a");
@@ -167,7 +168,7 @@ class CircuitCubesDslTest {
 
     @Test
     void sendMotorCommand_atMaxNegative_sendsMaxMagnitude() {
-        dsl.sendMotorCommand(CircuitCubesProtocolConstants.CHANNEL_A,
+        dsl.sendMotorCommand(CircuitCubesChannel.A,
                 -CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY);
 
         verifyWriteString("-255a");

@@ -8,6 +8,7 @@ import org.jspecify.annotations.NonNull;
 
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesChannel;
 import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesProtocolConstants;
 
 /**
@@ -20,8 +21,8 @@ import ch.varani.bricks.ble.device.circuitcubes.CircuitCubesProtocolConstants;
  * <p>Usage example:
  * <pre>{@code
  * connectionDsl.asCircuitCubes()
- *     .motorForward(CircuitCubesProtocolConstants.CHANNEL_A, 128)
- *     .motorStop(CircuitCubesProtocolConstants.CHANNEL_B)
+ *     .motorForward(CircuitCubesChannel.A, 128)
+ *     .motorStop(CircuitCubesChannel.B)
  *     .queryBattery()
  *     .done();
  * }</pre>
@@ -71,35 +72,35 @@ public final class CircuitCubesDsl {
      * <p>The internal velocity is clamped to the range
      * 0–{@value CircuitCubesProtocolConstants#MAX_INTERNAL_VELOCITY}.
      *
-     * @param channel  motor channel character (e.g.
-     *                 {@link CircuitCubesProtocolConstants#CHANNEL_A})
+     * @param channel  the motor channel to drive
+     *                 (e.g. {@link CircuitCubesChannel#A})
      * @param velocity forward speed in the range
      *                 0–{@value CircuitCubesProtocolConstants#MAX_INTERNAL_VELOCITY}
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> motorForward(char channel, int velocity) {
+    public @NonNull CompletableFuture<Void> motorForward(CircuitCubesChannel channel, int velocity) {
         return sendMotorCommand(channel, Math.abs(velocity));
     }
 
     /**
      * Drives a motor channel in the reverse direction at the given velocity.
      *
-     * @param channel  motor channel character
+     * @param channel  the motor channel to drive
      * @param velocity reverse speed in the range
      *                 0–{@value CircuitCubesProtocolConstants#MAX_INTERNAL_VELOCITY}
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> motorReverse(char channel, int velocity) {
+    public @NonNull CompletableFuture<Void> motorReverse(CircuitCubesChannel channel, int velocity) {
         return sendMotorCommand(channel, -Math.abs(velocity));
     }
 
     /**
      * Stops a motor channel.
      *
-     * @param channel motor channel character
+     * @param channel the motor channel to stop
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> motorStop(char channel) {
+    public @NonNull CompletableFuture<Void> motorStop(CircuitCubesChannel channel) {
         return sendMotorCommand(channel, 0);
     }
 
@@ -112,12 +113,12 @@ public final class CircuitCubesDsl {
      *   <li>velocity != 0 → magnitude = 55 + abs(velocity), sign = '+'/'-'</li>
      * </ul>
      *
-     * @param channel  motor channel character
+     * @param channel  the motor channel to drive
      * @param velocity signed velocity (negative = reverse);
      *                 clamped to ±{@value CircuitCubesProtocolConstants#MAX_INTERNAL_VELOCITY}
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> sendMotorCommand(char channel, int velocity) {
+    public @NonNull CompletableFuture<Void> sendMotorCommand(CircuitCubesChannel channel, int velocity) {
         final int clamped = Math.max(
                 -CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY,
                 Math.min(CircuitCubesProtocolConstants.MAX_INTERNAL_VELOCITY, velocity));
@@ -134,7 +135,7 @@ public final class CircuitCubesDsl {
             magnitude = CircuitCubesProtocolConstants.MAGNITUDE_MIN_NONZERO + Math.abs(clamped);
         }
 
-        final String cmd = String.format("%c%03d%c", sign, magnitude, channel);
+        final String cmd = String.format("%c%03d%c", sign, magnitude, channel.code());
         return writeString(cmd);
     }
 
