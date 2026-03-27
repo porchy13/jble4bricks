@@ -557,69 +557,146 @@ try {
 
 ## Diagnosing Connection Problems
 
-The library uses `java.util.logging` (JUL) for diagnostics. All loggers follow the naming
-convention `ch.varani.bricks.ble.<ClassName>`. No third-party logging framework is required.
+The library uses `java.util.logging` (JUL) for diagnostics. No third-party logging framework
+is required and no configuration is needed to see `INFO`-level events — they are on by default.
 
 ### Log levels
 
 | Level | What is logged |
 |---|---|
-| `INFO` | Important lifecycle events: scan started/stopped, device discovered, connection established or failed, disconnection. Enabled by default. |
-| `FINE` | Verbose per-operation details: every BLE write, read, and notification subscription. Disabled by default. |
-| `WARNING` | Recoverable errors that do not abort the current operation: failed to stop scan, interrupted wait, failed to disable notifications on close. |
+| `INFO` | Important lifecycle events: scan started/stopped, device discovered, connection established or failed, disconnection. On by default. |
+| `FINE` | Verbose per-operation details: every BLE write, read, notification subscription, pre-filter device evaluation, and native library load. Off by default. |
+| `WARNING` | Recoverable non-fatal errors: failed to stop scan, interrupted wait, failed to disable notifications on disconnect. |
 
-### Enable verbose logging at runtime
+`SEVERE` is never used directly — unrecoverable errors always throw a documented `BleException`.
 
-Add a `logging.properties` file to your classpath (or pass it with
-`-Djava.util.logging.config.file=...`) and set the desired level:
+### Logger names
 
-```properties
-# Enable INFO for all library loggers (already on by default)
-ch.varani.bricks.ble.level=INFO
+Every class has its own logger named after its fully-qualified class name. The complete list:
 
-# Enable FINE to see every BLE write, read, and notification subscription
-ch.varani.bricks.ble.level=FINE
+| Logger name | Covers |
+|---|---|
+| `ch.varani.bricks.ble.util.NativeLibraryLoader` | JAR extraction and `System.load()` of the native library |
+| `ch.varani.bricks.ble.api.dsl.ScanDsl` | Scan lifecycle, per-device filter decisions |
+| `ch.varani.bricks.ble.impl.macos.MacOsBleScanner` | macOS scan start/stop, device discovery, connect handoff |
+| `ch.varani.bricks.ble.impl.macos.MacOsBleDevice` | macOS connection initiation |
+| `ch.varani.bricks.ble.impl.macos.MacOsBleConnection` | macOS GATT writes, reads, notifications, disconnect |
+| `ch.varani.bricks.ble.impl.linux.LinuxBleScanner` | Linux (BlueZ) scan start/stop, device discovery, connect handoff |
+| `ch.varani.bricks.ble.impl.linux.LinuxBleDevice` | Linux connection initiation |
+| `ch.varani.bricks.ble.impl.linux.LinuxBleConnection` | Linux GATT writes, reads, notifications, disconnect |
+| `ch.varani.bricks.ble.impl.windows.WindowsBleScanner` | Windows (WinRT) scan start/stop, device discovery, connect handoff |
+| `ch.varani.bricks.ble.impl.windows.WindowsBleDevice` | Windows connection initiation |
+| `ch.varani.bricks.ble.impl.windows.WindowsBleConnection` | Windows GATT writes, reads, notifications, disconnect |
 
-# Direct output to the console
-handlers=java.util.logging.ConsoleHandler
-java.util.logging.ConsoleHandler.level=FINE
-java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter
+The shared prefix `ch.varani.bricks.ble` can be used to control all loggers at once.
+
+### Enable verbose logging
+
+#### Option 1 — `logging.properties` file
+
+Create `logging.properties` anywhere on your classpath (e.g. `src/main/resources/` for a Maven
+project, or the same directory as your executable JAR) and pass it to the JVM:
+
+```bash
+java -Djava.util.logging.config.file=logging.properties -jar your-app.jar
 ```
 
-Or configure programmatically before calling any library method:
+Minimal configuration to see everything the library emits:
+
+```properties
+# Send all output to the console
+handlers=java.util.logging.ConsoleHandler
+java.util.logging.ConsoleHandler.level=ALL
+java.util.logging.ConsoleHandler.formatter=java.util.logging.SimpleFormatter
+
+# Show FINE for the entire library
+ch.varani.bricks.ble.level=FINE
+
+# Optional: restrict verbose output to one subsystem only
+# ch.varani.bricks.ble.impl.macos.MacOsBleConnection.level=FINE
+```
+
+To also see native library loading traces add:
+
+```properties
+ch.varani.bricks.ble.util.NativeLibraryLoader.level=FINE
+```
+
+#### Option 2 — programmatic configuration
+
+Call this before any library method (including `BrickDsl.open()` or `BleScannerFactory.create()`):
 
 ```java
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-// Enable FINE level for the entire library
-Logger.getLogger("ch.varani.bricks.ble").setLevel(Level.FINE);
+// Enable FINE for the entire library
+Logger libRoot = Logger.getLogger("ch.varani.bricks.ble");
+libRoot.setLevel(Level.FINE);
 
-// Or scope it to a single class
-Logger.getLogger("ch.varani.bricks.ble.impl.macos.MacOsBleScanner").setLevel(Level.FINE);
+ConsoleHandler handler = new ConsoleHandler();
+handler.setLevel(Level.FINE);
+libRoot.addHandler(handler);
+
+// Or narrow it to a single class, e.g. to trace only GATT operations:
+Logger.getLogger("ch.varani.bricks.ble.impl.macos.MacOsBleConnection")
+      .setLevel(Level.FINE);
 ```
 
 ### Reading the log output
 
-A typical successful connection sequence at `INFO` level looks like this:
+#### Successful connection — `INFO` level
 
 ```
-INFO  ScanDsl          Starting scan: serviceUuidFilter=00001623-... deviceFilter=none count=1 timeout=10s
-INFO  MacOsBleScanner  Device found: id=A1B2C3D4-... name='Technic Hub' rssi=-62 mfrData=10 bytes
-INFO  ScanDsl          Scan completed: found 1 device(s)
-INFO  MacOsBleDevice   Initiating connection to device: id=A1B2C3D4-... name='Technic Hub'
-INFO  MacOsBleScanner  Connecting to peripheral: A1B2C3D4-...
-INFO  MacOsBleConnection BLE connection established: connPtr=0x600003e80040
+INFO  ScanDsl             Starting scan: serviceUuidFilter=00001623-... deviceFilter=none count=1 timeout=10s
+INFO  MacOsBleScanner     Device found: id=A1B2C3D4-... name='Technic Hub' rssi=-62 mfrData=10 bytes
+INFO  ScanDsl             Scan completed: found 1 device(s)
+INFO  MacOsBleDevice      Initiating connection to device: id=A1B2C3D4-... name='Technic Hub'
+INFO  MacOsBleScanner     Connecting to peripheral: A1B2C3D4-...
+INFO  MacOsBleConnection  BLE connection established: connPtr=0x600003e80040
 ```
 
-With `FINE` level enabled you also see each operation:
+The same sequence on Linux replaces `MacOs*` with `Linux*` and uses a D-Bus object path
+(`/org/bluez/hci0/dev_XX_XX_XX_XX_XX_XX`) as the device identifier. On Windows it uses
+`Windows*` and a WinRT device address string.
+
+#### GATT operations — `FINE` level
 
 ```
-FINE  MacOsBleConnection Write: chr=00001624-... svc=00001623-... len=5 bytes
-FINE  MacOsBleConnection Enabling notifications: chr=00001624-... svc=00001623-...
-FINE  MacOsBleConnection Read: chr=00001624-... svc=00001623-...
-INFO  MacOsBleConnection BLE connection disconnected
+FINE  MacOsBleConnection  Write: chr=00001624-... svc=00001623-... len=5 bytes
+FINE  MacOsBleConnection  Enabling notifications: chr=00001624-... svc=00001623-...
+FINE  MacOsBleConnection  Read: chr=00001624-... svc=00001623-...
+INFO  MacOsBleConnection  BLE connection disconnected
 ```
+
+#### Pre-filter device evaluation — `FINE` level
+
+Before applying Java-side filters (hub type, device ID) each discovered device is logged with
+its raw manufacturer data so you can verify the advertisement payload without a BLE sniffer:
+
+```
+FINE  ScanDsl  onDeviceFound pre-filter: id=A1B2C3D4-... name='Technic Hub' mfrData=[97 03 00 41 06 00 00] byte[3]=0x41
+FINE  ScanDsl  Device accepted by filter: A1B2C3D4-...
+```
+
+`byte[3]` is the System Type + Device Number byte used to identify the hub model
+(see `LegoProtocolConstants.MANUFACTURER_DATA_IDX_SYSTEM_TYPE`). If it shows `n/a` the
+manufacturer data payload is shorter than 4 bytes and hub-type filtering will not match.
+
+#### Native library loading — `FINE` level
+
+Useful when the library fails to start (throws `BleException: native library not found`):
+
+```
+FINE  NativeLibraryLoader  Loading native library from JAR resource: /natives/macos/universal/libbleBridge.dylib
+FINE  NativeLibraryLoader  Loaded native library: /var/folders/.../libbleBridge.dylib
+FINE  NativeLibraryLoader  Calling System.load: /var/folders/.../libbleBridge.dylib
+```
+
+If these lines are absent the JAR does not contain a native library for the current OS and
+architecture. If `Calling System.load` appears but is followed by a `BleException` the library
+was found but rejected by the JVM (wrong architecture, missing system dependency, etc.).
 
 ### Common failure patterns
 
@@ -627,16 +704,21 @@ INFO  MacOsBleConnection BLE connection disconnected
 
 ```
 INFO  ScanDsl  Starting scan: serviceUuidFilter=00001623-... count=1 timeout=10s
-INFO  ScanDsl  Scan completed: found 0 device(s)          ← or BleException timeout
+INFO  ScanDsl  Scan completed: found 0 device(s)
 ```
 
 Causes and checks:
 - The hub is not powered on, or the battery is too low to advertise.
-- Bluetooth is disabled on the host — check `centralManagerDidUpdateState` messages on macOS
-  (visible in the native `os_log` stream, see below).
+- Bluetooth is disabled on the host. On macOS the `os_log` stream (see below) shows
+  `centralManagerDidUpdateState` with state `PoweredOff`. On Linux, `hciconfig` will show the
+  adapter as `DOWN`. On Windows, check the Bluetooth status in Settings.
 - The hub is already connected to another host.
-- The GATT service UUID filter is too restrictive — try `forService(null)` (no filter) to
-  confirm the device is visible at all.
+- The GATT service UUID filter is too restrictive. Try a scan with no filter to confirm the
+  device is visible at all:
+
+  ```java
+  dsl.scan().forService(null).timeoutSeconds(10).collect(10);
+  ```
 
 **Connection established but service discovery fails**
 
@@ -645,55 +727,103 @@ WARNING MacOsBleScanner  Connection to A1B2C3D4-... failed: Connection or servic
 ```
 
 Causes and checks:
-- The hub firmware does not expose the expected GATT service; verify the UUID constants in
-  `LegoProtocolConstants` / `SBrickProtocolConstants` etc.
+- The hub firmware does not expose the expected GATT service. Verify the UUID constants in
+  `LegoProtocolConstants`, `SBrickProtocolConstants`, etc.
 - A stale connection from a previous session was not cleanly closed — power-cycle the hub.
 
 **Device found but rejected by filter**
-
-At `FINE` level you will see:
 
 ```
 FINE  ScanDsl  Device rejected by filter: A1B2C3D4-...
 ```
 
-This means the device passed the OS-level GATT service UUID filter but failed the Java-side
-`deviceFilter` (e.g. `withDeviceId`, `forLegoHubType`). Check that:
-- The device identifier string matches exactly (case-sensitive on most platforms).
-- The manufacturer data payload is long enough and contains the expected System Type byte.
+The device passed the OS-level GATT service UUID filter but failed the Java-side filter
+(`withDeviceId`, `forLegoHubType`). Check that:
+- The device identifier string matches exactly (case-sensitive on all platforms).
+- The manufacturer data payload is at least 4 bytes and `byte[3]` matches the expected hub
+  type. The pre-filter log line (see above) shows the raw bytes.
 
-**Stale callback after scan stop**
+**Stale advertisement after scan stop**
 
 ```
 FINE  MacOsBleScanner  onDeviceFound: no active scan, discarding device: A1B2C3D4-...
 ```
 
-This is informational — the OS delivered an advertisement just after `stopScan()` was called.
-No action is required; the device is discarded.
+Informational only — the OS delivered an advertisement just after `stopScan()` was called.
+The device is discarded; no action is required.
+
+**Scan stop interrupted**
+
+```
+WARNING ScanDsl  Interrupted while waiting for scan to stop
+```
+
+The thread waiting for the scan to stop was interrupted (e.g. by a timeout or explicit
+`Thread.interrupt()`). The scan is considered stopped; the interrupt flag is re-set on the
+calling thread.
 
 ### Reading native logs on macOS
 
-The CoreBluetooth layer writes to the system `os_log` stream under the subsystem
-`ch.varani.bricks.ble`. Read them with the `log` command-line tool or Console.app:
+The CoreBluetooth layer writes to the system `os_log` stream under subsystem
+`ch.varani.bricks.ble` with three categories:
+
+| Category | Content |
+|---|---|
+| `scan` | Adapter state changes (Bluetooth on/off/resetting), scan start/stop, every discovered peripheral with UUID and RSSI |
+| `connect` | Connect/disconnect lifecycle, error descriptions from `NSError.localizedDescription` |
+| `gatt` | Service and characteristic discovery, GATT reads/writes/notification enable/disable |
+
+Read them with the `log` command-line tool or Console.app:
 
 ```bash
-# Stream live BLE events (all categories)
+# Stream everything from the library in real time
 log stream --predicate 'subsystem == "ch.varani.bricks.ble"' --level debug
 
-# Filter to connection events only
+# Scope to one category
 log stream --predicate 'subsystem == "ch.varani.bricks.ble" AND category == "connect"' --level debug
+log stream --predicate 'subsystem == "ch.varani.bricks.ble" AND category == "scan"'    --level debug
+log stream --predicate 'subsystem == "ch.varani.bricks.ble" AND category == "gatt"'    --level debug
 
-# Filter to scan / discovery events only
-log stream --predicate 'subsystem == "ch.varani.bricks.ble" AND category == "scan"' --level debug
-
-# Filter to GATT operations only
-log stream --predicate 'subsystem == "ch.varani.bricks.ble" AND category == "gatt"' --level debug
+# Collect a timed capture to a file for later inspection
+log collect --predicate 'subsystem == "ch.varani.bricks.ble"' --last 5m --output ble-trace.logarchive
+log show ble-trace.logarchive --predicate 'subsystem == "ch.varani.bricks.ble"' --info --debug
 ```
 
-These messages include adapter state transitions (Bluetooth on/off/resetting), discovered
-peripheral UUIDs with RSSI, connect/disconnect events with error descriptions, and GATT
-service and characteristic discovery results — enough to diagnose any problem without
-attaching a debugger.
+### Reading native logs on Linux
+
+The Linux native layer writes to `stderr` with a `[BLE]` prefix. Redirect or capture it as
+needed:
+
+```bash
+# Capture stderr to a file while running your application
+java -jar your-app.jar 2>ble-native.log
+
+# Tail it in another terminal
+tail -f ble-native.log | grep '\[BLE\]'
+```
+
+BlueZ D-Bus activity can additionally be traced with `btmon` (requires root or `CAP_NET_RAW`):
+
+```bash
+sudo btmon -w ble-trace.btsnoop   # capture HCI traffic to a file
+btmon -r ble-trace.btsnoop        # replay/inspect the capture
+```
+
+### Reading native logs on Windows
+
+The Windows native layer writes to `stderr` with a `[BLE]` prefix. Capture it the same way as
+on Linux. For deeper WinRT-level tracing use the Windows Performance Analyzer (WPA) or
+ETW (Event Tracing for Windows) with the `Microsoft-Windows-Bluetooth-BTHPORT` provider:
+
+```powershell
+# Start an ETW capture (run as Administrator)
+logman start BLETrace -p "Microsoft-Windows-Bluetooth-BTHPORT" -o ble-trace.etl -ets
+
+# ... reproduce the problem ...
+
+logman stop BLETrace -ets
+# Open ble-trace.etl in Windows Performance Analyzer
+```
 
 ---
 
