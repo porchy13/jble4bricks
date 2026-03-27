@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.lego.LegoColor;
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
 
 /**
@@ -785,7 +786,7 @@ class LegoDslTest {
     void setHubLedColor_sendsCorrectBytes() {
         dsl.setHubLedColor(
                 LegoProtocolConstants.CITY_HUB_PORT_LED,
-                LegoProtocolConstants.COLOR_GREEN);
+                LegoColor.GREEN);
 
         // portOutputCommand with MOTOR_CMD_WRITE_DIRECT_MODE_DATA, mode=0x00, colour=6
         final byte[] expected = {
@@ -794,7 +795,7 @@ class LegoDslTest {
             0x11,
             (byte) LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
             0x00,
-            (byte) LegoProtocolConstants.COLOR_GREEN
+            (byte) LegoColor.GREEN.code()
         };
         verifyWrite(expected);
     }

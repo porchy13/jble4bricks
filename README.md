@@ -158,8 +158,7 @@ try (BrickDsl dsl = BrickDsl.open()) {
     lego.setupPortInputFormatSingle(0x00, 0x00, 1, true).get();  // port 0, mode 0, delta=1, notify
 
     // Set hub LED colour (use a hub-specific LED port constant)
-    lego.setHubLedColor(LegoProtocolConstants.CITY_HUB_PORT_LED,
-        LegoProtocolConstants.COLOR_RED).get();
+    lego.setHubLedColor(LegoProtocolConstants.CITY_HUB_PORT_LED, LegoColor.RED).get();
 
     // Play a sound on the Duplo Train Base speaker
     lego.playDuploSound(0x01, LegoProtocolConstants.DUPLO_SOUND_HORN).get();

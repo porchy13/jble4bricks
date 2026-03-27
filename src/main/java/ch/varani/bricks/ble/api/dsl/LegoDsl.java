@@ -7,6 +7,7 @@ import org.jspecify.annotations.NonNull;
 
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.lego.LegoColor;
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
 
 /**
@@ -446,29 +447,26 @@ public final class LegoDsl {
     // =========================================================================
 
     /**
-     * Sets the Hub LED to the given colour index by sending a
+     * Sets the Hub LED to the given colour by sending a
      * {@code WriteDirectModeData} ({@code 0x51}) Port Output Command to the
      * LED port.
      *
-     * <p>Use the {@code COLOR_*} constants from
-     * {@link LegoProtocolConstants} (e.g.
-     * {@link LegoProtocolConstants#COLOR_RED}) as the {@code colorIndex} value.
-     *
-     * @param ledPortId  the virtual port ID of the Hub LED (e.g.
-     *                   {@link LegoProtocolConstants#MOVE_HUB_PORT_LED},
-     *                   {@link LegoProtocolConstants#CITY_HUB_PORT_LED},
-     *                   {@link LegoProtocolConstants#TECHNIC_HUB_PORT_LED})
-     * @param colorIndex the colour index (0–10); use {@code COLOR_NONE} (255) to
-     *                   switch the LED off
+     * @param ledPortId the virtual port ID of the Hub LED (e.g.
+     *                  {@link LegoProtocolConstants#MOVE_HUB_PORT_LED},
+     *                  {@link LegoProtocolConstants#CITY_HUB_PORT_LED},
+     *                  {@link LegoProtocolConstants#TECHNIC_HUB_PORT_LED})
+     * @param color     the desired LED colour; use {@link LegoColor#NONE} to
+     *                  switch the LED off; must not be {@code null}
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> setHubLedColor(int ledPortId, int colorIndex) {
+    public @NonNull CompletableFuture<Void> setHubLedColor(int ledPortId,
+            @NonNull LegoColor color) {
         return portOutputCommand(
                 ledPortId,
                 DEFAULT_STARTUP_COMPLETION_LED,
                 LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
                 (byte) 0x00,          // mode 0 = colour index
-                (byte) colorIndex);
+                (byte) color.code());
     }
 
     // =========================================================================
