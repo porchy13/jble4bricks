@@ -271,7 +271,7 @@ public final class LegoProtocolConstants {
      * WEDO2_LED_MODE_SETUP_B2, WEDO2_LED_IDX_MODE_SETUP_B3]}.
      *
      * <p>This selects indexed colour mode (mode {@code 0x01}), as opposed to
-     * {@link #WEDO2_LED_MODE_SETUP_B3} which selects RGB mode ({@code 0x02}).
+     * RGB mode ({@code 0x02}) which is no longer exposed in the public API.
      * The WeDo 2.0 hub firmware reliably responds to indexed colour mode.
      *
      * <p>Reference: nathankellenicki/node-poweredup (MIT) —

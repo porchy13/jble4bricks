@@ -8,6 +8,7 @@ import org.jspecify.annotations.NonNull;
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+import ch.varani.bricks.ble.device.lego.WeDo2LedColor;
 
 /**
  * Fluent DSL sub-builder for WeDo 2.0 hub BLE protocol operations.
@@ -25,7 +26,7 @@ import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
  * <pre>{@code
  * connectionDsl.asWeDo2()
  *     .motorPower(LegoProtocolConstants.WEDO2_PORT_A, 75)
- *     .setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_GREEN)
+ *     .setLedColor(WeDo2LedColor.GREEN)
  *     .done();
  * }</pre>
  *
@@ -152,8 +153,7 @@ public final class WeDo2Dsl {
      *
      * <p>This is the <em>recommended</em> way to change the LED colour on the
      * WeDo 2.0 hub.  The hub firmware reliably responds to indexed colour mode;
-     * arbitrary RGB mode ({@link #setLedRgb}) may be silently ignored by some
-     * firmware versions.
+     * arbitrary RGB mode may be silently ignored by some firmware versions.
      *
      * <p>Performs two successive writes:
      * <ol>
@@ -165,20 +165,15 @@ public final class WeDo2Dsl {
      *       {@code [WEDO2_PORT_LED, 0x04, 0x01, colorIndex]}</li>
      * </ol>
      *
-     * <p>Use the {@code WEDO2_LED_COLOR_*} constants in
-     * {@link LegoProtocolConstants} to obtain valid colour index values
-     * (e.g. {@link LegoProtocolConstants#WEDO2_LED_COLOR_RED},
-     * {@link LegoProtocolConstants#WEDO2_LED_COLOR_GREEN}).
-     *
      * <p>Reference: nathankellenicki/node-poweredup (MIT) —
      * https://github.com/nathankellenicki/node-poweredup — {@code src/devices/hubled.ts
      * setColor()}.
      *
-     * @param colorIndex colour index 0–10; use {@code WEDO2_LED_COLOR_*} constants
+     * @param color the desired LED colour; must not be {@code null}
      * @return a future that completes when both writes have been submitted;
      *         never {@code null}
      */
-    public @NonNull CompletableFuture<Void> setLedColor(int colorIndex) {
+    public @NonNull CompletableFuture<Void> setLedColor(@NonNull WeDo2LedColor color) {
         final byte[] modeCmd = {
             (byte) LegoProtocolConstants.WEDO2_PORT_LED,
             (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B1,
@@ -189,7 +184,7 @@ public final class WeDo2Dsl {
             (byte) LegoProtocolConstants.WEDO2_PORT_LED,
             (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B1,
             (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B2,
-            (byte) colorIndex
+            (byte) color.code()
         };
         return connection.writeWithoutResponse(
                         LegoProtocolConstants.WEDO2_SERVICE_UUID,

@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+import ch.varani.bricks.ble.device.lego.WeDo2LedColor;
 
 /**
  * Unit tests for {@link WeDo2Dsl}.
@@ -131,7 +132,7 @@ class WeDo2DslTest {
 
     @Test
     void setLedColor_sendsModeCmdThenIndexCmd() {
-        dsl.setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_RED);
+        dsl.setLedColor(WeDo2LedColor.RED);
 
         final byte[] expectedMode = {
             (byte) LegoProtocolConstants.WEDO2_PORT_LED,
@@ -143,7 +144,7 @@ class WeDo2DslTest {
             (byte) LegoProtocolConstants.WEDO2_PORT_LED,
             (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B1,
             (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B2,
-            (byte) LegoProtocolConstants.WEDO2_LED_COLOR_RED
+            (byte) WeDo2LedColor.RED.code()
         };
 
         final ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
@@ -162,14 +163,14 @@ class WeDo2DslTest {
     }
 
     @Test
-    void setLedColor_greenIndex_sendsGreenIndexByte() {
-        dsl.setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_GREEN);
+    void setLedColor_greenColor_sendsGreenIndexByte() {
+        dsl.setLedColor(WeDo2LedColor.GREEN);
 
         final byte[] expectedIdx = {
             (byte) LegoProtocolConstants.WEDO2_PORT_LED,
             (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B1,
             (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B2,
-            (byte) LegoProtocolConstants.WEDO2_LED_COLOR_GREEN
+            (byte) WeDo2LedColor.GREEN.code()
         };
 
         final ArgumentCaptor<byte[]> captor2 = ArgumentCaptor.forClass(byte[].class);

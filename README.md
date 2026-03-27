@@ -205,8 +205,8 @@ try (BrickDsl dsl = BrickDsl.open()) {
     hub.stopMotor(LegoProtocolConstants.WEDO2_PORT_A).get();
 
     // Set the hub LED to an indexed colour
-    hub.setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_RED).get();   // red
-    hub.setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_GREEN).get(); // green
+    hub.setLedColor(WeDo2LedColor.RED).get();   // red
+    hub.setLedColor(WeDo2LedColor.GREEN).get(); // green
 
     hub.done();
 }
@@ -233,7 +233,7 @@ Key WeDo 2.0 constants in `LegoProtocolConstants`:
 | `WEDO2_LED_MODE_SETUP_B1/B2` | `0x17`, `0x01` | LED mode-setup packet bytes |
 | `WEDO2_LED_IDX_MODE_SETUP_B3` | `0x01` | LED mode-setup byte 3 for indexed colour mode |
 | `WEDO2_LED_IDX_CMD_B1/B2` | `0x04`, `0x01` | LED indexed-colour command packet bytes |
-| `WEDO2_LED_COLOR_BLACK` … `WEDO2_LED_COLOR_WHITE` | `0x00`–`0x0A` | Indexed colour constants (black, pink, purple, blue, light blue, cyan, green, yellow, orange, red, white) |
+| `WEDO2_LED_COLOR_BLACK` … `WEDO2_LED_COLOR_WHITE` | `0x00`–`0x0A` | Indexed colour constants (black, pink, purple, blue, light blue, cyan, green, yellow, orange, red, white) — prefer the `WeDo2LedColor` enum |
 
 ### SBrick
 
