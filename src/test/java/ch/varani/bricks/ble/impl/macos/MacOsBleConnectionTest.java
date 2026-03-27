@@ -200,6 +200,77 @@ class MacOsBleConnectionTest {
         assertNotNull(connection);
     }
 
+    /**
+     * Regression test for the CoreBluetooth UUID case-mismatch bug.
+     *
+     * <p>Java constants use lower-case UUID strings; CoreBluetooth's
+     * {@code UUIDString} property always returns upper-case strings.
+     * The notification publisher must be found regardless of which case was
+     * used to register it versus which case arrives from the native layer.
+     */
+    @Test
+    void onNotification_lowerCaseRegistration_upperCaseCallback_deliversValue()
+            throws Exception {
+
+        final String svcLower = "00001623-1212-efde-1623-785feabcd123";
+        final String chrLower = "00001624-1212-efde-1623-785feabcd123";
+        final String svcUpper = svcLower.toUpperCase(java.util.Locale.ROOT);
+        final String chrUpper = chrLower.toUpperCase(java.util.Locale.ROOT);
+
+        /* Register with lower-case constants (as Java code does). */
+        final Publisher<byte[]> publisher = connection.notifications(svcLower, chrLower);
+
+        final List<byte[]> received = new ArrayList<>();
+        final AtomicReference<Subscription> subRef = new AtomicReference<>();
+        publisher.subscribe(new Subscriber<byte[]>() {
+            @Override
+            public void onSubscribe(final Subscription s) {
+                subRef.set(s);
+                s.request(Long.MAX_VALUE);
+            }
+
+            @Override
+            public void onNext(final byte[] item) {
+                received.add(item);
+            }
+
+            @Override
+            public void onError(final Throwable t)  { /* not expected */ }
+
+            @Override
+            public void onComplete()                 { /* not expected */ }
+        });
+
+        /* Simulate CoreBluetooth callback arriving with upper-case UUIDs. */
+        final byte[] value = {0x05, 0x00, 0x01, 0x06, 0x06, 0x42};
+        connection.onNotification(svcUpper, chrUpper, value);
+
+        await().atMost(Duration.ofSeconds(2))
+               .until(() -> !received.isEmpty());
+
+        assertAll(
+            () -> assertEquals(1, received.size()),
+            () -> assertArrayEquals(value, received.get(0))
+        );
+    }
+
+    /**
+     * Verifies that registering with mixed-case UUIDs for the same logical
+     * characteristic returns the same publisher (idempotent key lookup).
+     */
+    @Test
+    void notifications_mixedCaseUuids_samePair_returnsSamePublisher() {
+        final String svcLower = "00001623-1212-efde-1623-785feabcd123";
+        final String chrLower = "00001624-1212-efde-1623-785feabcd123";
+        final String svcUpper = svcLower.toUpperCase(java.util.Locale.ROOT);
+        final String chrUpper = chrLower.toUpperCase(java.util.Locale.ROOT);
+
+        final Publisher<byte[]> p1 = connection.notifications(svcLower, chrLower);
+        final Publisher<byte[]> p2 = connection.notifications(svcUpper, chrUpper);
+
+        assertSame(p1, p2);
+    }
+
     /* ─────────────────────────────────────────────────────────────────────────
        disconnect
        ───────────────────────────────────────────────────────────────────────── */
@@ -215,7 +286,15 @@ class MacOsBleConnectionTest {
         connection.notifications(SVC, CHR);
         connection.disconnect().get();
 
-        verify(bridge).setNotify(CONN_PTR, SVC, CHR, false);
+        /*
+         * CharacteristicKey normalises UUIDs to upper-case on construction, so
+         * closeNotificationPublishers() iterates upper-case keys and passes the
+         * upper-case forms to setNotify(). The registration call (true) still
+         * receives the original caller-supplied string; only the disable call
+         * (false) uses the normalised key.
+         */
+        verify(bridge).setNotify(CONN_PTR, SVC.toUpperCase(java.util.Locale.ROOT),
+                CHR.toUpperCase(java.util.Locale.ROOT), false);
         verify(bridge).disconnect(CTX_PTR, CONN_PTR);
     }
 
@@ -235,8 +314,14 @@ class MacOsBleConnectionTest {
     @Test
     void disconnect_whenNotifyDisableFails_logsAndContinues() throws Exception {
         connection.notifications(SVC, CHR);
+        /*
+         * closeNotificationPublishers() calls setNotify with the upper-case
+         * normalised key — stub with the same upper-case forms so the exception
+         * is triggered on the actual call path.
+         */
         doThrow(new RuntimeException("hw error"))
-                .when(bridge).setNotify(CONN_PTR, SVC, CHR, false);
+                .when(bridge).setNotify(CONN_PTR, SVC.toUpperCase(java.util.Locale.ROOT),
+                        CHR.toUpperCase(java.util.Locale.ROOT), false);
 
         /* Should not throw — warning is logged internally. */
         connection.disconnect().get();

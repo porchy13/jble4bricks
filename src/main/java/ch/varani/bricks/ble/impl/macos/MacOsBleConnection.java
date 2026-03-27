@@ -1,5 +1,6 @@
 package ch.varani.bricks.ble.impl.macos;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,9 +39,30 @@ final class MacOsBleConnection implements BleConnection {
 
     private static final Logger LOG = Logger.getLogger(MacOsBleConnection.class.getName());
 
-    /** Key type for the notification publisher map. */
+    /**
+     * Key type for the notification publisher map.
+     *
+     * <p>UUID strings are normalised to upper case on construction so that keys
+     * registered from Java constants (lower case, e.g. {@code "00001624-..."})
+     * match keys derived from CoreBluetooth's {@code UUIDString} property, which
+     * always returns upper case (e.g. {@code "00001624-...".toUpperCase()}).
+     * Without this normalisation all notification lookups would silently fail.
+     */
     private record CharacteristicKey(@NonNull String serviceUuid,
-                                     @NonNull String characteristicUuid) {}
+                                     @NonNull String characteristicUuid) {
+
+        /**
+         * Constructs a {@code CharacteristicKey} with both UUID strings normalised
+         * to upper case using the {@link Locale#ROOT} locale.
+         *
+         * @param serviceUuid        GATT service UUID string; must not be {@code null}
+         * @param characteristicUuid GATT characteristic UUID string; must not be {@code null}
+         */
+        CharacteristicKey {
+            serviceUuid        = serviceUuid.toUpperCase(Locale.ROOT);
+            characteristicUuid = characteristicUuid.toUpperCase(Locale.ROOT);
+        }
+    }
 
     /** Opaque pointer to the native {@code BleConnectionContext} struct. */
     private final long connectionPtr;
