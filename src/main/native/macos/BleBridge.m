@@ -1066,6 +1066,13 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeDisconnect(
  *
  * Calls CBPeripheral.writeValue:forCharacteristic:type: with
  * CBCharacteristicWriteWithoutResponse.
+ *
+ * Uses dispatch_sync (not dispatch_async) so that this function blocks until
+ * CoreBluetooth has accepted the write call.  This ensures that consecutive
+ * writes issued by Java (e.g. mode-setup followed by LED RGB data for the
+ * WeDo 2.0 hub) are fully serialised on the BLE queue before the caller
+ * proceeds, preventing the hub firmware from receiving the second packet
+ * before it has finished processing the first.
  */
 JNIEXPORT void JNICALL
 Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse(
@@ -1084,7 +1091,7 @@ Java_ch_varani_bricks_ble_impl_macos_JniNativeBridge_nativeWriteWithoutResponse(
     NSData  *nsData = [NSData dataWithBytes:bytes length:(NSUInteger)len];
     (*env)->ReleaseByteArrayElements(env, data, bytes, JNI_ABORT);
 
-    dispatch_async(conn->ctx->bleQueue, ^{
+    dispatch_sync(conn->ctx->bleQueue, ^{
         CBCharacteristic *chr = findCharacteristic(conn->peripheral, svcStr, chrStr);
         if (chr != nil) {
             [conn->peripheral writeValue:nsData
