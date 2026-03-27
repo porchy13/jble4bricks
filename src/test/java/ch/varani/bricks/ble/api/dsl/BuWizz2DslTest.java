@@ -17,6 +17,7 @@ import org.mockito.ArgumentCaptor;
 
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.buwizz.BuWizz2PowerLevel;
 import ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstants;
 
 /**
@@ -165,7 +166,7 @@ class BuWizz2DslTest {
 
     @Test
     void setPowerLevel_sendsCorrectBytes() {
-        dsl.setPowerLevel(BuWizz2ProtocolConstants.POWER_LEVEL_FAST);
+        dsl.setPowerLevel(BuWizz2PowerLevel.FAST);
 
         final byte[] expected = {
             (byte) BuWizz2ProtocolConstants.CMD_SET_POWER_LEVEL,
@@ -176,7 +177,7 @@ class BuWizz2DslTest {
 
     @Test
     void setPowerLevel_disabled_sendsCorrectBytes() {
-        dsl.setPowerLevel(BuWizz2ProtocolConstants.POWER_LEVEL_DISABLED);
+        dsl.setPowerLevel(BuWizz2PowerLevel.DISABLED);
 
         final byte[] expected = {
             (byte) BuWizz2ProtocolConstants.CMD_SET_POWER_LEVEL,

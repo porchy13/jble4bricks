@@ -7,6 +7,7 @@ import org.jspecify.annotations.NonNull;
 
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.buwizz.BuWizz2PowerLevel;
 import ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstants;
 
 /**
@@ -19,7 +20,7 @@ import ch.varani.bricks.ble.device.buwizz.BuWizz2ProtocolConstants;
  * <p>Usage example:
  * <pre>{@code
  * connectionDsl.asBuWizz2()
- *     .setPowerLevel(BuWizz2ProtocolConstants.POWER_LEVEL_FAST)
+ *     .setPowerLevel(BuWizz2PowerLevel.FAST)
  *     .setMotorData(100, -100, 0, 0, false, false, false, false)
  *     .done();
  * }</pre>
@@ -130,17 +131,17 @@ public final class BuWizz2Dsl {
     /**
      * Sends a Set Power Level command ({@code 0x11}).
      *
-     * <p>The BuWizz defaults to power level 0 (disabled) after connection.
-     * Set it to {@link BuWizz2ProtocolConstants#POWER_LEVEL_NORMAL} or higher
-     * before sending motor commands.
+     * <p>The BuWizz defaults to power level {@link BuWizz2PowerLevel#DISABLED} after
+     * connection. Set it to {@link BuWizz2PowerLevel#NORMAL} or higher before sending
+     * motor commands.
      *
-     * @param level power level (0=disabled, 1=Slow, 2=Normal, 3=Fast, 4=LDCRS)
+     * @param level the power level to apply
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> setPowerLevel(int level) {
+    public @NonNull CompletableFuture<Void> setPowerLevel(@NonNull BuWizz2PowerLevel level) {
         final byte[] msg = {
             (byte) BuWizz2ProtocolConstants.CMD_SET_POWER_LEVEL,
-            (byte) level
+            (byte) level.code()
         };
         return write(msg);
     }
