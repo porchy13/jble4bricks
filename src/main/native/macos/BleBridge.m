@@ -122,6 +122,17 @@ typedef struct {
     /* Semaphore posted when a characteristic read completes. */
     dispatch_semaphore_t    readDone;
 
+    /*
+     * Number of services whose characteristic discovery has not yet completed.
+     * Initialised in didDiscoverServices: to peripheral.services.count and
+     * decremented by one in each didDiscoverCharacteristicsForService: callback.
+     * discoveryDone is signalled when this reaches zero.
+     *
+     * All accesses happen on ctx->bleQueue (the CoreBluetooth serial queue), so
+     * no additional synchronisation is required.
+     */
+    NSUInteger              pendingServiceDiscoveries;
+
     /* Most-recently read characteristic value (or nil on error). */
     NSData                 *__strong lastReadValue;
 
@@ -202,6 +213,16 @@ static CBCharacteristic *findCharacteristic(
             return nil;
         }
     }
+
+    /* The requested service itself was not found — log all discovered services. */
+    NSMutableString *availableServices = [NSMutableString string];
+    for (CBService *svc in peripheral.services) {
+        [availableServices appendFormat:@"%@ ", svc.UUID.UUIDString];
+    }
+    os_log_error(BLE_LOG_GATT,
+            "findCharacteristic: svc %{public}@ not found in peripheral %{public}@. "
+            "Discovered services: [%{public}@]",
+            serviceUuidString, peripheral.identifier.UUIDString, availableServices);
     return nil;
 }
 
@@ -508,6 +529,17 @@ static CBCharacteristic *findCharacteristic(
         return;
     }
 
+    /*
+     * Record how many per-service characteristic-discovery callbacks we expect.
+     * didDiscoverCharacteristicsForService: decrements this counter and signals
+     * discoveryDone when it reaches zero.  This avoids the race that the old
+     * nil-check approach had: CoreBluetooth may set service.characteristics to
+     * an empty array [] (not nil) for services that have not yet been queried,
+     * which caused allDone to become YES prematurely on multi-service peripherals
+     * such as the WeDo 2.0 hub.
+     */
+    conn->pendingServiceDiscoveries = peripheral.services.count;
+
     /* Trigger characteristic discovery for every service. */
     for (CBService *service in peripheral.services) {
         [peripheral discoverCharacteristics:nil forService:service];
@@ -545,15 +577,21 @@ static CBCharacteristic *findCharacteristic(
             service.UUID.UUIDString,
             (unsigned long)service.characteristics.count);
 
-    /* Check if every service now has its characteristics populated. */
-    BOOL allDone = YES;
-    for (CBService *svc in peripheral.services) {
-        if (svc.characteristics == nil) {
-            allDone = NO;
-            break;
-        }
+    /*
+     * Decrement the outstanding-service counter.  When it reaches zero every
+     * service has reported its characteristics and discovery is complete.
+     *
+     * The old nil-check (svc.characteristics == nil) was unreliable: on some
+     * OS versions CoreBluetooth initialises characteristics to [] rather than
+     * nil before discovery runs, causing allDone to become YES prematurely on
+     * peripherals that expose more than one service (e.g. WeDo 2.0 hub with
+     * five services).  The counter approach is exact regardless of how
+     * CoreBluetooth initialises the characteristics property.
+     */
+    if (conn->pendingServiceDiscoveries > 0) {
+        conn->pendingServiceDiscoveries--;
     }
-    if (allDone) {
+    if (conn->pendingServiceDiscoveries == 0) {
         dispatch_semaphore_signal(conn->discoveryDone);
     }
 }
