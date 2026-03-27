@@ -148,7 +148,65 @@ public final class WeDo2Dsl {
     // =========================================================================
 
     /**
+     * Sets the WeDo 2.0 hub LED to a named colour using the indexed colour mode.
+     *
+     * <p>This is the <em>recommended</em> way to change the LED colour on the
+     * WeDo 2.0 hub.  The hub firmware reliably responds to indexed colour mode;
+     * arbitrary RGB mode ({@link #setLedRgb}) may be silently ignored by some
+     * firmware versions.
+     *
+     * <p>Performs two successive writes:
+     * <ol>
+     *   <li>A 4-byte mode-setup packet to
+     *       {@link LegoProtocolConstants#WEDO2_PORT_TYPE_WRITE_UUID}:
+     *       {@code [WEDO2_PORT_LED, 0x17, 0x01, 0x01]}</li>
+     *   <li>A 4-byte indexed-colour packet to
+     *       {@link LegoProtocolConstants#WEDO2_MOTOR_VALUE_WRITE_UUID}:
+     *       {@code [WEDO2_PORT_LED, 0x04, 0x01, colorIndex]}</li>
+     * </ol>
+     *
+     * <p>Use the {@code WEDO2_LED_COLOR_*} constants in
+     * {@link LegoProtocolConstants} to obtain valid colour index values
+     * (e.g. {@link LegoProtocolConstants#WEDO2_LED_COLOR_RED},
+     * {@link LegoProtocolConstants#WEDO2_LED_COLOR_GREEN}).
+     *
+     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
+     * https://github.com/nathankellenicki/node-poweredup — {@code src/devices/hubled.ts
+     * setColor()}.
+     *
+     * @param colorIndex colour index 0–10; use {@code WEDO2_LED_COLOR_*} constants
+     * @return a future that completes when both writes have been submitted;
+     *         never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> setLedColor(int colorIndex) {
+        final byte[] modeCmd = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
+            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B1,
+            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B2,
+            (byte) LegoProtocolConstants.WEDO2_LED_IDX_MODE_SETUP_B3
+        };
+        final byte[] idxCmd = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
+            (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B1,
+            (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B2,
+            (byte) colorIndex
+        };
+        return connection.writeWithoutResponse(
+                        LegoProtocolConstants.WEDO2_SERVICE_UUID,
+                        LegoProtocolConstants.WEDO2_PORT_TYPE_WRITE_UUID,
+                        modeCmd)
+                .thenCompose(ignored -> connection.writeWithoutResponse(
+                        LegoProtocolConstants.WEDO2_SERVICE_UUID,
+                        LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID,
+                        idxCmd));
+    }
+
+    /**
      * Sets the WeDo 2.0 hub LED to an arbitrary RGB colour.
+     *
+     * <p><b>Note:</b> some WeDo 2.0 firmware versions silently ignore RGB mode.
+     * Prefer {@link #setLedColor(int)} with a {@code WEDO2_LED_COLOR_*} index
+     * constant for reliable colour changes.
      *
      * <p>Performs two successive writes to the secondary GATT service
      * ({@link LegoProtocolConstants#WEDO2_SERVICE_2_UUID}):

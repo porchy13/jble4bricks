@@ -495,4 +495,30 @@ class LegoProtocolConstantsTest {
                     LegoProtocolConstants.WEDO2_FIRMWARE_REVISION_UUID)
         );
     }
+
+    @Test
+    void wedo2LedIndexedModeConstants_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(0x01, LegoProtocolConstants.WEDO2_LED_IDX_MODE_SETUP_B3),
+            () -> assertEquals(0x04, LegoProtocolConstants.WEDO2_LED_IDX_CMD_B1),
+            () -> assertEquals(0x01, LegoProtocolConstants.WEDO2_LED_IDX_CMD_B2)
+        );
+    }
+
+    @Test
+    void wedo2LedColorIndexConstants_haveExpectedValues() {
+        assertAll(
+            () -> assertEquals(0x00, LegoProtocolConstants.WEDO2_LED_COLOR_BLACK),
+            () -> assertEquals(0x01, LegoProtocolConstants.WEDO2_LED_COLOR_PINK),
+            () -> assertEquals(0x02, LegoProtocolConstants.WEDO2_LED_COLOR_PURPLE),
+            () -> assertEquals(0x03, LegoProtocolConstants.WEDO2_LED_COLOR_BLUE),
+            () -> assertEquals(0x04, LegoProtocolConstants.WEDO2_LED_COLOR_LIGHT_BLUE),
+            () -> assertEquals(0x05, LegoProtocolConstants.WEDO2_LED_COLOR_CYAN),
+            () -> assertEquals(0x06, LegoProtocolConstants.WEDO2_LED_COLOR_GREEN),
+            () -> assertEquals(0x07, LegoProtocolConstants.WEDO2_LED_COLOR_YELLOW),
+            () -> assertEquals(0x08, LegoProtocolConstants.WEDO2_LED_COLOR_ORANGE),
+            () -> assertEquals(0x09, LegoProtocolConstants.WEDO2_LED_COLOR_RED),
+            () -> assertEquals(0x0A, LegoProtocolConstants.WEDO2_LED_COLOR_WHITE)
+        );
+    }
 }

@@ -288,6 +288,93 @@ public final class LegoProtocolConstants {
      */
     public static final int WEDO2_LED_RGB_CMD_B2 = 0x03;
 
+    // ── WeDo 2.0 — LED indexed colour mode constants ─────────────────────────
+    //
+    // Reference: nathankellenicki/node-poweredup (MIT) —
+    // https://github.com/nathankellenicki/node-poweredup — src/consts.ts Color enum
+
+    /**
+     * WeDo 2.0 LED indexed-colour mode-setup command sub-byte 3 ({@code 0x01}).
+     *
+     * <p>Written as part of the 4-byte mode-setup packet to
+     * {@link #WEDO2_PORT_TYPE_WRITE_UUID} before sending an indexed-colour
+     * command.  Packet layout:
+     * {@code [WEDO2_PORT_LED, WEDO2_LED_MODE_SETUP_B1,
+     * WEDO2_LED_MODE_SETUP_B2, WEDO2_LED_IDX_MODE_SETUP_B3]}.
+     *
+     * <p>This selects indexed colour mode (mode {@code 0x01}), as opposed to
+     * {@link #WEDO2_LED_MODE_SETUP_B3} which selects RGB mode ({@code 0x02}).
+     * The WeDo 2.0 hub firmware reliably responds to indexed colour mode.
+     *
+     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
+     * https://github.com/nathankellenicki/node-poweredup — {@code src/devices/hubled.ts
+     * setColor()}
+     */
+    public static final int WEDO2_LED_IDX_MODE_SETUP_B3 = 0x01;
+
+    /**
+     * WeDo 2.0 LED indexed-colour data command sub-byte 1 ({@code 0x04}).
+     *
+     * <p>Written as part of the 4-byte indexed-colour data packet to
+     * {@link #WEDO2_MOTOR_VALUE_WRITE_UUID}.  Packet layout:
+     * {@code [WEDO2_PORT_LED, WEDO2_LED_IDX_CMD_B1, WEDO2_LED_IDX_CMD_B2,
+     * colorIndex]}.
+     *
+     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
+     * https://github.com/nathankellenicki/node-poweredup — {@code src/devices/hubled.ts
+     * setColor()}
+     */
+    public static final int WEDO2_LED_IDX_CMD_B1 = 0x04;
+
+    /**
+     * WeDo 2.0 LED indexed-colour data command sub-byte 2 ({@code 0x01}).
+     *
+     * <p>See {@link #WEDO2_LED_IDX_CMD_B1} for packet layout.
+     *
+     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
+     * https://github.com/nathankellenicki/node-poweredup — {@code src/devices/hubled.ts
+     * setColor()}
+     */
+    public static final int WEDO2_LED_IDX_CMD_B2 = 0x01;
+
+    // ── WeDo 2.0 — LED indexed colour values ─────────────────────────────────
+    //
+    // Reference: nathankellenicki/node-poweredup (MIT) —
+    // https://github.com/nathankellenicki/node-poweredup — src/consts.ts Color enum
+
+    /** WeDo 2.0 LED colour index: black (off) ({@code 0x00}). */
+    public static final int WEDO2_LED_COLOR_BLACK = 0x00;
+
+    /** WeDo 2.0 LED colour index: pink ({@code 0x01}). */
+    public static final int WEDO2_LED_COLOR_PINK = 0x01;
+
+    /** WeDo 2.0 LED colour index: purple ({@code 0x02}). */
+    public static final int WEDO2_LED_COLOR_PURPLE = 0x02;
+
+    /** WeDo 2.0 LED colour index: blue ({@code 0x03}). */
+    public static final int WEDO2_LED_COLOR_BLUE = 0x03;
+
+    /** WeDo 2.0 LED colour index: light blue ({@code 0x04}). */
+    public static final int WEDO2_LED_COLOR_LIGHT_BLUE = 0x04;
+
+    /** WeDo 2.0 LED colour index: cyan ({@code 0x05}). */
+    public static final int WEDO2_LED_COLOR_CYAN = 0x05;
+
+    /** WeDo 2.0 LED colour index: green ({@code 0x06}). */
+    public static final int WEDO2_LED_COLOR_GREEN = 0x06;
+
+    /** WeDo 2.0 LED colour index: yellow ({@code 0x07}). */
+    public static final int WEDO2_LED_COLOR_YELLOW = 0x07;
+
+    /** WeDo 2.0 LED colour index: orange ({@code 0x08}). */
+    public static final int WEDO2_LED_COLOR_ORANGE = 0x08;
+
+    /** WeDo 2.0 LED colour index: red ({@code 0x09}). */
+    public static final int WEDO2_LED_COLOR_RED = 0x09;
+
+    /** WeDo 2.0 LED colour index: white ({@code 0x0A}). */
+    public static final int WEDO2_LED_COLOR_WHITE = 0x0A;
+
     // =========================================================================
     // Message Types (LWP3 §3)
     // =========================================================================

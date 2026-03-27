@@ -126,6 +126,61 @@ class WeDo2DslTest {
     }
 
     // =========================================================================
+    // setLedColor
+    // =========================================================================
+
+    @Test
+    void setLedColor_sendsModeCmdThenIndexCmd() {
+        dsl.setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_RED);
+
+        final byte[] expectedMode = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
+            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B1,
+            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B2,
+            (byte) LegoProtocolConstants.WEDO2_LED_IDX_MODE_SETUP_B3
+        };
+        final byte[] expectedIdx = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
+            (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B1,
+            (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B2,
+            (byte) LegoProtocolConstants.WEDO2_LED_COLOR_RED
+        };
+
+        final ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
+        verify(connection).writeWithoutResponse(
+                eq(LegoProtocolConstants.WEDO2_SERVICE_UUID),
+                eq(LegoProtocolConstants.WEDO2_PORT_TYPE_WRITE_UUID),
+                captor.capture());
+        assertArrayEquals(expectedMode, captor.getValue());
+
+        final ArgumentCaptor<byte[]> captor2 = ArgumentCaptor.forClass(byte[].class);
+        verify(connection).writeWithoutResponse(
+                eq(LegoProtocolConstants.WEDO2_SERVICE_UUID),
+                eq(LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID),
+                captor2.capture());
+        assertArrayEquals(expectedIdx, captor2.getValue());
+    }
+
+    @Test
+    void setLedColor_greenIndex_sendsGreenIndexByte() {
+        dsl.setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_GREEN);
+
+        final byte[] expectedIdx = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
+            (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B1,
+            (byte) LegoProtocolConstants.WEDO2_LED_IDX_CMD_B2,
+            (byte) LegoProtocolConstants.WEDO2_LED_COLOR_GREEN
+        };
+
+        final ArgumentCaptor<byte[]> captor2 = ArgumentCaptor.forClass(byte[].class);
+        verify(connection).writeWithoutResponse(
+                eq(LegoProtocolConstants.WEDO2_SERVICE_UUID),
+                eq(LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID),
+                captor2.capture());
+        assertArrayEquals(expectedIdx, captor2.getValue());
+    }
+
+    // =========================================================================
     // setLedRgb
     // =========================================================================
 
