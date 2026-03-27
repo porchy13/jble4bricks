@@ -171,42 +171,43 @@ try (BrickDsl dsl = BrickDsl.open()) {
 }
 ```
 
-### WeDo 2.0 hub (custom GATT UUIDs)
+### WeDo 2.0 hub
 
-The WeDo 2.0 hub does not use LWP3 UUIDs. It exposes separate write and notify
-characteristics. Use the 4-argument `LegoDsl` constructor to supply custom service and
-characteristic UUIDs:
+The WeDo 2.0 hub uses a proprietary GATT layout (LWP2, not LWP3). Use
+`connectionDsl.asWeDo2()` to get a `WeDo2Dsl` with named methods for every WeDo 2.0
+operation. Do **not** use `asLego()` for WeDo 2.0 — the LWP3 message format is incompatible.
 
 ```java
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
 
 try (BrickDsl dsl = BrickDsl.open()) {
-    BleConnection connection = dsl.scan()
+    WeDo2Dsl hub = dsl.scan()
         .forWeDo2()
         .timeoutSeconds(10)
         .first()
         .thenConnect()
-        .connection();
+        .asWeDo2();
 
-    LegoDsl wedo2 = new LegoDsl(
-        connection,
-        LegoProtocolConstants.WEDO2_SERVICE_UUID,          // primary service (notifications)
-        LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID, // write characteristic
-        LegoProtocolConstants.WEDO2_BUTTON_UUID             // notify characteristic
-    );
+    // Subscribe to button / hub events
+    hub.notifications().subscribe(buttonSubscriber);
 
-    // Subscribe to button / notification events
-    wedo2.notifications().subscribe(subscriber);
+    // Subscribe to sensor readings (call subscribeSensor first to activate)
+    hub.subscribeSensor(
+        LegoProtocolConstants.WEDO2_PORT_B,
+        LegoProtocolConstants.WEDO2_MOTION_SENSOR_TYPE_ID,
+        0).get();
+    hub.sensorNotifications().subscribe(sensorSubscriber);
 
-    // Send a raw motor command: [portId, typeId, mode, power]
-    wedo2.writeRaw(new byte[]{
-        (byte) LegoProtocolConstants.WEDO2_PORT_A,
-        (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
-        0x01,   // mode
-        (byte) 75  // power (signed, −100 to 100)
-    }).get();
+    // Drive a motor
+    hub.motorPower(LegoProtocolConstants.WEDO2_PORT_A, 75).get();
 
-    wedo2.done();
+    // Stop a motor
+    hub.stopMotor(LegoProtocolConstants.WEDO2_PORT_A).get();
+
+    // Set the hub LED to an arbitrary RGB colour
+    hub.setLedRgb(255, 0, 0).get();   // red
+
+    hub.done();
 }
 ```
 
@@ -227,7 +228,9 @@ Key WeDo 2.0 constants in `LegoProtocolConstants`:
 | `WEDO2_MOTOR_TYPE_ID` | `0x01` | Simple/Medium Linear Motor device type |
 | `WEDO2_MOTION_SENSOR_TYPE_ID` | `0x23` | Motion/Distance Sensor device type |
 | `WEDO2_RGB_LED_TYPE_ID` | `0x22` | RGB LED device type |
-```
+| `WEDO2_PORT_LED` | `0x06` | Internal hub LED virtual port |
+| `WEDO2_LED_MODE_SETUP_B1/B2/B3` | `0x17`, `0x01`, `0x02` | LED mode-setup packet bytes |
+| `WEDO2_LED_RGB_CMD_B1/B2` | `0x04`, `0x03` | LED RGB command packet bytes |
 
 ### SBrick
 

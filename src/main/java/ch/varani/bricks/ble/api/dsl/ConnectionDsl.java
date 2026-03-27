@@ -159,6 +159,16 @@ public final class ConnectionDsl implements AutoCloseable {
     }
 
     /**
+     * Returns a {@link WeDo2Dsl} sub-builder for WeDo 2.0 hub protocol
+     * operations on this connection.
+     *
+     * @return the WeDo 2.0 DSL sub-builder; never {@code null}
+     */
+    public @NonNull WeDo2Dsl asWeDo2() {
+        return new WeDo2Dsl(connection);
+    }
+
+    /**
      * Returns the underlying {@link BleConnection} for callers that need
      * direct access to the raw API.
      *

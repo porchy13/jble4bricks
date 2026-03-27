@@ -104,6 +104,11 @@ class ConnectionDslTest {
     }
 
     @Test
+    void asWeDo2_returnsNonNullWeDo2Dsl() {
+        assertNotNull(dsl.asWeDo2());
+    }
+
+    @Test
     void connection_returnsWrappedConnection() {
         assertSame(connection, dsl.connection());
     }

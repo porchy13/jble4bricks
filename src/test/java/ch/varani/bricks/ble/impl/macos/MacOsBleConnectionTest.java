@@ -395,6 +395,127 @@ class MacOsBleConnectionTest {
         );
     }
 
+    /**
+     * Regression test for the cross-service notification routing bug.
+     *
+     * <p>WeDo 2.0 sensor characteristic {@code 0x1560} physically lives in
+     * service {@code 0x4F0E}, but the Java subscriber registers under the
+     * logical service hint {@code 0x1523}.  CoreBluetooth delivers the
+     * notification with the <em>actual</em> service UUID ({@code 0x4F0E}).
+     * The chr-UUID-only fallback must route the notification to the registered
+     * publisher despite the service UUID mismatch.
+     */
+    @Test
+    void onNotification_differentServiceUuid_chrOnlyFallback_deliversValue() throws Exception {
+        final String registeredSvc = "00001523-1212-efde-1523-785feabcd123";
+        final String actualSvc     = "00004F0E-1212-EFDE-1523-785FEABCD123";
+        final String chr           = "00001560-1212-efde-1523-785feabcd123";
+
+        /* Register under the hint service (0x1523). */
+        final Publisher<byte[]> publisher = connection.notifications(registeredSvc, chr);
+
+        final List<byte[]> received = new ArrayList<>();
+        publisher.subscribe(new Subscriber<byte[]>() {
+            @Override
+            public void onSubscribe(final Subscription s) {
+                s.request(Long.MAX_VALUE);
+            }
+
+            @Override
+            public void onNext(final byte[] item) {
+                received.add(item);
+            }
+
+            @Override
+            public void onError(final Throwable t)  { /* not expected */ }
+
+            @Override
+            public void onComplete()                 { /* not expected */ }
+        });
+
+        /* Notification arrives with the actual service UUID (0x4F0E). */
+        final byte[] value = {0x23, 0x00, 0x10, 0x00};
+        connection.onNotification(actualSvc, chr, value);
+
+        await().atMost(Duration.ofSeconds(2))
+               .until(() -> !received.isEmpty());
+
+        assertAll(
+            () -> assertEquals(1, received.size()),
+            () -> assertArrayEquals(value, received.get(0))
+        );
+    }
+
+    /**
+     * Verifies that a notification whose characteristic UUID does not match any
+     * registered publisher is silently dropped (no exception, no delivery).
+     *
+     * <p>This exercises the fallback scan path where the loop finds nothing.
+     */
+    @Test
+    void onNotification_unknownChr_afterFallbackScan_isDropped() throws Exception {
+        /* Register a publisher for one characteristic. */
+        connection.notifications(SVC, CHR);
+
+        /* Deliver a notification for a completely different characteristic. */
+        connection.onNotification(SVC, "unknown-chr", new byte[]{(byte) 0x99});
+
+        /* No assertion other than no exception; reaching here is the pass. */
+        assertNotNull(connection);
+    }
+
+    /**
+     * Ensures the {@code FINE}-level log lambdas inside
+     * {@link MacOsBleConnection#onNotification} are executed (coverage).
+     *
+     * <p>Three paths are exercised while {@code FINE} logging is enabled:
+     * <ol>
+     *   <li>Exact-key miss + successful chr-only fallback match</li>
+     *   <li>Exact-key miss + chr-only fallback finds nothing (dropped)</li>
+     * </ol>
+     */
+    @Test
+    void onNotification_fineLevelLogs_lambdasExecuted() throws Exception {
+        final Logger logger = Logger.getLogger(MacOsBleConnection.class.getName());
+        final Level savedLevel = logger.getLevel();
+        logger.setLevel(Level.FINE);
+        try {
+            final String registeredSvc = "0000-svc-A";
+            final String actualSvc     = "0000-svc-B";
+            final String chr           = "0000-chr-A";
+
+            /* Register under svc-A. */
+            final Publisher<byte[]> publisher = connection.notifications(registeredSvc, chr);
+            final List<byte[]> received = new ArrayList<>();
+            publisher.subscribe(new Subscriber<byte[]>() {
+                @Override
+                public void onSubscribe(final Subscription s) {
+                    s.request(Long.MAX_VALUE);
+                }
+
+                @Override
+                public void onNext(final byte[] item) {
+                    received.add(item);
+                }
+
+                @Override
+                public void onError(final Throwable t)  { /* not expected */ }
+
+                @Override
+                public void onComplete()                 { /* not expected */ }
+            });
+
+            /* Path 1: exact-key miss → fallback match. */
+            connection.onNotification(actualSvc, chr, new byte[]{0x01});
+            await().atMost(Duration.ofSeconds(2)).until(() -> !received.isEmpty());
+
+            /* Path 2: exact-key miss → fallback scan finds nothing → dropped. */
+            connection.onNotification(actualSvc, "0000-chr-unknown", new byte[]{0x02});
+        } finally {
+            logger.setLevel(savedLevel);
+        }
+    }
+
     @Test
     void fineLevelLogs_writeNotificationsRead_lambdasExecuted() throws Exception {
         final Logger logger = Logger.getLogger(MacOsBleConnection.class.getName());

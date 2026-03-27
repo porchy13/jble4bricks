@@ -278,7 +278,17 @@ final class MacOsBleConnection implements BleConnection {
      * {@code peripheral:didUpdateValueForCharacteristic:error:} in
      * {@code BleBridge.m} when {@code characteristic.isNotifying} is {@code YES}.
      *
-     * @param serviceUuid        the service UUID string
+     * <p>Primary lookup uses the exact {@code (serviceUuid, characteristicUuid)}
+     * key.  If no publisher is found — which can happen when CoreBluetooth reports
+     * the notification under the <em>actual</em> service UUID (e.g.
+     * {@code 0x4F0E} for a WeDo 2.0 sensor characteristic) but the subscriber
+     * registered under a <em>different</em> service UUID hint (e.g.
+     * {@code 0x1523}) — a secondary scan over all registered publishers is
+     * performed and the first entry whose characteristic UUID matches is used.
+     * This mirrors the cross-service fallback already implemented in
+     * {@code findCharacteristic()} in {@code BleBridge.m}.
+     *
+     * @param serviceUuid        the service UUID string as reported by CoreBluetooth
      * @param characteristicUuid the characteristic UUID string
      * @param value              the notification payload bytes
      */
@@ -288,9 +298,29 @@ final class MacOsBleConnection implements BleConnection {
             final byte[] value) {
 
         final CharacteristicKey key = new CharacteristicKey(serviceUuid, characteristicUuid);
-        final SubmissionPublisher<byte[]> pub = notificationPublishers.get(key);
+        SubmissionPublisher<byte[]> pub = notificationPublishers.get(key);
+
+        if (pub == null) {
+            /* Cross-service fallback: match on characteristic UUID alone. */
+            final String chrUpper = characteristicUuid.toUpperCase(Locale.ROOT);
+            LOG.fine(() -> "onNotification: exact key miss for svc=" + serviceUuid
+                    + " chr=" + characteristicUuid + " — trying chr-only fallback");
+            for (final Map.Entry<CharacteristicKey, SubmissionPublisher<byte[]>> entry
+                    : notificationPublishers.entrySet()) {
+                if (entry.getKey().characteristicUuid().equals(chrUpper)) {
+                    pub = entry.getValue();
+                    LOG.fine(() -> "onNotification: chr-only fallback matched svc="
+                            + entry.getKey().serviceUuid() + " for chr=" + chrUpper);
+                    break;
+                }
+            }
+        }
+
         if (pub != null) {
             pub.submit(value);
+        } else {
+            LOG.fine(() -> "onNotification: no publisher for svc=" + serviceUuid
+                    + " chr=" + characteristicUuid + " — notification dropped");
         }
     }
 
