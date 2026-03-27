@@ -249,11 +249,11 @@ try (BrickDsl dsl = BrickDsl.open()) {
     sbrick.notifications().subscribe(subscriber);
 
     // Drive channels
-    sbrick.drive(SBrickProtocolConstants.CHANNEL_A, false, 200).get(); // channel A, CW, power 200
-    sbrick.drive(SBrickProtocolConstants.CHANNEL_B, true,  128).get(); // channel B, CCW, power 128
+    sbrick.drive(SBrickChannel.A, SBrickDirection.CLOCKWISE,         200).get(); // channel A, CW, power 200
+    sbrick.drive(SBrickChannel.B, SBrickDirection.COUNTER_CLOCKWISE, 128).get(); // channel B, CCW, power 128
 
     // Brake one or more channels at once
-    sbrick.brake(SBrickProtocolConstants.CHANNEL_A, SBrickProtocolConstants.CHANNEL_B).get();
+    sbrick.brake(SBrickChannel.A, SBrickChannel.B).get();
 
     // Query ADC channels
     sbrick.queryBatteryVoltage().get();    // battery voltage
@@ -283,9 +283,9 @@ try (BrickDsl dsl = BrickDsl.open()) {
     cc.notifications().subscribe(subscriber);
 
     // Drive motors forward / reverse / stop
-    cc.motorForward(CircuitCubesProtocolConstants.CHANNEL_A, 128).get();
-    cc.motorReverse(CircuitCubesProtocolConstants.CHANNEL_B, 64).get();
-    cc.motorStop(CircuitCubesProtocolConstants.CHANNEL_C).get();
+    cc.motorForward(CircuitCubesChannel.A, 128).get();
+    cc.motorReverse(CircuitCubesChannel.B, 64).get();
+    cc.motorStop(CircuitCubesChannel.C).get();
 
     // Query battery voltage (response arrives as an RX notification)
     cc.queryBattery().get();
@@ -309,7 +309,7 @@ try (BrickDsl dsl = BrickDsl.open()) {
     bw2.notifications().subscribe(subscriber);
 
     // Set power level before sending motor commands (default is 0 = disabled)
-    bw2.setPowerLevel(BuWizz2ProtocolConstants.POWER_LEVEL_NORMAL).get();
+    bw2.setPowerLevel(BuWizz2PowerLevel.NORMAL).get();
 
     // Set motor speeds (channels 1–4, signed −127 to 127) and brake flags
     bw2.setMotorData(
