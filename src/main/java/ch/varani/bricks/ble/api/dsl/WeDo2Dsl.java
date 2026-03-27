@@ -97,10 +97,15 @@ public final class WeDo2Dsl {
      * <p>Writes a 4-byte command to
      * {@link LegoProtocolConstants#WEDO2_MOTOR_VALUE_WRITE_UUID}:
      * <pre>
-     * [portId, typeId, mode, power]
+     * [portId, 0x01, 0x02, power]
      * </pre>
-     * where {@code power} is a signed byte in the range −100 to +100, and
-     * {@code typeId} is {@link LegoProtocolConstants#WEDO2_MOTOR_TYPE_ID}.
+     * where {@code power} is a signed byte in the range −100 to +100.
+     * Byte[1] is the fixed WeDo 2.0 {@code typeId} ({@code 0x01}) and
+     * byte[2] is the fixed {@code writeDirect} sub-command ({@code 0x02}).
+     *
+     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
+     * https://github.com/nathankellenicki/node-poweredup —
+     * {@code src/devices/device.ts writeDirect()}.
      *
      * @param portId port identifier; use
      *               {@link LegoProtocolConstants#WEDO2_PORT_A} or
@@ -113,7 +118,7 @@ public final class WeDo2Dsl {
         final byte[] msg = {
             (byte) portId,
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
-            (byte) 0x00,                // mode 0 = motor power
+            (byte) 0x02,                // fixed writeDirect sub-command byte
             (byte) (power & BYTE_MASK)
         };
         return writeMotor(msg);

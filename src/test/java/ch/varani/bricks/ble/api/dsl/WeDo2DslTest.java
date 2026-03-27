@@ -76,7 +76,7 @@ class WeDo2DslTest {
         final byte[] expected = {
             (byte) LegoProtocolConstants.WEDO2_PORT_A,
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
-            (byte) 0x00,
+            (byte) 0x02,
             (byte) 75
         };
         verifyMotorWrite(expected);
@@ -89,7 +89,7 @@ class WeDo2DslTest {
         final byte[] expected = {
             (byte) LegoProtocolConstants.WEDO2_PORT_B,
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
-            (byte) 0x00,
+            (byte) 0x02,
             (byte) (-50 & 0xFF)
         };
         verifyMotorWrite(expected);
@@ -102,7 +102,7 @@ class WeDo2DslTest {
         final byte[] expected = {
             (byte) LegoProtocolConstants.WEDO2_PORT_A,
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
-            (byte) 0x00,
+            (byte) 0x02,
             (byte) 0
         };
         verifyMotorWrite(expected);
@@ -119,7 +119,7 @@ class WeDo2DslTest {
         final byte[] expected = {
             (byte) LegoProtocolConstants.WEDO2_PORT_A,
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
-            (byte) 0x00,
+            (byte) 0x02,
             (byte) 0
         };
         verifyMotorWrite(expected);

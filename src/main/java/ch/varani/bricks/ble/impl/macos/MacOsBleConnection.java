@@ -39,6 +39,9 @@ final class MacOsBleConnection implements BleConnection {
 
     private static final Logger LOG = Logger.getLogger(MacOsBleConnection.class.getName());
 
+    /** Mask for converting a signed byte to an unsigned int for hex formatting. */
+    private static final int BYTE_MASK = 0xFF;
+
     /**
      * Key type for the notification publisher map.
      *
@@ -178,8 +181,15 @@ final class MacOsBleConnection implements BleConnection {
             final byte[] data) {
 
         checkOpen();
-        LOG.fine(() -> "Write: chr=" + characteristicUuid + " svc=" + serviceUuid
-                + " len=" + data.length + " bytes");
+        LOG.fine(() -> {
+            final StringBuilder hex = new StringBuilder(data.length * 3);
+            for (final byte b : data) {
+                hex.append(String.format("%02X ", b & BYTE_MASK));
+            }
+            return "Write: chr=" + characteristicUuid + " svc=" + serviceUuid
+                    + " len=" + data.length + " bytes ["
+                    + hex.toString().stripTrailing() + "]";
+        });
         return CompletableFuture.runAsync(() ->
                 scanner.writeWithoutResponseNative(connectionPtr, serviceUuid,
                         characteristicUuid, data));
