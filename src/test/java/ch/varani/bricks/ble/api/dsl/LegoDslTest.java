@@ -124,6 +124,84 @@ class LegoDslTest {
     }
 
     @Test
+    void requestManufacturerName_sendsCorrectBytes() {
+        dsl.requestManufacturerName();
+
+        final byte[] expected = {
+            0x05, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_PROPERTIES,
+            (byte) LegoProtocolConstants.HUB_PROP_MANUFACTURER_NAME,
+            (byte) LegoProtocolConstants.HUB_PROP_OP_REQUEST_UPDATE
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void requestRadioFirmwareVersion_sendsCorrectBytes() {
+        dsl.requestRadioFirmwareVersion();
+
+        final byte[] expected = {
+            0x05, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_PROPERTIES,
+            (byte) LegoProtocolConstants.HUB_PROP_RADIO_FIRMWARE_VERSION,
+            (byte) LegoProtocolConstants.HUB_PROP_OP_REQUEST_UPDATE
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void requestLwpVersion_sendsCorrectBytes() {
+        dsl.requestLwpVersion();
+
+        final byte[] expected = {
+            0x05, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_PROPERTIES,
+            (byte) LegoProtocolConstants.HUB_PROP_LWP_VERSION,
+            (byte) LegoProtocolConstants.HUB_PROP_OP_REQUEST_UPDATE
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void requestSystemTypeId_sendsCorrectBytes() {
+        dsl.requestSystemTypeId();
+
+        final byte[] expected = {
+            0x05, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_PROPERTIES,
+            (byte) LegoProtocolConstants.HUB_PROP_SYSTEM_TYPE_ID,
+            (byte) LegoProtocolConstants.HUB_PROP_OP_REQUEST_UPDATE
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void requestPrimaryMac_sendsCorrectBytes() {
+        dsl.requestPrimaryMac();
+
+        final byte[] expected = {
+            0x05, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_PROPERTIES,
+            (byte) LegoProtocolConstants.HUB_PROP_PRIMARY_MAC,
+            (byte) LegoProtocolConstants.HUB_PROP_OP_REQUEST_UPDATE
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void requestSecondaryMac_sendsCorrectBytes() {
+        dsl.requestSecondaryMac();
+
+        final byte[] expected = {
+            0x05, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_PROPERTIES,
+            (byte) LegoProtocolConstants.HUB_PROP_SECONDARY_MAC,
+            (byte) LegoProtocolConstants.HUB_PROP_OP_REQUEST_UPDATE
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
     void enableBatteryVoltageUpdates_sendsCorrectBytes() {
         dsl.enableBatteryVoltageUpdates();
 
@@ -235,6 +313,42 @@ class LegoDslTest {
     @Test
     void hubAction_and_returnsParentDsl() {
         assertSame(dsl, dsl.hubAction().and());
+    }
+
+    @Test
+    void hubAction_activateBusyIndication_sendsCorrectBytes() {
+        dsl.hubAction().activateBusyIndication();
+
+        final byte[] expected = {
+            0x04, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_ACTIONS,
+            (byte) LegoProtocolConstants.HUB_ACTION_ACTIVATE_BUSY_INDICATION
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void hubAction_resetBusyIndication_sendsCorrectBytes() {
+        dsl.hubAction().resetBusyIndication();
+
+        final byte[] expected = {
+            0x04, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_ACTIONS,
+            (byte) LegoProtocolConstants.HUB_ACTION_RESET_BUSY_INDICATION
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void hubAction_shutdown_sendsCorrectBytes() {
+        dsl.hubAction().shutdown();
+
+        final byte[] expected = {
+            0x04, 0x00,
+            (byte) LegoProtocolConstants.MSG_HUB_ACTIONS,
+            (byte) LegoProtocolConstants.HUB_ACTION_SHUTDOWN
+        };
+        verifyWrite(expected);
     }
 
     // =========================================================================
@@ -464,6 +578,244 @@ class LegoDslTest {
     @Test
     void motor_and_returnsParentDsl() {
         assertSame(dsl, dsl.motor(0x00).and());
+    }
+
+    // =========================================================================
+    // MotorBuilder — startSpeedForTime with explicit endState
+    // =========================================================================
+
+    @Test
+    void motor_startSpeedForTime_explicitEndState_encodesCorrectly() {
+        // timeMs = 500 = 0x01F4; endState = BRAKING_STYLE_BRAKE (0x7F)
+        dsl.motor(0x00).startSpeedForTime(500, 50, 100,
+                LegoProtocolConstants.BRAKING_STYLE_BRAKE);
+
+        final byte[] expected = {
+            0x0C, 0x00, (byte) 0x81, 0x00, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_START_SPEED_FOR_TIME,
+            (byte) 0xF4, 0x01, 50, 100,
+            (byte) LegoProtocolConstants.BRAKING_STYLE_BRAKE, 0x00
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void motor_startSpeedForTime_explicitFloat_encodesCorrectly() {
+        // endState = BRAKING_STYLE_FLOAT (0x00)
+        dsl.motor(0x01).startSpeedForTime(100, 30, 80,
+                LegoProtocolConstants.BRAKING_STYLE_FLOAT);
+
+        final byte[] expected = {
+            0x0C, 0x00, (byte) 0x81, 0x01, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_START_SPEED_FOR_TIME,
+            100, 0x00, 30, 80,
+            (byte) LegoProtocolConstants.BRAKING_STYLE_FLOAT, 0x00
+        };
+        verifyWrite(expected);
+    }
+
+    // =========================================================================
+    // MotorBuilder — startSpeedForDegrees with explicit endState
+    // =========================================================================
+
+    @Test
+    void motor_startSpeedForDegrees_explicitEndState_encodesCorrectly() {
+        // degrees = 180 = 0x000000B4; endState = BRAKING_STYLE_BRAKE
+        dsl.motor(0x00).startSpeedForDegrees(180, 50, 100,
+                LegoProtocolConstants.BRAKING_STYLE_BRAKE);
+
+        final byte[] expected = {
+            0x0E, 0x00, (byte) 0x81, 0x00, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_START_SPEED_FOR_DEGREES,
+            (byte) 0xB4, 0x00, 0x00, 0x00, 50, 100,
+            (byte) LegoProtocolConstants.BRAKING_STYLE_BRAKE, 0x00
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void motor_startSpeedForDegrees_explicitFloat_encodesCorrectly() {
+        dsl.motor(0x00).startSpeedForDegrees(90, 40, 70,
+                LegoProtocolConstants.BRAKING_STYLE_FLOAT);
+
+        final byte[] expected = {
+            0x0E, 0x00, (byte) 0x81, 0x00, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_START_SPEED_FOR_DEGREES,
+            90, 0x00, 0x00, 0x00, 40, 70,
+            (byte) LegoProtocolConstants.BRAKING_STYLE_FLOAT, 0x00
+        };
+        verifyWrite(expected);
+    }
+
+    // =========================================================================
+    // MotorBuilder — gotoAbsolutePosition with explicit endState
+    // =========================================================================
+
+    @Test
+    void motor_gotoAbsolutePosition_explicitEndState_encodesCorrectly() {
+        // position = 90 = 0x0000005A; endState = BRAKING_STYLE_BRAKE
+        dsl.motor(0x00).gotoAbsolutePosition(90, 50, 100,
+                LegoProtocolConstants.BRAKING_STYLE_BRAKE);
+
+        final byte[] expected = {
+            0x0E, 0x00, (byte) 0x81, 0x00, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_GOTO_ABSOLUTE_POSITION,
+            0x5A, 0x00, 0x00, 0x00, 50, 100,
+            (byte) LegoProtocolConstants.BRAKING_STYLE_BRAKE, 0x00
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void motor_gotoAbsolutePosition_explicitFloat_encodesCorrectly() {
+        dsl.motor(0x00).gotoAbsolutePosition(45, 30, 80,
+                LegoProtocolConstants.BRAKING_STYLE_FLOAT);
+
+        final byte[] expected = {
+            0x0E, 0x00, (byte) 0x81, 0x00, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_GOTO_ABSOLUTE_POSITION,
+            45, 0x00, 0x00, 0x00, 30, 80,
+            (byte) LegoProtocolConstants.BRAKING_STYLE_FLOAT, 0x00
+        };
+        verifyWrite(expected);
+    }
+
+    // =========================================================================
+    // MotorBuilder — writeDirect
+    // =========================================================================
+
+    @Test
+    void motor_writeDirect_sendsCorrectBytes() {
+        dsl.motor(0x32).writeDirect((byte) 0x03);
+
+        // portOutputCommand: [length, hubId, 0x81, portId, 0x11, 0x50, data...]
+        final byte[] expected = {
+            0x07, 0x00, (byte) 0x81, 0x32, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT,
+            0x03
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void motor_writeDirect_multipleBytes_sendsCorrectBytes() {
+        dsl.motor(0x00).writeDirect((byte) 0x01, (byte) 0x02, (byte) 0x03);
+
+        final byte[] expected = {
+            0x09, 0x00, (byte) 0x81, 0x00, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT,
+            0x01, 0x02, 0x03
+        };
+        verifyWrite(expected);
+    }
+
+    // =========================================================================
+    // MotorBuilder — writeDirectModeData
+    // =========================================================================
+
+    @Test
+    void motor_writeDirectModeData_sendsCorrectBytes() {
+        // LED colour: mode=0, colorIndex=RED(9)
+        dsl.motor(0x32).writeDirectModeData(0x00,
+                (byte) LegoProtocolConstants.COLOR_RED);
+
+        final byte[] expected = {
+            0x08, 0x00, (byte) 0x81, 0x32, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
+            0x00,
+            (byte) LegoProtocolConstants.COLOR_RED
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void motor_writeDirectModeData_soundMode_sendsCorrectBytes() {
+        // Duplo sound: mode=1, soundId=HORN(9)
+        dsl.motor(0x01).writeDirectModeData(0x01,
+                (byte) LegoProtocolConstants.DUPLO_SOUND_HORN);
+
+        final byte[] expected = {
+            0x08, 0x00, (byte) 0x81, 0x01, 0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
+            0x01,
+            (byte) LegoProtocolConstants.DUPLO_SOUND_HORN
+        };
+        verifyWrite(expected);
+    }
+
+    // =========================================================================
+    // setupPortInputFormatSingle
+    // =========================================================================
+
+    @Test
+    void setupPortInputFormatSingle_notifyOn_sendsCorrectBytes() {
+        // portId=0, mode=0, deltaInterval=1 (0x00000001), notifyOnChange=true
+        dsl.setupPortInputFormatSingle(0x00, 0x00, 1, true);
+
+        final byte[] expected = {
+            0x0A, 0x00,
+            (byte) LegoProtocolConstants.MSG_PORT_INPUT_FORMAT_SETUP_SINGLE,
+            0x00, 0x00,
+            0x01, 0x00, 0x00, 0x00,
+            0x01
+        };
+        verifyWrite(expected);
+    }
+
+    @Test
+    void setupPortInputFormatSingle_notifyOff_sendsCorrectBytes() {
+        // portId=1, mode=2, deltaInterval=256=0x00000100, notifyOnChange=false
+        dsl.setupPortInputFormatSingle(0x01, 0x02, 256, false);
+
+        final byte[] expected = {
+            0x0A, 0x00,
+            (byte) LegoProtocolConstants.MSG_PORT_INPUT_FORMAT_SETUP_SINGLE,
+            0x01, 0x02,
+            0x00, 0x01, 0x00, 0x00,
+            0x00
+        };
+        verifyWrite(expected);
+    }
+
+    // =========================================================================
+    // setHubLedColor
+    // =========================================================================
+
+    @Test
+    void setHubLedColor_sendsCorrectBytes() {
+        dsl.setHubLedColor(
+                LegoProtocolConstants.CITY_HUB_PORT_LED,
+                LegoProtocolConstants.COLOR_GREEN);
+
+        // portOutputCommand with MOTOR_CMD_WRITE_DIRECT_MODE_DATA, mode=0x00, colour=6
+        final byte[] expected = {
+            0x08, 0x00, (byte) 0x81,
+            (byte) LegoProtocolConstants.CITY_HUB_PORT_LED,
+            0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
+            0x00,
+            (byte) LegoProtocolConstants.COLOR_GREEN
+        };
+        verifyWrite(expected);
+    }
+
+    // =========================================================================
+    // playDuploSound
+    // =========================================================================
+
+    @Test
+    void playDuploSound_sendsCorrectBytes() {
+        dsl.playDuploSound(0x01, LegoProtocolConstants.DUPLO_SOUND_STEAM);
+
+        final byte[] expected = {
+            0x08, 0x00, (byte) 0x81,
+            0x01,
+            0x11,
+            (byte) LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
+            0x01,
+            (byte) LegoProtocolConstants.DUPLO_SOUND_STEAM
+        };
+        verifyWrite(expected);
     }
 
     // =========================================================================

@@ -164,6 +164,79 @@ public final class LegoDsl {
     }
 
     /**
+     * Requests the manufacturer name string from the hub.
+     *
+     * <p>Convenience shortcut for
+     * {@code requestHubProperty(HUB_PROP_MANUFACTURER_NAME)}.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestManufacturerName() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_MANUFACTURER_NAME);
+    }
+
+    /**
+     * Requests the radio firmware version string from the hub.
+     *
+     * <p>Convenience shortcut for
+     * {@code requestHubProperty(HUB_PROP_RADIO_FIRMWARE_VERSION)}.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestRadioFirmwareVersion() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_RADIO_FIRMWARE_VERSION);
+    }
+
+    /**
+     * Requests the LEGO Wireless Protocol version from the hub.
+     *
+     * <p>Convenience shortcut for
+     * {@code requestHubProperty(HUB_PROP_LWP_VERSION)}.
+     * The response payload is a 2-byte BCD-encoded version number.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestLwpVersion() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_LWP_VERSION);
+    }
+
+    /**
+     * Requests the System Type ID from the hub.
+     *
+     * <p>Convenience shortcut for
+     * {@code requestHubProperty(HUB_PROP_SYSTEM_TYPE_ID)}.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestSystemTypeId() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_SYSTEM_TYPE_ID);
+    }
+
+    /**
+     * Requests the primary MAC address from the hub.
+     *
+     * <p>Convenience shortcut for
+     * {@code requestHubProperty(HUB_PROP_PRIMARY_MAC)}.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestPrimaryMac() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_PRIMARY_MAC);
+    }
+
+    /**
+     * Requests the secondary MAC address from the hub.
+     *
+     * <p>Convenience shortcut for
+     * {@code requestHubProperty(HUB_PROP_SECONDARY_MAC)}.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> requestSecondaryMac() {
+        return requestHubProperty(LegoProtocolConstants.HUB_PROP_SECONDARY_MAC);
+    }
+
+    /**
      * Enables periodic battery voltage updates from the hub.
      *
      * @return a future that completes when the write is submitted; never {@code null}
@@ -330,6 +403,102 @@ public final class LegoDsl {
     }
 
     // =========================================================================
+    // Port Input Format Setup (message type 0x41)
+    // =========================================================================
+
+    /**
+     * Sends a Port Input Format Setup (Single) message ({@code 0x41}) to configure
+     * a sensor port to report in a specific mode.
+     *
+     * <p>After calling this method the hub will begin sending Port Value (Single)
+     * notifications ({@code 0x45}) whenever the value changes by at least
+     * {@code deltaInterval} in the given {@code mode}.
+     *
+     * @param portId          the port identifier byte
+     * @param mode            the sensor mode index (0-based)
+     * @param deltaInterval   minimum value change that triggers a notification
+     * @param notifyOnChange  {@code true} to enable automatic notifications;
+     *                        {@code false} to disable them (polling only)
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> setupPortInputFormatSingle(
+            int portId,
+            int mode,
+            int deltaInterval,
+            boolean notifyOnChange) {
+        final int headerSize = SETUP_SINGLE_MSG_SIZE;
+        final byte[] msg = new byte[headerSize];
+        msg[0] = (byte) headerSize;
+        msg[1] = (byte) LegoProtocolConstants.HUB_ID;
+        msg[2] = (byte) LegoProtocolConstants.MSG_PORT_INPUT_FORMAT_SETUP_SINGLE;
+        msg[IDX_SETUP_PORT_ID] = (byte) portId;
+        msg[IDX_SETUP_MODE] = (byte) mode;
+        msg[IDX_SETUP_DELTA_0] = (byte) (deltaInterval & SETUP_BYTE_MASK);
+        msg[IDX_SETUP_DELTA_1] = (byte) ((deltaInterval >> SETUP_SHIFT_8) & SETUP_BYTE_MASK);
+        msg[IDX_SETUP_DELTA_2] = (byte) ((deltaInterval >> SETUP_SHIFT_16) & SETUP_BYTE_MASK);
+        msg[IDX_SETUP_DELTA_3] = (byte) ((deltaInterval >> SETUP_SHIFT_24) & SETUP_BYTE_MASK);
+        msg[IDX_SETUP_NOTIFY] = notifyOnChange ? (byte) 1 : (byte) 0;
+        return write(msg);
+    }
+
+    // =========================================================================
+    // Hub LED colour control
+    // =========================================================================
+
+    /**
+     * Sets the Hub LED to the given colour index by sending a
+     * {@code WriteDirectModeData} ({@code 0x51}) Port Output Command to the
+     * LED port.
+     *
+     * <p>Use the {@code COLOR_*} constants from
+     * {@link LegoProtocolConstants} (e.g.
+     * {@link LegoProtocolConstants#COLOR_RED}) as the {@code colorIndex} value.
+     *
+     * @param ledPortId  the virtual port ID of the Hub LED (e.g.
+     *                   {@link LegoProtocolConstants#MOVE_HUB_PORT_LED},
+     *                   {@link LegoProtocolConstants#CITY_HUB_PORT_LED},
+     *                   {@link LegoProtocolConstants#TECHNIC_HUB_PORT_LED})
+     * @param colorIndex the colour index (0–10); use {@code COLOR_NONE} (255) to
+     *                   switch the LED off
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> setHubLedColor(int ledPortId, int colorIndex) {
+        return portOutputCommand(
+                ledPortId,
+                DEFAULT_STARTUP_COMPLETION_LED,
+                LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
+                (byte) 0x00,          // mode 0 = colour index
+                (byte) colorIndex);
+    }
+
+    // =========================================================================
+    // Duplo Train sound control
+    // =========================================================================
+
+    /**
+     * Plays a sound on the Duplo Train Base by sending a
+     * {@code WriteDirectModeData} ({@code 0x51}) Port Output Command to the
+     * Duplo Train Base Speaker port.
+     *
+     * <p>Use the {@code DUPLO_SOUND_*} constants from
+     * {@link LegoProtocolConstants} (e.g.
+     * {@link LegoProtocolConstants#DUPLO_SOUND_HORN}).
+     *
+     * @param speakerPortId the port ID of the Duplo Train Base Speaker device
+     * @param soundId       the sound identifier byte; use one of the
+     *                      {@code DUPLO_SOUND_*} constants
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> playDuploSound(int speakerPortId, int soundId) {
+        return portOutputCommand(
+                speakerPortId,
+                DEFAULT_STARTUP_COMPLETION_LED,
+                LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
+                (byte) 0x01,          // mode 1 = sound
+                (byte) soundId);
+    }
+
+    // =========================================================================
     // Port Information requests (message types 0x21, 0x22)
     // =========================================================================
 
@@ -426,6 +595,48 @@ public final class LegoDsl {
     private static final int IDX_SUB_COMMAND = 5;
 
     /**
+     * Startup/completion byte used for LED and sound output commands:
+     * buffer if necessary + execute immediately ({@code 0x11}).
+     */
+    private static final int DEFAULT_STARTUP_COMPLETION_LED = 0x11;
+
+    /** Byte mask for extracting the lowest 8 bits of an integer (Port Input Format Setup). */
+    private static final int SETUP_BYTE_MASK = 0xFF;
+
+    /** Bit-shift amount to reach bits 8–15 of a 32-bit integer (Port Input Format Setup). */
+    private static final int SETUP_SHIFT_8 = 8;
+
+    /** Bit-shift amount to reach bits 16–23 of a 32-bit integer (Port Input Format Setup). */
+    private static final int SETUP_SHIFT_16 = 16;
+
+    /** Bit-shift amount to reach bits 24–31 of a 32-bit integer (Port Input Format Setup). */
+    private static final int SETUP_SHIFT_24 = 24;
+
+    /** Total message size in bytes of a Port Input Format Setup (Single) message. */
+    private static final int SETUP_SINGLE_MSG_SIZE = 10;
+
+    /** Array index of the port-ID field in a Port Input Format Setup (Single) message. */
+    private static final int IDX_SETUP_PORT_ID = 3;
+
+    /** Array index of the mode field in a Port Input Format Setup (Single) message. */
+    private static final int IDX_SETUP_MODE = 4;
+
+    /** Array index of the delta-interval byte 0 (LSB) in a Port Input Format Setup (Single) message. */
+    private static final int IDX_SETUP_DELTA_0 = 5;
+
+    /** Array index of the delta-interval byte 1 in a Port Input Format Setup (Single) message. */
+    private static final int IDX_SETUP_DELTA_1 = 6;
+
+    /** Array index of the delta-interval byte 2 in a Port Input Format Setup (Single) message. */
+    private static final int IDX_SETUP_DELTA_2 = 7;
+
+    /** Array index of the delta-interval byte 3 (MSB) in a Port Input Format Setup (Single) message. */
+    private static final int IDX_SETUP_DELTA_3 = 8;
+
+    /** Array index of the notify-on-change flag in a Port Input Format Setup (Single) message. */
+    private static final int IDX_SETUP_NOTIFY = 9;
+
+    /**
      * Writes a raw LWP message payload to the hub characteristic.
      *
      * <p>Use this method to send protocol messages that are not yet covered
@@ -507,6 +718,42 @@ public final class LegoDsl {
         }
 
         /**
+         * Sends the Activate Busy Indication action ({@code 0x05}).
+         *
+         * <p>Instructs the hub to display a "busy" LED state.
+         *
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> activateBusyIndication() {
+            return parent.sendHubAction(
+                    LegoProtocolConstants.HUB_ACTION_ACTIVATE_BUSY_INDICATION);
+        }
+
+        /**
+         * Sends the Reset Busy Indication action ({@code 0x06}).
+         *
+         * <p>Clears the "busy" LED state set by {@link #activateBusyIndication()}.
+         *
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> resetBusyIndication() {
+            return parent.sendHubAction(
+                    LegoProtocolConstants.HUB_ACTION_RESET_BUSY_INDICATION);
+        }
+
+        /**
+         * Sends the Shutdown action ({@code 0x2F}).
+         *
+         * <p>Powers off the hub immediately without sending an upstream
+         * "will switch off" notification.
+         *
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> shutdown() {
+            return parent.sendHubAction(LegoProtocolConstants.HUB_ACTION_SHUTDOWN);
+        }
+
+        /**
          * Returns the parent {@link LegoDsl} to continue chaining.
          *
          * @return the parent builder; never {@code null}
@@ -540,11 +787,14 @@ public final class LegoDsl {
         private static final int SHIFT_24 = 24;
 
         /**
-         * End-state byte: brake ({@code 0x7E}).
+         * End-state byte: hold position ({@code 0x7E} =
+         * {@link LegoProtocolConstants#BRAKING_STYLE_HOLD}).
          *
-         * <p>Used as the end-state parameter in timed and degree-limited motor commands.
+         * <p>Used as the default end-state parameter in timed and degree-limited
+         * motor commands when the caller does not specify an explicit end state.
          */
-        private static final byte END_STATE_BRAKE = 0x7E;
+        private static final byte END_STATE_BRAKE =
+                (byte) LegoProtocolConstants.BRAKING_STYLE_HOLD;
 
         private final LegoDsl parent;
         private final int portId;
@@ -597,6 +847,24 @@ public final class LegoDsl {
          */
         public @NonNull CompletableFuture<Void> startSpeedForTime(
                 int timeMs, int speed, int maxPower) {
+            return startSpeedForTime(timeMs, speed, maxPower,
+                    LegoProtocolConstants.BRAKING_STYLE_HOLD);
+        }
+
+        /**
+         * Sends a {@code StartSpeedForTime} command ({@code 0x09}) on this port
+         * with an explicit end state.
+         *
+         * @param timeMs   duration in milliseconds
+         * @param speed    signed speed in the range −100 to 100
+         * @param maxPower maximum power (0–100)
+         * @param endState braking style after the command completes; use one of the
+         *                 {@code BRAKING_STYLE_*} constants from
+         *                 {@link LegoProtocolConstants}
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> startSpeedForTime(
+                int timeMs, int speed, int maxPower, int endState) {
             return parent.portOutputCommand(
                     portId,
                     DEFAULT_STARTUP_COMPLETION,
@@ -605,7 +873,7 @@ public final class LegoDsl {
                     (byte) ((timeMs >> SHIFT_8) & BYTE_MASK),
                     (byte) speed,
                     (byte) maxPower,
-                    END_STATE_BRAKE,
+                    (byte) endState,
                     (byte) 0x00);   // use acceleration profile
         }
 
@@ -619,6 +887,24 @@ public final class LegoDsl {
          */
         public @NonNull CompletableFuture<Void> startSpeedForDegrees(
                 int degrees, int speed, int maxPower) {
+            return startSpeedForDegrees(degrees, speed, maxPower,
+                    LegoProtocolConstants.BRAKING_STYLE_HOLD);
+        }
+
+        /**
+         * Sends a {@code StartSpeedForDegrees} command ({@code 0x0B}) on this port
+         * with an explicit end state.
+         *
+         * @param degrees  rotation in degrees (unsigned 32-bit)
+         * @param speed    signed speed in the range −100 to 100
+         * @param maxPower maximum power (0–100)
+         * @param endState braking style after the command completes; use one of the
+         *                 {@code BRAKING_STYLE_*} constants from
+         *                 {@link LegoProtocolConstants}
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> startSpeedForDegrees(
+                int degrees, int speed, int maxPower, int endState) {
             return parent.portOutputCommand(
                     portId,
                     DEFAULT_STARTUP_COMPLETION,
@@ -629,7 +915,7 @@ public final class LegoDsl {
                     (byte) ((degrees >> SHIFT_24) & BYTE_MASK),
                     (byte) speed,
                     (byte) maxPower,
-                    END_STATE_BRAKE,
+                    (byte) endState,
                     (byte) 0x00);   // use acceleration profile
         }
 
@@ -643,6 +929,24 @@ public final class LegoDsl {
          */
         public @NonNull CompletableFuture<Void> gotoAbsolutePosition(
                 int position, int speed, int maxPower) {
+            return gotoAbsolutePosition(position, speed, maxPower,
+                    LegoProtocolConstants.BRAKING_STYLE_HOLD);
+        }
+
+        /**
+         * Sends a {@code GotoAbsolutePosition} command ({@code 0x0D}) on this port
+         * with an explicit end state.
+         *
+         * @param position signed absolute position in degrees
+         * @param speed    signed speed in the range −100 to 100
+         * @param maxPower maximum power (0–100)
+         * @param endState braking style after the command completes; use one of the
+         *                 {@code BRAKING_STYLE_*} constants from
+         *                 {@link LegoProtocolConstants}
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> gotoAbsolutePosition(
+                int position, int speed, int maxPower, int endState) {
             return parent.portOutputCommand(
                     portId,
                     DEFAULT_STARTUP_COMPLETION,
@@ -653,8 +957,49 @@ public final class LegoDsl {
                     (byte) ((position >> SHIFT_24) & BYTE_MASK),
                     (byte) speed,
                     (byte) maxPower,
-                    END_STATE_BRAKE,
+                    (byte) endState,
                     (byte) 0x00);   // use profile
+        }
+
+        /**
+         * Sends a {@code WriteDirect} command ({@code 0x50}) on this port.
+         *
+         * <p>Used for low-level direct writes to output devices such as LEDs.
+         * The meaning of {@code data} bytes depends on the connected device type.
+         *
+         * @param data the raw payload bytes to write; must not be {@code null}
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> writeDirect(byte... data) {
+            return parent.portOutputCommand(
+                    portId,
+                    DEFAULT_STARTUP_COMPLETION,
+                    LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT,
+                    data);
+        }
+
+        /**
+         * Sends a {@code WriteDirectModeData} command ({@code 0x51}) on this port.
+         *
+         * <p>Used to write mode-specific data to output devices, for example:
+         * <ul>
+         *   <li>Hub LED colour: mode {@code 0x00}, one data byte = colour index</li>
+         *   <li>Duplo Train speaker: mode {@code 0x01}, one data byte = sound ID</li>
+         * </ul>
+         *
+         * @param mode the device mode index byte
+         * @param data the mode-specific payload bytes; must not be {@code null}
+         * @return a future that completes when the write is submitted; never {@code null}
+         */
+        public @NonNull CompletableFuture<Void> writeDirectModeData(int mode, byte... data) {
+            final byte[] params = new byte[1 + data.length];
+            params[0] = (byte) mode;
+            System.arraycopy(data, 0, params, 1, data.length);
+            return parent.portOutputCommand(
+                    portId,
+                    DEFAULT_STARTUP_COMPLETION,
+                    LegoProtocolConstants.MOTOR_CMD_WRITE_DIRECT_MODE_DATA,
+                    params);
         }
 
         /**

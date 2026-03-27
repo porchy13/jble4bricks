@@ -103,6 +103,15 @@ try (BrickDsl dsl = BrickDsl.open()) {
     lego.requestFirmwareVersion().get();
     lego.requestHardwareVersion().get();
 
+    // Request additional hub properties
+    lego.requestRssi().get();
+    lego.requestManufacturerName().get();
+    lego.requestRadioFirmwareVersion().get();
+    lego.requestLwpVersion().get();
+    lego.requestSystemTypeId().get();
+    lego.requestPrimaryMac().get();
+    lego.requestSecondaryMac().get();
+
     // Control motors
     lego.motor(0x00).startSpeed(80).get();          // port A, 80 % forward
     lego.motor(0x00).startSpeed(80, 100).get();     // port A, speed 80, max power 100
@@ -112,14 +121,29 @@ try (BrickDsl dsl = BrickDsl.open()) {
     lego.motor(0x00).setAccTime(500).get();   // 500 ms ramp-up
     lego.motor(0x00).setDecTime(300).get();   // 300 ms ramp-down
 
+    // Motor commands with explicit end state (FLOAT, HOLD, or BRAKE)
+    lego.motor(0x00).startSpeedForTime(2000, 50, 100,
+        LegoProtocolConstants.BRAKING_STYLE_BRAKE).get();
+    lego.motor(0x00).startSpeedForDegrees(360, 50, 100,
+        LegoProtocolConstants.BRAKING_STYLE_FLOAT).get();
+    lego.motor(0x00).gotoAbsolutePosition(0, 50, 100,
+        LegoProtocolConstants.BRAKING_STYLE_HOLD).get();
+
+    // Low-level WriteDirect / WriteDirectModeData (escape hatch for any port output device)
+    lego.motor(0x32).writeDirect((byte) 0x06).get();                     // raw WriteDirect
+    lego.motor(0x32).writeDirectModeData(0x00, (byte) 0x09).get();       // mode 0, payload 0x09
+
     // Chain motor operations
     lego.motor(0x00).startSpeed(60).get();
     lego.motor(0x01).startSpeed(-60).get();   // port B, reverse
 
     // Hub actions
     lego.hubAction().vccPortOn().get();
+    lego.hubAction().activateBusyIndication().get();  // show busy LED state
+    lego.hubAction().resetBusyIndication().get();     // clear busy LED state
     lego.hubAction().disconnect().get();
     lego.hubAction().switchOff().get();
+    lego.hubAction().shutdown().get();                // immediate power-off, no upstream event
 
     // Hub alerts
     lego.enableAlert(LegoProtocolConstants.HUB_ALERT_LOW_VOLTAGE).get();
@@ -129,6 +153,16 @@ try (BrickDsl dsl = BrickDsl.open()) {
     // Port information
     lego.requestPortInfo(0x00, 0x01).get();
     lego.requestPortModeInfo(0x00, 0x00, 0x04).get();
+
+    // Configure sensor port input format (single mode)
+    lego.setupPortInputFormatSingle(0x00, 0x00, 1, true).get();  // port 0, mode 0, delta=1, notify
+
+    // Set hub LED colour (use a hub-specific LED port constant)
+    lego.setHubLedColor(LegoProtocolConstants.CITY_HUB_PORT_LED,
+        LegoProtocolConstants.COLOR_RED).get();
+
+    // Play a sound on the Duplo Train Base speaker
+    lego.playDuploSound(0x01, LegoProtocolConstants.DUPLO_SOUND_HORN).get();
 
     // Send a raw LWP message (must be a complete, valid LWP packet)
     lego.writeRaw(new byte[]{ 0x05, 0x00, 0x01, 0x06, 0x05 }).get();
