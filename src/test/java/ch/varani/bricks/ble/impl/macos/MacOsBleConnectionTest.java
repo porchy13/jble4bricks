@@ -395,15 +395,140 @@ class MacOsBleConnectionTest {
         );
     }
 
+    /* ─────────────────────────────────────────────────────────────────────────
+       expandUuid
+       ───────────────────────────────────────────────────────────────────────── */
+
     /**
-     * Regression test for the cross-service notification routing bug.
+     * Verifies that a 16-bit SIG UUID string is expanded to its full 128-bit form.
      *
-     * <p>WeDo 2.0 sensor characteristic {@code 0x1560} physically lives in
-     * service {@code 0x4F0E}, but the Java subscriber registers under the
-     * logical service hint {@code 0x1523}.  CoreBluetooth delivers the
-     * notification with the <em>actual</em> service UUID ({@code 0x4F0E}).
-     * The chr-UUID-only fallback must route the notification to the registered
-     * publisher despite the service UUID mismatch.
+     * <p>CoreBluetooth returns {@code "180F"} for the Battery Service; the Java
+     * constant stores it as {@code "0000180F-0000-1000-8000-00805F9B34FB"}.
+     */
+    @Test
+    void expandUuid_16bitUuid_expandsToFull128Bit() {
+        assertEquals(
+            "0000180F-0000-1000-8000-00805F9B34FB",
+            MacOsBleConnection.expandUuid("180F")
+        );
+    }
+
+    /**
+     * Verifies that a 32-bit SIG UUID string is expanded to its full 128-bit form.
+     */
+    @Test
+    void expandUuid_32bitUuid_expandsToFull128Bit() {
+        assertEquals(
+            "0000180F-0000-1000-8000-00805F9B34FB",
+            MacOsBleConnection.expandUuid("0000180F")
+        );
+    }
+
+    /**
+     * Verifies that a UUID already in full 128-bit form is returned unchanged.
+     */
+    @Test
+    void expandUuid_full128BitUuid_returnedUnchanged() {
+        final String full = "0000180F-0000-1000-8000-00805F9B34FB";
+        assertEquals(full, MacOsBleConnection.expandUuid(full));
+    }
+
+    /**
+     * Verifies that a non-standard UUID string (not 4 or 8 pure-hex characters) is
+     * returned unchanged — the method must not throw on unknown lengths or non-hex content.
+     */
+    @Test
+    void expandUuid_nonStandardLength_returnedUnchanged() {
+        final String arbitrary = "0000-svc-A";
+        assertEquals(arbitrary, MacOsBleConnection.expandUuid(arbitrary));
+    }
+
+    /**
+     * Verifies that an 8-character string containing non-hex characters is NOT expanded.
+     * This guards the hex-only validation path in {@link MacOsBleConnection#expandUuid}.
+     */
+    @Test
+    void expandUuid_8charNonHex_returnedUnchanged() {
+        /* "0000-SVC" is 8 chars but contains a hyphen — not pure hex. */
+        final String nonHex = "0000-SVC";
+        assertEquals(nonHex, MacOsBleConnection.expandUuid(nonHex));
+    }
+
+    /**
+     * Verifies that a 4-character string containing non-hex characters is NOT expanded.
+     */
+    @Test
+    void expandUuid_4charNonHex_returnedUnchanged() {
+        /* "SV-C" is 4 chars but contains a hyphen — not pure hex. */
+        final String nonHex = "SV-C";
+        assertEquals(nonHex, MacOsBleConnection.expandUuid(nonHex));
+    }
+
+    /**
+     * End-to-end: registers a publisher under the full 128-bit Battery Service UUID
+     * (as stored in {@code LegoProtocolConstants.WEDO2_BATTERY_SERVICE_UUID}) and
+     * verifies that a notification arriving with CoreBluetooth's short-form UUIDs
+     * ({@code "180F"} / {@code "2A19"}) is correctly routed — no fallback needed.
+     *
+     * <p>This is the exact scenario that was previously causing the
+     * {@code "notification dropped"} log entries for the City Hub.
+     */
+    @Test
+    void onNotification_shortFormSigUuid_expandedAndDelivered() throws Exception {
+        /* Full 128-bit form as stored by Java constants (lower-case). */
+        final String fullSvc = "0000180f-0000-1000-8000-00805f9b34fb";
+        final String fullChr = "00002a19-0000-1000-8000-00805f9b34fb";
+
+        final Publisher<byte[]> publisher = connection.notifications(fullSvc, fullChr);
+
+        final List<byte[]> received = new ArrayList<>();
+        publisher.subscribe(new Subscriber<byte[]>() {
+            @Override
+            public void onSubscribe(final Subscription s) {
+                s.request(Long.MAX_VALUE);
+            }
+
+            @Override
+            public void onNext(final byte[] item) {
+                received.add(item);
+            }
+
+            @Override
+            public void onError(final Throwable t)  { /* not expected */ }
+
+            @Override
+            public void onComplete()                 { /* not expected */ }
+        });
+
+        /* CoreBluetooth delivers notification with short-form UUIDs. */
+        final byte[] value = {(byte) 0x5A};
+        connection.onNotification("180F", "2A19", value);
+
+        await().atMost(Duration.ofSeconds(2))
+               .until(() -> !received.isEmpty());
+
+        assertAll(
+            () -> assertEquals(1, received.size()),
+            () -> assertArrayEquals(value, received.get(0))
+        );
+    }
+
+    /**
+     * Verifies the chr-UUID-only fallback in
+     * {@link MacOsBleConnection#onNotification(String, String, byte[])}.
+     *
+     * <p>If a subscriber registers under service UUID {@code A} but CoreBluetooth
+     * delivers the notification under a different service UUID {@code B} for the
+     * same characteristic, the fallback scan must still route the notification to
+     * the registered publisher.
+     *
+     * <p>Note: the WeDo 2.0 sensor characteristic {@code 0x1560} used to trigger
+     * this path because it was registered under service {@code 0x1523} while
+     * CoreBluetooth reported it under {@code 0x4F0E}.  That mismatch has been
+     * corrected in {@link ch.varani.bricks.ble.api.dsl.WeDo2Dsl#sensorNotifications()} (now uses
+     * {@code WEDO2_SERVICE_2_UUID}).  The fallback is retained as a safety net for
+     * other devices or future characteristics where the service boundary may not
+     * be known in advance.
      */
     @Test
     void onNotification_differentServiceUuid_chrOnlyFallback_deliversValue() throws Exception {
@@ -411,7 +536,7 @@ class MacOsBleConnectionTest {
         final String actualSvc     = "00004F0E-1212-EFDE-1523-785FEABCD123";
         final String chr           = "00001560-1212-efde-1523-785feabcd123";
 
-        /* Register under the hint service (0x1523). */
+        /* Register under a different service UUID than what CoreBluetooth will report. */
         final Publisher<byte[]> publisher = connection.notifications(registeredSvc, chr);
 
         final List<byte[]> received = new ArrayList<>();

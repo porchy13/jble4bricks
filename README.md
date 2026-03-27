@@ -216,7 +216,7 @@ Key WeDo 2.0 constants in `LegoProtocolConstants`:
 | Constant | Value | Description |
 |---|---|---|
 | `WEDO2_SERVICE_UUID` | `00001523-…` | Primary GATT service (notifications) |
-| `WEDO2_SERVICE_2_UUID` | `00004f0e-…` | Secondary GATT service (write characteristics) |
+| `WEDO2_SERVICE_2_UUID` | `00004f0e-…` | Secondary GATT service (write characteristics and sensor-value notifications) |
 | `WEDO2_MOTOR_VALUE_WRITE_UUID` | `00001565-…` | Motor command characteristic (write) |
 | `WEDO2_PORT_TYPE_WRITE_UUID` | `00001563-…` | Sensor subscription characteristic (write) |
 | `WEDO2_BUTTON_UUID` | `00001526-…` | Button/general notification characteristic |

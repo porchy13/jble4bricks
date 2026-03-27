@@ -87,11 +87,19 @@ public final class WeDo2Dsl {
      * an overflow flag ({@code 0x01} means add 255 to {@code msg[2]}).
      * Call {@link #subscribeSensor(int, int, int)} before subscribing here.
      *
+     * <p><b>Service note:</b> {@link LegoProtocolConstants#WEDO2_SENSOR_VALUE_UUID}
+     * ({@code 0x1560}) resides in the secondary service
+     * {@link LegoProtocolConstants#WEDO2_SERVICE_2_UUID} ({@code 0x4F0E}), not in
+     * the primary service {@code 0x1523}.  This method registers the publisher
+     * under the correct service UUID so that CoreBluetooth notifications are
+     * routed without relying on the chr-only fallback in
+     * {@code MacOsBleConnection.onNotification()}.
+     *
      * @return a publisher of sensor-value notification payloads; never {@code null}
      */
     public @NonNull Publisher<byte[]> sensorNotifications() {
         return connection.notifications(
-                LegoProtocolConstants.WEDO2_SERVICE_UUID,
+                LegoProtocolConstants.WEDO2_SERVICE_2_UUID,
                 LegoProtocolConstants.WEDO2_SENSOR_VALUE_UUID);
     }
 

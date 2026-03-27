@@ -59,7 +59,7 @@ class WeDo2DslTest {
     void sensorNotifications_returnsPublisherFromConnection() {
         final Publisher<byte[]> publisher = mock(Publisher.class);
         when(connection.notifications(
-                LegoProtocolConstants.WEDO2_SERVICE_UUID,
+                LegoProtocolConstants.WEDO2_SERVICE_2_UUID,
                 LegoProtocolConstants.WEDO2_SENSOR_VALUE_UUID))
                 .thenReturn(publisher);
 

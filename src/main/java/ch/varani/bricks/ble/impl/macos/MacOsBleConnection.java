@@ -43,6 +43,27 @@ final class MacOsBleConnection implements BleConnection {
     private static final int BYTE_MASK = 0xFF;
 
     /**
+     * Bluetooth Base UUID suffix used to expand 16-bit and 32-bit SIG-assigned UUIDs
+     * to full 128-bit form: {@code xxxxxxxx-0000-1000-8000-00805F9B34FB}.
+     *
+     * <p>CoreBluetooth's {@code CBUUID.UUIDString} returns the short form for
+     * SIG-assigned UUIDs (e.g. {@code "180F"} instead of
+     * {@code "0000180F-0000-1000-8000-00805F9B34FB"}).  Subscription keys are
+     * always stored in full 128-bit form (from Java constants), so incoming
+     * short UUIDs must be expanded before lookup.
+     *
+     * @see <a href="https://www.bluetooth.com/specifications/assigned-numbers/">
+     *      Bluetooth Assigned Numbers — §3.4 Bluetooth Base UUID</a>
+     */
+    private static final String BT_BASE_UUID_SUFFIX = "-0000-1000-8000-00805F9B34FB";
+
+    /** Length of a 16-bit SIG UUID string (e.g. {@code "180F"}). */
+    private static final int SHORT_UUID_16_LEN = 4;
+
+    /** Length of a 32-bit SIG UUID string (e.g. {@code "0000180F"}). */
+    private static final int SHORT_UUID_32_LEN = 8;
+
+    /**
      * Key type for the notification publisher map.
      *
      * <p>UUID strings are normalised to upper case on construction so that keys
@@ -281,6 +302,38 @@ final class MacOsBleConnection implements BleConnection {
        ───────────────────────────────────────────────────────────────────────── */
 
     /**
+     * Expands a short-form Bluetooth SIG UUID string to full 128-bit form.
+     *
+     * <p>CoreBluetooth returns short UUIDs for SIG-assigned characteristics and
+     * services (e.g. {@code "180F"} for the Battery Service or {@code "2A19"}
+     * for Battery Level).  Subscription keys are always stored in full 128-bit
+     * form derived from Java constants (e.g.
+     * {@code "0000180F-0000-1000-8000-00805F9B34FB"}).  This method bridges the
+     * two representations so that {@link #onNotification} can find the correct
+     * publisher.
+     *
+     * <p>The expansion rule follows the Bluetooth Core Specification §B.2.5.1:
+     * a 16-bit UUID {@code XXXX} expands to {@code 0000XXXX-0000-1000-8000-00805F9B34FB},
+     * and a 32-bit UUID {@code XXXXXXXX} expands to
+     * {@code XXXXXXXX-0000-1000-8000-00805F9B34FB}.
+     * Only pure hex strings of length 4 or 8 are expanded; any other input is
+     * returned unchanged.
+     *
+     * @param uuid upper-cased UUID string as returned by CoreBluetooth
+     * @return the full 128-bit UUID string, or {@code uuid} unchanged if it is
+     *         already in 128-bit form or is not a recognised short-form UUID
+     */
+    static @NonNull String expandUuid(final @NonNull String uuid) {
+        if ((uuid.length() == SHORT_UUID_16_LEN || uuid.length() == SHORT_UUID_32_LEN)
+                && uuid.chars().allMatch(c -> c >= '0' && c <= '9'
+                                          || c >= 'A' && c <= 'F')) {
+            final String padded = uuid.length() == SHORT_UUID_16_LEN ? "0000" + uuid : uuid;
+            return padded + BT_BASE_UUID_SUFFIX;
+        }
+        return uuid;
+    }
+
+    /**
      * Called by the native layer when a GATT notification arrives for any
      * subscribed characteristic.
      *
@@ -307,20 +360,28 @@ final class MacOsBleConnection implements BleConnection {
             final @NonNull String characteristicUuid,
             final byte[] value) {
 
-        final CharacteristicKey key = new CharacteristicKey(serviceUuid, characteristicUuid);
+        /*
+         * CoreBluetooth returns short-form UUIDs for SIG-assigned characteristics
+         * and services (e.g. "180F", "2A19").  Subscription keys are always stored
+         * in full 128-bit form.  Expand before lookup so that both representations
+         * resolve to the same key.
+         */
+        final String expandedSvc = expandUuid(serviceUuid.toUpperCase(Locale.ROOT));
+        final String expandedChr = expandUuid(characteristicUuid.toUpperCase(Locale.ROOT));
+
+        final CharacteristicKey key = new CharacteristicKey(expandedSvc, expandedChr);
         SubmissionPublisher<byte[]> pub = notificationPublishers.get(key);
 
         if (pub == null) {
             /* Cross-service fallback: match on characteristic UUID alone. */
-            final String chrUpper = characteristicUuid.toUpperCase(Locale.ROOT);
             LOG.fine(() -> "onNotification: exact key miss for svc=" + serviceUuid
                     + " chr=" + characteristicUuid + " — trying chr-only fallback");
             for (final Map.Entry<CharacteristicKey, SubmissionPublisher<byte[]>> entry
                     : notificationPublishers.entrySet()) {
-                if (entry.getKey().characteristicUuid().equals(chrUpper)) {
+                if (entry.getKey().characteristicUuid().equals(expandedChr)) {
                     pub = entry.getValue();
                     LOG.fine(() -> "onNotification: chr-only fallback matched svc="
-                            + entry.getKey().serviceUuid() + " for chr=" + chrUpper);
+                            + entry.getKey().serviceUuid() + " for chr=" + expandedChr);
                     break;
                 }
             }
