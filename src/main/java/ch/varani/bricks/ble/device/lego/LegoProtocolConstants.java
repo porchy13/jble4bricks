@@ -107,8 +107,19 @@ public final class LegoProtocolConstants {
     /**
      * Sensor-value notification characteristic (notify).
      *
-     * <p>Subscribe to receive sensor readings.  Each notification payload
-     * starts with the port ID followed by the value bytes.
+     * <p>Subscribe to receive sensor readings.  Each notification payload has
+     * the following layout (confirmed against nathankellenicki/node-poweredup
+     * {@code src/hubs/wedo2smarthub.ts _parseSensorMessage()}):
+     * <pre>
+     * [indicator, portId, value, overflow]
+     * </pre>
+     * {@code indicator} is {@code 0x00} (button released) or {@code 0x01} (button
+     * pressed) for button events; for sensor-value events it carries a different
+     * indicator.  {@code portId} identifies the port (e.g.
+     * {@link #WEDO2_PORT_B} = {@code 0x02} for the motion sensor).
+     * {@code value} is the raw sensor reading (distance in cm for the motion
+     * sensor in mode 0).  {@code overflow} is {@code 0x01} when the reading
+     * exceeds 255 (add 255 to {@code value} in that case), otherwise {@code 0x00}.
      *
      * <p><b>Service placement note:</b> hardware testing confirms this
      * characteristic resides in {@link #WEDO2_SERVICE_2_UUID} ({@code 0x4F0E}),

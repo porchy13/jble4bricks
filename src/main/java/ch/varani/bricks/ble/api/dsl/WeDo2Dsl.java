@@ -75,9 +75,16 @@ public final class WeDo2Dsl {
      * the WeDo 2.0 sensor-value characteristic
      * ({@link LegoProtocolConstants#WEDO2_SENSOR_VALUE_UUID}).
      *
-     * <p>Each notification payload starts with the port ID followed by the
-     * sensor value bytes. Subscribe to sensor updates using
-     * {@link #subscribeSensor(int, int, int)} first.
+     * <p>Each notification payload has the following layout (confirmed against
+     * nathankellenicki/node-poweredup
+     * {@code src/hubs/wedo2smarthub.ts _parseSensorMessage()}):
+     * <pre>
+     * [indicator, portId, value, overflow]
+     * </pre>
+     * {@code msg[1]} is the port ID, {@code msg[2]} is the raw sensor value
+     * (distance in cm for the motion sensor in mode 0), and {@code msg[3]} is
+     * an overflow flag ({@code 0x01} means add 255 to {@code msg[2]}).
+     * Call {@link #subscribeSensor(int, int, int)} before subscribing here.
      *
      * @return a publisher of sensor-value notification payloads; never {@code null}
      */
