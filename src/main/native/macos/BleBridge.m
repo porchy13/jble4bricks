@@ -195,6 +195,10 @@ static CBCharacteristic *findCharacteristic(
     CBUUID *svcUuid  = [CBUUID UUIDWithString:serviceUuidString];
     CBUUID *chrUuid  = [CBUUID UUIDWithString:characteristicUuidString];
 
+    /*
+     * First pass: look in the requested service.  This is the fast path for
+     * characteristics that live where the caller expects them.
+     */
     for (CBService *service in peripheral.services) {
         if ([service.UUID isEqual:svcUuid]) {
             for (CBCharacteristic *characteristic in service.characteristics) {
@@ -202,27 +206,62 @@ static CBCharacteristic *findCharacteristic(
                     return characteristic;
                 }
             }
-            /* Log all available characteristics when the requested one is not found. */
+
+            /*
+             * The characteristic was not in the requested service.
+             * Log the available characteristics for diagnostics, then fall
+             * through to the cross-service search below.
+             *
+             * This situation is known to occur on the WeDo 2.0 hub where
+             * characteristic 0x1560 (sensor value) and 0x1561 (value format)
+             * reside in service 0x4F0E but callers may reference them under
+             * the primary service 0x1523.
+             */
             NSMutableString *available = [NSMutableString string];
             for (CBCharacteristic *c in service.characteristics) {
                 [available appendFormat:@"%@ ", c.UUID.UUIDString];
             }
             os_log_error(BLE_LOG_GATT,
-                    "findCharacteristic: chr %{public}@ not found in svc %{public}@. Available: [%{public}@]",
+                    "findCharacteristic: chr %{public}@ not found in svc %{public}@. "
+                    "Available: [%{public}@] — searching all services as fallback.",
                     characteristicUuidString, serviceUuidString, available);
-            return nil;
+            break;
         }
     }
 
-    /* The requested service itself was not found — log all discovered services. */
+    /*
+     * Fallback: search every discovered service for the characteristic.
+     * If found in a different service than requested, log a warning so the
+     * caller can correct the service UUID in a future update.
+     */
+    for (CBService *service in peripheral.services) {
+        if ([service.UUID isEqual:svcUuid]) {
+            /* Already searched this service above — skip. */
+            continue;
+        }
+        for (CBCharacteristic *characteristic in service.characteristics) {
+            if ([characteristic.UUID isEqual:chrUuid]) {
+                os_log_info(BLE_LOG_GATT,
+                        "findCharacteristic: chr %{public}@ found in svc %{public}@ "
+                        "(caller specified svc %{public}@) — update the service UUID.",
+                        characteristicUuidString,
+                        service.UUID.UUIDString,
+                        serviceUuidString);
+                return characteristic;
+            }
+        }
+    }
+
+    /* Characteristic not found anywhere — log all discovered services. */
     NSMutableString *availableServices = [NSMutableString string];
     for (CBService *svc in peripheral.services) {
         [availableServices appendFormat:@"%@ ", svc.UUID.UUIDString];
     }
     os_log_error(BLE_LOG_GATT,
-            "findCharacteristic: svc %{public}@ not found in peripheral %{public}@. "
-            "Discovered services: [%{public}@]",
-            serviceUuidString, peripheral.identifier.UUIDString, availableServices);
+            "findCharacteristic: chr %{public}@ not found anywhere in peripheral %{public}@. "
+            "Requested svc %{public}@. Discovered services: [%{public}@]",
+            characteristicUuidString, peripheral.identifier.UUIDString,
+            serviceUuidString, availableServices);
     return nil;
 }
 

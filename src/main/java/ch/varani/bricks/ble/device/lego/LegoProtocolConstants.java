@@ -109,11 +109,24 @@ public final class LegoProtocolConstants {
      *
      * <p>Subscribe to receive sensor readings.  Each notification payload
      * starts with the port ID followed by the value bytes.
+     *
+     * <p><b>Service placement note:</b> hardware testing confirms this
+     * characteristic resides in {@link #WEDO2_SERVICE_2_UUID} ({@code 0x4F0E}),
+     * not in {@link #WEDO2_SERVICE_UUID} ({@code 0x1523}) as might be assumed
+     * from the UUID suffix.  Callers that pass {@code WEDO2_SERVICE_UUID} when
+     * subscribing will still succeed because the library performs a cross-service
+     * fallback search when the characteristic is not found in the specified
+     * service.
      */
     public static final String WEDO2_SENSOR_VALUE_UUID =
             "00001560-1212-efde-1523-785feabcd123";
 
-    /** Sensor value-format characteristic (write). */
+    /**
+     * Sensor value-format characteristic (write).
+     *
+     * <p><b>Service placement note:</b> resides in {@link #WEDO2_SERVICE_2_UUID}
+     * ({@code 0x4F0E}); see {@link #WEDO2_SENSOR_VALUE_UUID} for details.
+     */
     public static final String WEDO2_VALUE_FORMAT_UUID =
             "00001561-1212-efde-1523-785feabcd123";
 
