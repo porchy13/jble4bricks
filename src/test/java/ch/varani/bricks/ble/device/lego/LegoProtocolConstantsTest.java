@@ -191,10 +191,7 @@ class LegoProtocolConstantsTest {
     void wedo2LedCommandConstants_haveExpectedValues() {
         assertAll(
             () -> assertEquals(0x17, LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B1),
-            () -> assertEquals(0x01, LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B2),
-            () -> assertEquals(0x02, LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B3),
-            () -> assertEquals(0x04, LegoProtocolConstants.WEDO2_LED_RGB_CMD_B1),
-            () -> assertEquals(0x03, LegoProtocolConstants.WEDO2_LED_RGB_CMD_B2)
+            () -> assertEquals(0x01, LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B2)
         );
     }
 

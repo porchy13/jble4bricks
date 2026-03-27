@@ -181,44 +181,6 @@ class WeDo2DslTest {
     }
 
     // =========================================================================
-    // setLedRgb
-    // =========================================================================
-
-    @Test
-    void setLedRgb_sendsModeCmdThenRgbCmd() {
-        dsl.setLedRgb(255, 0, 128);
-
-        final byte[] expectedMode = {
-            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
-            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B1,
-            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B2,
-            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B3
-        };
-        final byte[] expectedRgb = {
-            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
-            (byte) LegoProtocolConstants.WEDO2_LED_RGB_CMD_B1,
-            (byte) LegoProtocolConstants.WEDO2_LED_RGB_CMD_B2,
-            (byte) 255,
-            (byte) 0,
-            (byte) 128
-        };
-
-        final ArgumentCaptor<byte[]> captor = ArgumentCaptor.forClass(byte[].class);
-        verify(connection).writeWithoutResponse(
-                eq(LegoProtocolConstants.WEDO2_SERVICE_UUID),
-                eq(LegoProtocolConstants.WEDO2_PORT_TYPE_WRITE_UUID),
-                captor.capture());
-        assertArrayEquals(expectedMode, captor.getValue());
-
-        final ArgumentCaptor<byte[]> captor2 = ArgumentCaptor.forClass(byte[].class);
-        verify(connection).writeWithoutResponse(
-                eq(LegoProtocolConstants.WEDO2_SERVICE_UUID),
-                eq(LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID),
-                captor2.capture());
-        assertArrayEquals(expectedRgb, captor2.getValue());
-    }
-
-    // =========================================================================
     // subscribeSensor / unsubscribeSensor
     // =========================================================================
 

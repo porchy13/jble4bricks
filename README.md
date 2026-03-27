@@ -204,13 +204,9 @@ try (BrickDsl dsl = BrickDsl.open()) {
     // Stop a motor
     hub.stopMotor(LegoProtocolConstants.WEDO2_PORT_A).get();
 
-    // Set the hub LED to an indexed colour (reliable on all WeDo 2.0 firmware)
+    // Set the hub LED to an indexed colour
     hub.setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_RED).get();   // red
     hub.setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_GREEN).get(); // green
-
-    // Set the hub LED to an arbitrary RGB colour (may be silently ignored by
-    // some WeDo 2.0 firmware versions — prefer setLedColor for reliability)
-    hub.setLedRgb(255, 0, 0).get();   // red
 
     hub.done();
 }
@@ -234,8 +230,7 @@ Key WeDo 2.0 constants in `LegoProtocolConstants`:
 | `WEDO2_MOTION_SENSOR_TYPE_ID` | `0x23` | Motion/Distance Sensor device type |
 | `WEDO2_RGB_LED_TYPE_ID` | `0x22` | RGB LED device type |
 | `WEDO2_PORT_LED` | `0x06` | Internal hub LED virtual port |
-| `WEDO2_LED_MODE_SETUP_B1/B2/B3` | `0x17`, `0x01`, `0x02` | LED mode-setup packet bytes (RGB mode) |
-| `WEDO2_LED_RGB_CMD_B1/B2` | `0x04`, `0x03` | LED RGB command packet bytes |
+| `WEDO2_LED_MODE_SETUP_B1/B2` | `0x17`, `0x01` | LED mode-setup packet bytes |
 | `WEDO2_LED_IDX_MODE_SETUP_B3` | `0x01` | LED mode-setup byte 3 for indexed colour mode |
 | `WEDO2_LED_IDX_CMD_B1/B2` | `0x04`, `0x01` | LED indexed-colour command packet bytes |
 | `WEDO2_LED_COLOR_BLACK` … `WEDO2_LED_COLOR_WHITE` | `0x00`–`0x0A` | Indexed colour constants (black, pink, purple, blue, light blue, cyan, green, yellow, orange, red, white) |

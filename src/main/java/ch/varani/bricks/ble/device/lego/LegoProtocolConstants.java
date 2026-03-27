@@ -237,9 +237,9 @@ public final class LegoProtocolConstants {
      * WeDo 2.0 LED mode-setup command sub-byte 1 ({@code 0x17}).
      *
      * <p>Written as part of the 4-byte mode-setup packet to
-     * {@link #WEDO2_PORT_TYPE_WRITE_UUID} before sending an RGB colour command.
+     * {@link #WEDO2_PORT_TYPE_WRITE_UUID} before sending a colour command.
      * Packet layout: {@code [WEDO2_PORT_LED, WEDO2_LED_MODE_SETUP_B1,
-     * WEDO2_LED_MODE_SETUP_B2, WEDO2_LED_MODE_SETUP_B3]}.
+     * WEDO2_LED_MODE_SETUP_B2, WEDO2_LED_IDX_MODE_SETUP_B3]}.
      *
      * <p>Reference: nathankellenicki/node-poweredup (MIT) —
      * https://github.com/nathankellenicki/node-poweredup
@@ -255,38 +255,6 @@ public final class LegoProtocolConstants {
      * https://github.com/nathankellenicki/node-poweredup
      */
     public static final int WEDO2_LED_MODE_SETUP_B2 = 0x01;
-
-    /**
-     * WeDo 2.0 LED mode-setup command sub-byte 3 ({@code 0x02}).
-     *
-     * <p>See {@link #WEDO2_LED_MODE_SETUP_B1} for packet layout.
-     *
-     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
-     * https://github.com/nathankellenicki/node-poweredup
-     */
-    public static final int WEDO2_LED_MODE_SETUP_B3 = 0x02;
-
-    /**
-     * WeDo 2.0 LED RGB command sub-byte 1 ({@code 0x04}).
-     *
-     * <p>Written as part of the 6-byte RGB colour packet to
-     * {@link #WEDO2_MOTOR_VALUE_WRITE_UUID}.  Packet layout:
-     * {@code [WEDO2_PORT_LED, WEDO2_LED_RGB_CMD_B1, WEDO2_LED_RGB_CMD_B2, r, g, b]}.
-     *
-     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
-     * https://github.com/nathankellenicki/node-poweredup
-     */
-    public static final int WEDO2_LED_RGB_CMD_B1 = 0x04;
-
-    /**
-     * WeDo 2.0 LED RGB command sub-byte 2 ({@code 0x03}).
-     *
-     * <p>See {@link #WEDO2_LED_RGB_CMD_B1} for packet layout.
-     *
-     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
-     * https://github.com/nathankellenicki/node-poweredup
-     */
-    public static final int WEDO2_LED_RGB_CMD_B2 = 0x03;
 
     // ── WeDo 2.0 — LED indexed colour mode constants ─────────────────────────
     //

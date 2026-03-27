@@ -25,7 +25,7 @@ import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
  * <pre>{@code
  * connectionDsl.asWeDo2()
  *     .motorPower(LegoProtocolConstants.WEDO2_PORT_A, 75)
- *     .setLedRgb(0, 255, 0)
+ *     .setLedColor(LegoProtocolConstants.WEDO2_LED_COLOR_GREEN)
  *     .done();
  * }</pre>
  *
@@ -199,59 +199,6 @@ public final class WeDo2Dsl {
                         LegoProtocolConstants.WEDO2_SERVICE_UUID,
                         LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID,
                         idxCmd));
-    }
-
-    /**
-     * Sets the WeDo 2.0 hub LED to an arbitrary RGB colour.
-     *
-     * <p><b>Note:</b> some WeDo 2.0 firmware versions silently ignore RGB mode.
-     * Prefer {@link #setLedColor(int)} with a {@code WEDO2_LED_COLOR_*} index
-     * constant for reliable colour changes.
-     *
-     * <p>Performs two successive writes to the secondary GATT service
-     * ({@link LegoProtocolConstants#WEDO2_SERVICE_2_UUID}):
-     * <ol>
-     *   <li>A 4-byte mode-setup packet to
-     *       {@link LegoProtocolConstants#WEDO2_PORT_TYPE_WRITE_UUID}:
-     *       {@code [WEDO2_PORT_LED, 0x17, 0x01, 0x02]}</li>
-     *   <li>A 6-byte RGB colour packet to
-     *       {@link LegoProtocolConstants#WEDO2_MOTOR_VALUE_WRITE_UUID}:
-     *       {@code [WEDO2_PORT_LED, 0x04, 0x03, r, g, b]}</li>
-     * </ol>
-     *
-     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
-     * https://github.com/nathankellenicki/node-poweredup — {@code src/devices/hubled.ts
-     * setRGB()}.
-     *
-     * @param r red component, 0–255
-     * @param g green component, 0–255
-     * @param b blue component, 0–255
-     * @return a future that completes when both writes have been submitted;
-     *         never {@code null}
-     */
-    public @NonNull CompletableFuture<Void> setLedRgb(int r, int g, int b) {
-        final byte[] modeCmd = {
-            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
-            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B1,
-            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B2,
-            (byte) LegoProtocolConstants.WEDO2_LED_MODE_SETUP_B3
-        };
-        final byte[] rgbCmd = {
-            (byte) LegoProtocolConstants.WEDO2_PORT_LED,
-            (byte) LegoProtocolConstants.WEDO2_LED_RGB_CMD_B1,
-            (byte) LegoProtocolConstants.WEDO2_LED_RGB_CMD_B2,
-            (byte) r,
-            (byte) g,
-            (byte) b
-        };
-        return connection.writeWithoutResponse(
-                        LegoProtocolConstants.WEDO2_SERVICE_UUID,
-                        LegoProtocolConstants.WEDO2_PORT_TYPE_WRITE_UUID,
-                        modeCmd)
-                .thenCompose(ignored -> connection.writeWithoutResponse(
-                        LegoProtocolConstants.WEDO2_SERVICE_UUID,
-                        LegoProtocolConstants.WEDO2_MOTOR_VALUE_WRITE_UUID,
-                        rgbCmd));
     }
 
     // =========================================================================
