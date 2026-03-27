@@ -7,6 +7,8 @@ import org.jspecify.annotations.NonNull;
 
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.sbrick.SBrickChannel;
+import ch.varani.bricks.ble.device.sbrick.SBrickDirection;
 import ch.varani.bricks.ble.device.sbrick.SBrickProtocolConstants;
 
 /**
@@ -20,9 +22,9 @@ import ch.varani.bricks.ble.device.sbrick.SBrickProtocolConstants;
  * <p>Usage example:
  * <pre>{@code
  * connectionDsl.asSBrick()
- *     .drive(SBrickProtocolConstants.CHANNEL_A, false, 200)
- *     .drive(SBrickProtocolConstants.CHANNEL_B, true, 128)
- *     .brake(SBrickProtocolConstants.CHANNEL_A)
+ *     .drive(SBrickChannel.A, SBrickDirection.CLOCKWISE, 200)
+ *     .drive(SBrickChannel.B, SBrickDirection.COUNTER_CLOCKWISE, 128)
+ *     .brake(SBrickChannel.A)
  *     .done();
  * }</pre>
  *
@@ -72,20 +74,19 @@ public final class SBrickDsl {
      *
      * <p>Power {@code 0x00} is freewheel; {@code 0xFF} is full power.
      *
-     * @param channel   channel constant (e.g.
-     *                  {@link SBrickProtocolConstants#CHANNEL_A})
-     * @param counterCw {@code false} = clockwise, {@code true} = counter-clockwise
+     * @param channel   the motor channel (e.g. {@link SBrickChannel#A})
+     * @param direction the rotation direction (e.g. {@link SBrickDirection#CLOCKWISE})
      * @param power     power value in the range 0–255
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> drive(int channel, boolean counterCw, int power) {
-        final byte dir = counterCw
-                ? (byte) SBrickProtocolConstants.DIRECTION_COUNTER_CLOCKWISE
-                : (byte) SBrickProtocolConstants.DIRECTION_CLOCKWISE;
+    public @NonNull CompletableFuture<Void> drive(
+            @NonNull SBrickChannel channel,
+            @NonNull SBrickDirection direction,
+            int power) {
         final byte[] msg = {
             (byte) SBrickProtocolConstants.CMD_DRIVE,
-            (byte) channel,
-            dir,
+            (byte) channel.code(),
+            (byte) direction.code(),
             (byte) (power & BYTE_MASK)
         };
         return write(msg);
@@ -94,20 +95,19 @@ public final class SBrickDsl {
     /**
      * Sends a Brake command ({@code 0x00}) for one or more channels.
      *
-     * @param channels one or more channel constants (e.g.
-     *                 {@link SBrickProtocolConstants#CHANNEL_A},
-     *                 {@link SBrickProtocolConstants#CHANNEL_B})
+     * @param channels one or more motor channels (e.g. {@link SBrickChannel#A},
+     *                 {@link SBrickChannel#B})
      * @return a future that completes when the write is submitted; never {@code null}
      * @throws IllegalArgumentException if no channels are specified
      */
-    public @NonNull CompletableFuture<Void> brake(int... channels) {
+    public @NonNull CompletableFuture<Void> brake(@NonNull SBrickChannel... channels) {
         if (channels.length == 0) {
             throw new IllegalArgumentException("At least one channel must be specified.");
         }
         final byte[] msg = new byte[1 + channels.length];
         msg[0] = (byte) SBrickProtocolConstants.CMD_BRAKE;
         for (int i = 0; i < channels.length; i++) {
-            msg[1 + i] = (byte) channels[i];
+            msg[1 + i] = (byte) channels[i].code();
         }
         return write(msg);
     }

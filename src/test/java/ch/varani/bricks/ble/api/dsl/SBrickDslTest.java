@@ -18,6 +18,8 @@ import org.mockito.ArgumentCaptor;
 
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
+import ch.varani.bricks.ble.device.sbrick.SBrickChannel;
+import ch.varani.bricks.ble.device.sbrick.SBrickDirection;
 import ch.varani.bricks.ble.device.sbrick.SBrickProtocolConstants;
 
 /**
@@ -60,7 +62,7 @@ class SBrickDslTest {
 
     @Test
     void drive_clockwise_sendsCorrectBytes() {
-        dsl.drive(SBrickProtocolConstants.CHANNEL_A, false, 200);
+        dsl.drive(SBrickChannel.A, SBrickDirection.CLOCKWISE, 200);
 
         final byte[] expected = {
             (byte) SBrickProtocolConstants.CMD_DRIVE,
@@ -73,7 +75,7 @@ class SBrickDslTest {
 
     @Test
     void drive_counterClockwise_sendsCorrectDirectionByte() {
-        dsl.drive(SBrickProtocolConstants.CHANNEL_B, true, 128);
+        dsl.drive(SBrickChannel.B, SBrickDirection.COUNTER_CLOCKWISE, 128);
 
         final byte[] expected = {
             (byte) SBrickProtocolConstants.CMD_DRIVE,
@@ -87,7 +89,7 @@ class SBrickDslTest {
     @Test
     void drive_powerMaskedTo8Bits() {
         // 256 & 0xFF == 0
-        dsl.drive(SBrickProtocolConstants.CHANNEL_C, false, 256);
+        dsl.drive(SBrickChannel.C, SBrickDirection.CLOCKWISE, 256);
 
         final byte[] expected = {
             (byte) SBrickProtocolConstants.CMD_DRIVE,
@@ -104,7 +106,7 @@ class SBrickDslTest {
 
     @Test
     void brake_singleChannel_sendsCorrectBytes() {
-        dsl.brake(SBrickProtocolConstants.CHANNEL_A);
+        dsl.brake(SBrickChannel.A);
 
         final byte[] expected = {
             (byte) SBrickProtocolConstants.CMD_BRAKE,
@@ -115,10 +117,7 @@ class SBrickDslTest {
 
     @Test
     void brake_multipleChannels_sendsCorrectBytes() {
-        dsl.brake(SBrickProtocolConstants.CHANNEL_A,
-                  SBrickProtocolConstants.CHANNEL_B,
-                  SBrickProtocolConstants.CHANNEL_C,
-                  SBrickProtocolConstants.CHANNEL_D);
+        dsl.brake(SBrickChannel.A, SBrickChannel.B, SBrickChannel.C, SBrickChannel.D);
 
         final byte[] expected = {
             (byte) SBrickProtocolConstants.CMD_BRAKE,
