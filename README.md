@@ -177,7 +177,10 @@ The WeDo 2.0 hub uses a proprietary GATT layout (LWP2, not LWP3). Use
 operation. Do **not** use `asLego()` for WeDo 2.0 — the LWP3 message format is incompatible.
 
 ```java
-import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+import ch.varani.bricks.ble.device.lego.WeDo2DeviceType;
+import ch.varani.bricks.ble.device.lego.WeDo2LedColor;
+import ch.varani.bricks.ble.device.lego.WeDo2Port;
+import ch.varani.bricks.ble.device.lego.WeDo2SensorMode;
 
 try (BrickDsl dsl = BrickDsl.open()) {
     WeDo2Dsl hub = dsl.scan()
@@ -192,16 +195,22 @@ try (BrickDsl dsl = BrickDsl.open()) {
 
     // Subscribe to sensor readings (call subscribeSensor first to activate)
     hub.subscribeSensor(
-        LegoProtocolConstants.WEDO2_PORT_B,
-        LegoProtocolConstants.WEDO2_MOTION_SENSOR_TYPE_ID,
-        0).get();
+        WeDo2Port.B,
+        WeDo2DeviceType.MOTION_SENSOR,
+        WeDo2SensorMode.MOTION_DISTANCE).get();
     hub.sensorNotifications().subscribe(sensorSubscriber);
 
     // Drive a motor
-    hub.motorPower(LegoProtocolConstants.WEDO2_PORT_A, 75).get();
+    hub.motorPower(WeDo2Port.A, 75).get();
 
     // Stop a motor
-    hub.stopMotor(LegoProtocolConstants.WEDO2_PORT_A).get();
+    hub.stopMotor(WeDo2Port.A).get();
+
+    // Play a tone on the built-in piezo buzzer (440 Hz for 500 ms)
+    hub.playTone(440, 500).get();
+
+    // Silence the piezo buzzer immediately
+    hub.stopTone().get();
 
     // Set the hub LED to an indexed colour
     hub.setLedColor(WeDo2LedColor.RED).get();   // red
@@ -211,7 +220,16 @@ try (BrickDsl dsl = BrickDsl.open()) {
 }
 ```
 
-Key WeDo 2.0 constants in `LegoProtocolConstants`:
+Key WeDo 2.0 enums:
+
+| Enum | Constants | Description |
+|---|---|---|
+| `WeDo2Port` | `A` (`0x01`), `B` (`0x02`) | Physical port identifiers — use with `motorPower`, `stopMotor`, `subscribeSensor`, `unsubscribeSensor` |
+| `WeDo2DeviceType` | `MOTOR`, `PIEZO_BUZZER`, `RGB_LED`, `MOTION_SENSOR` | Device type of the peripheral attached to a port — used in `subscribeSensor`/`unsubscribeSensor` |
+| `WeDo2SensorMode` | `MOTION_DISTANCE` (0), `MOTION_DETECT` (1), `LED_INDEX` (1), `DEFAULT` (0) | Sensor measurement mode — used in `subscribeSensor`/`unsubscribeSensor` |
+| `WeDo2LedColor` | `BLACK`…`WHITE` (11 values, `0x00`–`0x0A`) | Hub LED indexed colour — used with `setLedColor` |
+
+Key WeDo 2.0 GATT constants in `LegoProtocolConstants`:
 
 | Constant | Value | Description |
 |---|---|---|
@@ -223,16 +241,6 @@ Key WeDo 2.0 constants in `LegoProtocolConstants`:
 | `WEDO2_SENSOR_VALUE_UUID` | `00001560-…` | Sensor value notification characteristic |
 | `WEDO2_BATTERY_SERVICE_UUID` | `0000180f-…` | Standard BLE Battery Service |
 | `WEDO2_BATTERY_LEVEL_UUID` | `00002a19-…` | Standard BLE Battery Level characteristic |
-| `WEDO2_PORT_A` | `0x01` | Port A identifier |
-| `WEDO2_PORT_B` | `0x02` | Port B identifier |
-| `WEDO2_MOTOR_TYPE_ID` | `0x01` | Simple/Medium Linear Motor device type |
-| `WEDO2_MOTION_SENSOR_TYPE_ID` | `0x23` | Motion/Distance Sensor device type |
-| `WEDO2_RGB_LED_TYPE_ID` | `0x22` | RGB LED device type |
-| `WEDO2_PORT_LED` | `0x06` | Internal hub LED virtual port |
-| `WEDO2_LED_MODE_SETUP_B1/B2` | `0x17`, `0x01` | LED mode-setup packet bytes |
-| `WEDO2_LED_IDX_MODE_SETUP_B3` | `0x01` | LED mode-setup byte 3 for indexed colour mode |
-| `WEDO2_LED_IDX_CMD_B1/B2` | `0x04`, `0x01` | LED indexed-colour command packet bytes |
-| `WEDO2_LED_COLOR_BLACK` … `WEDO2_LED_COLOR_WHITE` | `0x00`–`0x0A` | Indexed colour constants (black, pink, purple, blue, light blue, cyan, green, yellow, orange, red, white) — prefer the `WeDo2LedColor` enum |
 
 ### SBrick
 

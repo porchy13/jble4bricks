@@ -8,7 +8,10 @@ import org.jspecify.annotations.NonNull;
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+import ch.varani.bricks.ble.device.lego.WeDo2DeviceType;
 import ch.varani.bricks.ble.device.lego.WeDo2LedColor;
+import ch.varani.bricks.ble.device.lego.WeDo2Port;
+import ch.varani.bricks.ble.device.lego.WeDo2SensorMode;
 
 /**
  * Fluent DSL sub-builder for WeDo 2.0 hub BLE protocol operations.
@@ -25,7 +28,7 @@ import ch.varani.bricks.ble.device.lego.WeDo2LedColor;
  * <p>Usage example:
  * <pre>{@code
  * connectionDsl.asWeDo2()
- *     .motorPower(LegoProtocolConstants.WEDO2_PORT_A, 75)
+ *     .motorPower(WeDo2Port.A, 75)
  *     .setLedColor(WeDo2LedColor.GREEN)
  *     .done();
  * }</pre>
@@ -85,7 +88,8 @@ public final class WeDo2Dsl {
      * {@code msg[1]} is the port ID, {@code msg[2]} is the raw sensor value
      * (distance in cm for the motion sensor in mode 0), and {@code msg[3]} is
      * an overflow flag ({@code 0x01} means add 255 to {@code msg[2]}).
-     * Call {@link #subscribeSensor(int, int, int)} before subscribing here.
+     * Call {@link #subscribeSensor(WeDo2Port, WeDo2DeviceType, WeDo2SensorMode)}
+     * before subscribing here.
      *
      * <p><b>Service note:</b> {@link LegoProtocolConstants#WEDO2_SENSOR_VALUE_UUID}
      * ({@code 0x1560}) resides in the secondary service
@@ -123,16 +127,14 @@ public final class WeDo2Dsl {
      * https://github.com/nathankellenicki/node-poweredup —
      * {@code src/devices/device.ts writeDirect()}.
      *
-     * @param portId port identifier; use
-     *               {@link LegoProtocolConstants#WEDO2_PORT_A} or
-     *               {@link LegoProtocolConstants#WEDO2_PORT_B}
-     * @param power  motor power in the range −100 (full reverse) to +100
-     *               (full forward); 0 = stop
+     * @param port  the physical port to drive; must not be {@code null}
+     * @param power motor power in the range −100 (full reverse) to +100
+     *              (full forward); 0 = stop
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> motorPower(int portId, int power) {
+    public @NonNull CompletableFuture<Void> motorPower(@NonNull WeDo2Port port, int power) {
         final byte[] msg = {
-            (byte) portId,
+            (byte) port.code(),
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
             (byte) 0x02,                // fixed writeDirect sub-command byte
             (byte) (power & BYTE_MASK)
@@ -143,13 +145,69 @@ public final class WeDo2Dsl {
     /**
      * Stops the motor on the given port by sending a power value of zero.
      *
-     * @param portId port identifier; use
-     *               {@link LegoProtocolConstants#WEDO2_PORT_A} or
-     *               {@link LegoProtocolConstants#WEDO2_PORT_B}
+     * @param port the physical port to stop; must not be {@code null}
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> stopMotor(int portId) {
-        return motorPower(portId, 0);
+    public @NonNull CompletableFuture<Void> stopMotor(@NonNull WeDo2Port port) {
+        return motorPower(port, 0);
+    }
+
+    // =========================================================================
+    // Piezo buzzer
+    // =========================================================================
+
+    /**
+     * Plays a tone on the WeDo 2.0 hub's built-in piezo buzzer.
+     *
+     * <p>Writes a 7-byte command to
+     * {@link LegoProtocolConstants#WEDO2_MOTOR_VALUE_WRITE_UUID}:
+     * <pre>
+     * [WEDO2_PORT_PIEZO_BUZZER, WEDO2_PIEZO_TYPE_ID, WEDO2_PIEZO_WRITE_DIRECT_CMD,
+     *  freq_lo, freq_hi, duration_lo, duration_hi]
+     * </pre>
+     * where {@code freq} is a little-endian uint16 frequency in Hz and
+     * {@code duration} is a little-endian uint16 duration in milliseconds.
+     *
+     * <p>The hub itself enforces the tone duration; the returned future
+     * completes as soon as the BLE write has been submitted, not when the
+     * tone has finished playing.  If you need to wait until playback is
+     * complete, chain a {@code CompletableFuture.delayedExecutor(duration, MILLISECONDS)}
+     * call onto the returned future.
+     *
+     * <p>Valid frequency range: 1–65 535 Hz (hardware limit: audible range
+     * is approximately 20–20 000 Hz).  A frequency of {@code 0} silences the
+     * buzzer immediately and is equivalent to calling {@link #stopTone()}.
+     *
+     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
+     * https://github.com/nathankellenicki/node-poweredup —
+     * {@code src/devices/piezobuzzer.ts playTone()}.
+     *
+     * @param frequency frequency in Hz; must be in the range 0–65 535
+     * @param durationMs duration in milliseconds; must be in the range 0–65 535
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> playTone(int frequency, int durationMs) {
+        final byte[] msg = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_PIEZO_BUZZER,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_TYPE_ID,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_WRITE_DIRECT_CMD,
+            (byte) (frequency & BYTE_MASK),
+            (byte) ((frequency >> Byte.SIZE) & BYTE_MASK),
+            (byte) (durationMs & BYTE_MASK),
+            (byte) ((durationMs >> Byte.SIZE) & BYTE_MASK)
+        };
+        return writeMotor(msg);
+    }
+
+    /**
+     * Silences the WeDo 2.0 hub's built-in piezo buzzer immediately.
+     *
+     * <p>Equivalent to calling {@link #playTone(int, int) playTone(0, 0)}.
+     *
+     * @return a future that completes when the write is submitted; never {@code null}
+     */
+    public @NonNull CompletableFuture<Void> stopTone() {
+        return playTone(0, 0);
     }
 
     // =========================================================================
@@ -219,20 +277,22 @@ public final class WeDo2Dsl {
      * After this call the hub will emit sensor readings via
      * {@link #sensorNotifications()}.
      *
-     * @param portId     port identifier; use
-     *                   {@link LegoProtocolConstants#WEDO2_PORT_A} or
-     *                   {@link LegoProtocolConstants#WEDO2_PORT_B}
-     * @param deviceType the device type ID (e.g.
-     *                   {@link LegoProtocolConstants#WEDO2_MOTION_SENSOR_TYPE_ID})
-     * @param mode       the sensor mode index (0-based)
+     * @param port       the physical port the sensor is connected to;
+     *                   must not be {@code null}
+     * @param deviceType the type of device attached to the port;
+     *                   must not be {@code null}
+     * @param mode       the sensor measurement mode; must not be {@code null}
      * @return a future that completes when the write is submitted; never {@code null}
      */
-    public @NonNull CompletableFuture<Void> subscribeSensor(int portId, int deviceType, int mode) {
+    public @NonNull CompletableFuture<Void> subscribeSensor(
+            @NonNull WeDo2Port port,
+            @NonNull WeDo2DeviceType deviceType,
+            @NonNull WeDo2SensorMode mode) {
         final byte[] msg = {
             0x01, 0x02,
-            (byte) portId,
-            (byte) deviceType,
-            (byte) mode,
+            (byte) port.code(),
+            (byte) deviceType.code(),
+            (byte) mode.code(),
             0x01, 0x00, 0x00, 0x00, 0x00,
             0x01
         };
@@ -246,21 +306,21 @@ public final class WeDo2Dsl {
      * {@link LegoProtocolConstants#WEDO2_PORT_TYPE_WRITE_UUID} — identical to
      * the subscribe command but with the last byte set to {@code 0x00}.
      *
-     * @param portId     port identifier; use
-     *                   {@link LegoProtocolConstants#WEDO2_PORT_A} or
-     *                   {@link LegoProtocolConstants#WEDO2_PORT_B}
-     * @param deviceType the device type ID (e.g.
-     *                   {@link LegoProtocolConstants#WEDO2_MOTION_SENSOR_TYPE_ID})
-     * @param mode       the sensor mode index (0-based)
+     * @param port       the physical port to unsubscribe; must not be {@code null}
+     * @param deviceType the type of device attached to the port;
+     *                   must not be {@code null}
+     * @param mode       the sensor measurement mode; must not be {@code null}
      * @return a future that completes when the write is submitted; never {@code null}
      */
     public @NonNull CompletableFuture<Void> unsubscribeSensor(
-            int portId, int deviceType, int mode) {
+            @NonNull WeDo2Port port,
+            @NonNull WeDo2DeviceType deviceType,
+            @NonNull WeDo2SensorMode mode) {
         final byte[] msg = {
             0x01, 0x02,
-            (byte) portId,
-            (byte) deviceType,
-            (byte) mode,
+            (byte) port.code(),
+            (byte) deviceType.code(),
+            (byte) mode.code(),
             0x01, 0x00, 0x00, 0x00, 0x00,
             0x00
         };

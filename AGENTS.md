@@ -1081,3 +1081,70 @@ the following attribution comment at the top of the relevant section:
 ```
 
 This credit must also appear in README.md under the "Acknowledgements" section.
+
+---
+
+## 19. Enum-over-Constants Mandate
+
+**Prefer typed enums over raw `int` constants for every DSL method parameter that represents a
+closed, protocol-defined set of values.**
+
+### Rationale
+
+A parameter such as "port ID" or "device type" is drawn from a fixed, finite set defined by the
+protocol specification. Accepting a raw `int` at the DSL boundary allows callers to pass
+out-of-range values that will silently corrupt BLE packets. A typed enum makes illegal states
+unrepresentable at compile time.
+
+### When to use an enum
+
+| Use an enum | Keep as raw `int` / `long` |
+|---|---|
+| Protocol-defined closed set (port IDs, device types, LED colours, sensor modes, action codes, alert types, …) | Free-range numeric values (power −100..100, frequency Hz, duration ms, baud rate, …) |
+
+### Rules for every new enum
+
+1. **One enum per concept** — do not reuse an existing enum for a conceptually different field
+   even if the wire values happen to overlap.
+2. **Wrap the corresponding `LegoProtocolConstants` (or brand-equivalent constants class)
+   constant** — the enum constructor must accept the constant, not a duplicate literal.
+   ```java
+   A(LegoProtocolConstants.WEDO2_PORT_A)   // correct
+   A(0x01)                                 // forbidden — duplicates the constant
+   ```
+3. **Expose `public int code()`** — returns the raw wire byte for use in BLE payload builders.
+4. **Full Javadoc on every constant** — include the wire value, the protocol reference, and
+   the `LegoProtocolConstants` constant it wraps using a `{@link}` reference.
+5. **Class-level Javadoc** — explain which BLE command field the enum encodes, cite the
+   protocol spec section, and include a short usage example in a `{@code}` block.
+6. **Dedicated test class** — follow the pattern of `WeDo2LedColorTest.java`:
+   - `values_hasNConstants()` — asserts exact enum cardinality.
+   - `valueOf_allConstants_roundTrips()` — round-trip through `valueOf(name())`.
+   - One `code_<constant>_is<hex>()` test per constant, comparing against the
+     `LegoProtocolConstants` value (or the literal when no named constant exists).
+   - `allConstants_codes_haveExpectedValues()` — `assertAll` summary of every constant.
+   - `allConstants_areNotNull()` — null guard over `values()`.
+7. **DSL test coverage** — every DSL method that accepts the new enum must have tests in the
+   DSL test class that exercise each enum constant.
+8. **Place enums in the correct package** — `ch.varani.bricks.ble.device.<brand>/` alongside
+   the protocol-constants class. Never place enums in `api/` or `impl/`.
+
+### Package placement
+
+| Brand | Enum package |
+|---|---|
+| LEGO Powered Up | `ch.varani.bricks.ble.device.lego` |
+| SBrick | `ch.varani.bricks.ble.device.sbrick` |
+| Circuit Cubes | `ch.varani.bricks.ble.device.circuitcubes` |
+| BuWizz | `ch.varani.bricks.ble.device.buwizz` |
+
+### Existing enums (reference implementations)
+
+| Enum | Concept | Brand |
+|---|---|---|
+| `WeDo2Port` | Physical port A / B | LEGO WeDo 2.0 |
+| `WeDo2DeviceType` | Peripheral type ID in subscription command | LEGO WeDo 2.0 |
+| `WeDo2SensorMode` | Sensor mode index in subscription command | LEGO WeDo 2.0 |
+| `WeDo2LedColor` | RGB LED colour index | LEGO WeDo 2.0 |
+| `LegoColor` | General hub LED colour | LEGO Powered Up |
+| `LegoHubType` | Hub hardware type | LEGO Powered Up |

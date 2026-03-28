@@ -221,6 +221,36 @@ public final class LegoProtocolConstants {
     public static final int WEDO2_MOTION_SENSOR_TYPE_ID = 0x23;
 
     /**
+     * WeDo 2.0 device type: Piezo Buzzer ({@code 0x02}).
+     *
+     * <p>Used as the type byte (byte 1) in the 7-byte piezo command written to
+     * {@link #WEDO2_MOTOR_VALUE_WRITE_UUID}:
+     * <pre>
+     * [WEDO2_PORT_PIEZO_BUZZER, WEDO2_PIEZO_TYPE_ID, 0x04,
+     *  freq_lo, freq_hi, duration_lo, duration_hi]
+     * </pre>
+     * where {@code freq} is a uint16 little-endian frequency in Hz and
+     * {@code duration} is a uint16 little-endian duration in milliseconds.
+     *
+     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
+     * https://github.com/nathankellenicki/node-poweredup —
+     * {@code src/devices/piezobuzzer.ts playTone()}.
+     */
+    public static final int WEDO2_PIEZO_TYPE_ID = 0x02;
+
+    /**
+     * WeDo 2.0 Piezo Buzzer writeDirect sub-command byte ({@code 0x04}).
+     *
+     * <p>Written at byte 2 of the 7-byte piezo command.  See
+     * {@link #WEDO2_PIEZO_TYPE_ID} for the full packet layout.
+     *
+     * <p>Reference: nathankellenicki/node-poweredup (MIT) —
+     * https://github.com/nathankellenicki/node-poweredup —
+     * {@code src/devices/piezobuzzer.ts playTone()}.
+     */
+    public static final int WEDO2_PIEZO_WRITE_DIRECT_CMD = 0x04;
+
+    /**
      * WeDo 2.0 device type: RGB LED ({@code 0x22} = 34).
      *
      * <p>The internal RGB LED is also addressed through

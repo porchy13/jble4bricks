@@ -18,7 +18,10 @@ import org.mockito.ArgumentCaptor;
 import ch.varani.bricks.ble.api.BleConnection;
 import ch.varani.bricks.ble.api.BleException;
 import ch.varani.bricks.ble.device.lego.LegoProtocolConstants;
+import ch.varani.bricks.ble.device.lego.WeDo2DeviceType;
 import ch.varani.bricks.ble.device.lego.WeDo2LedColor;
+import ch.varani.bricks.ble.device.lego.WeDo2Port;
+import ch.varani.bricks.ble.device.lego.WeDo2SensorMode;
 
 /**
  * Unit tests for {@link WeDo2Dsl}.
@@ -72,10 +75,10 @@ class WeDo2DslTest {
 
     @Test
     void motorPower_portA_forwardPower_sendsCorrectBytes() {
-        dsl.motorPower(LegoProtocolConstants.WEDO2_PORT_A, 75);
+        dsl.motorPower(WeDo2Port.A, 75);
 
         final byte[] expected = {
-            (byte) LegoProtocolConstants.WEDO2_PORT_A,
+            (byte) WeDo2Port.A.code(),
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
             (byte) 0x02,
             (byte) 75
@@ -85,10 +88,10 @@ class WeDo2DslTest {
 
     @Test
     void motorPower_portB_reversePower_sendsCorrectBytes() {
-        dsl.motorPower(LegoProtocolConstants.WEDO2_PORT_B, -50);
+        dsl.motorPower(WeDo2Port.B, -50);
 
         final byte[] expected = {
-            (byte) LegoProtocolConstants.WEDO2_PORT_B,
+            (byte) WeDo2Port.B.code(),
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
             (byte) 0x02,
             (byte) (-50 & 0xFF)
@@ -98,10 +101,10 @@ class WeDo2DslTest {
 
     @Test
     void motorPower_zeroPower_sendsStopBytes() {
-        dsl.motorPower(LegoProtocolConstants.WEDO2_PORT_A, 0);
+        dsl.motorPower(WeDo2Port.A, 0);
 
         final byte[] expected = {
-            (byte) LegoProtocolConstants.WEDO2_PORT_A,
+            (byte) WeDo2Port.A.code(),
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
             (byte) 0x02,
             (byte) 0
@@ -115,10 +118,10 @@ class WeDo2DslTest {
 
     @Test
     void stopMotor_delegatesToMotorPowerZero() {
-        dsl.stopMotor(LegoProtocolConstants.WEDO2_PORT_A);
+        dsl.stopMotor(WeDo2Port.A);
 
         final byte[] expected = {
-            (byte) LegoProtocolConstants.WEDO2_PORT_A,
+            (byte) WeDo2Port.A.code(),
             (byte) LegoProtocolConstants.WEDO2_MOTOR_TYPE_ID,
             (byte) 0x02,
             (byte) 0
@@ -186,17 +189,15 @@ class WeDo2DslTest {
     // =========================================================================
 
     @Test
-    void subscribeSensor_sendsCorrectBytes() {
-        dsl.subscribeSensor(
-                LegoProtocolConstants.WEDO2_PORT_A,
-                LegoProtocolConstants.WEDO2_MOTION_SENSOR_TYPE_ID,
-                0);
+    void subscribeSensor_portA_motionSensor_distanceMode_sendsCorrectBytes() {
+        dsl.subscribeSensor(WeDo2Port.A, WeDo2DeviceType.MOTION_SENSOR,
+                WeDo2SensorMode.MOTION_DISTANCE);
 
         final byte[] expected = {
             0x01, 0x02,
-            (byte) LegoProtocolConstants.WEDO2_PORT_A,
-            (byte) LegoProtocolConstants.WEDO2_MOTION_SENSOR_TYPE_ID,
-            (byte) 0,
+            (byte) WeDo2Port.A.code(),
+            (byte) WeDo2DeviceType.MOTION_SENSOR.code(),
+            (byte) WeDo2SensorMode.MOTION_DISTANCE.code(),
             0x01, 0x00, 0x00, 0x00, 0x00,
             0x01
         };
@@ -204,21 +205,182 @@ class WeDo2DslTest {
     }
 
     @Test
-    void unsubscribeSensor_sendsCorrectBytes() {
-        dsl.unsubscribeSensor(
-                LegoProtocolConstants.WEDO2_PORT_B,
-                LegoProtocolConstants.WEDO2_MOTION_SENSOR_TYPE_ID,
-                0);
+    void subscribeSensor_portB_motionSensor_defaultMode_sendsCorrectBytes() {
+        dsl.subscribeSensor(WeDo2Port.B, WeDo2DeviceType.MOTION_SENSOR,
+                WeDo2SensorMode.DEFAULT);
 
         final byte[] expected = {
             0x01, 0x02,
-            (byte) LegoProtocolConstants.WEDO2_PORT_B,
-            (byte) LegoProtocolConstants.WEDO2_MOTION_SENSOR_TYPE_ID,
-            (byte) 0,
+            (byte) WeDo2Port.B.code(),
+            (byte) WeDo2DeviceType.MOTION_SENSOR.code(),
+            (byte) WeDo2SensorMode.DEFAULT.code(),
+            0x01, 0x00, 0x00, 0x00, 0x00,
+            0x01
+        };
+        verifyPortTypeWrite(expected);
+    }
+
+    @Test
+    void subscribeSensor_motorDeviceType_encodesCorrectTypeId() {
+        dsl.subscribeSensor(WeDo2Port.A, WeDo2DeviceType.MOTOR,
+                WeDo2SensorMode.DEFAULT);
+
+        final byte[] expected = {
+            0x01, 0x02,
+            (byte) WeDo2Port.A.code(),
+            (byte) WeDo2DeviceType.MOTOR.code(),
+            (byte) WeDo2SensorMode.DEFAULT.code(),
+            0x01, 0x00, 0x00, 0x00, 0x00,
+            0x01
+        };
+        verifyPortTypeWrite(expected);
+    }
+
+    @Test
+    void subscribeSensor_piezoBuzzerDeviceType_encodesCorrectTypeId() {
+        dsl.subscribeSensor(WeDo2Port.A, WeDo2DeviceType.PIEZO_BUZZER,
+                WeDo2SensorMode.DEFAULT);
+
+        final byte[] expected = {
+            0x01, 0x02,
+            (byte) WeDo2Port.A.code(),
+            (byte) WeDo2DeviceType.PIEZO_BUZZER.code(),
+            (byte) WeDo2SensorMode.DEFAULT.code(),
+            0x01, 0x00, 0x00, 0x00, 0x00,
+            0x01
+        };
+        verifyPortTypeWrite(expected);
+    }
+
+    @Test
+    void subscribeSensor_rgbLedDeviceType_indexMode_encodesCorrectBytes() {
+        dsl.subscribeSensor(WeDo2Port.A, WeDo2DeviceType.RGB_LED,
+                WeDo2SensorMode.LED_INDEX);
+
+        final byte[] expected = {
+            0x01, 0x02,
+            (byte) WeDo2Port.A.code(),
+            (byte) WeDo2DeviceType.RGB_LED.code(),
+            (byte) WeDo2SensorMode.LED_INDEX.code(),
+            0x01, 0x00, 0x00, 0x00, 0x00,
+            0x01
+        };
+        verifyPortTypeWrite(expected);
+    }
+
+    @Test
+    void subscribeSensor_motionSensor_detectMode_encodesCorrectModeIndex() {
+        dsl.subscribeSensor(WeDo2Port.B, WeDo2DeviceType.MOTION_SENSOR,
+                WeDo2SensorMode.MOTION_DETECT);
+
+        final byte[] expected = {
+            0x01, 0x02,
+            (byte) WeDo2Port.B.code(),
+            (byte) WeDo2DeviceType.MOTION_SENSOR.code(),
+            (byte) WeDo2SensorMode.MOTION_DETECT.code(),
+            0x01, 0x00, 0x00, 0x00, 0x00,
+            0x01
+        };
+        verifyPortTypeWrite(expected);
+    }
+
+    @Test
+    void unsubscribeSensor_portB_motionSensor_distanceMode_sendsCorrectBytes() {
+        dsl.unsubscribeSensor(WeDo2Port.B, WeDo2DeviceType.MOTION_SENSOR,
+                WeDo2SensorMode.MOTION_DISTANCE);
+
+        final byte[] expected = {
+            0x01, 0x02,
+            (byte) WeDo2Port.B.code(),
+            (byte) WeDo2DeviceType.MOTION_SENSOR.code(),
+            (byte) WeDo2SensorMode.MOTION_DISTANCE.code(),
             0x01, 0x00, 0x00, 0x00, 0x00,
             0x00
         };
         verifyPortTypeWrite(expected);
+    }
+
+    @Test
+    void unsubscribeSensor_portA_motionSensor_defaultMode_sendsCorrectBytes() {
+        dsl.unsubscribeSensor(WeDo2Port.A, WeDo2DeviceType.MOTION_SENSOR,
+                WeDo2SensorMode.DEFAULT);
+
+        final byte[] expected = {
+            0x01, 0x02,
+            (byte) WeDo2Port.A.code(),
+            (byte) WeDo2DeviceType.MOTION_SENSOR.code(),
+            (byte) WeDo2SensorMode.DEFAULT.code(),
+            0x01, 0x00, 0x00, 0x00, 0x00,
+            0x00
+        };
+        verifyPortTypeWrite(expected);
+    }
+
+    // =========================================================================
+    // playTone
+    // =========================================================================
+
+    @Test
+    void playTone_validFrequencyAndDuration_sendsCorrectSevenBytePacket() {
+        dsl.playTone(440, 1000);
+
+        final byte[] expected = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_PIEZO_BUZZER,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_TYPE_ID,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_WRITE_DIRECT_CMD,
+            (byte) (440 & 0xFF),
+            (byte) ((440 >> 8) & 0xFF),
+            (byte) (1000 & 0xFF),
+            (byte) ((1000 >> 8) & 0xFF)
+        };
+        verifyMotorWrite(expected);
+    }
+
+    @Test
+    void playTone_highFrequency_encodesUint16LittleEndianCorrectly() {
+        // 1000 Hz = 0x03E8 → lo=0xE8, hi=0x03 ; 500 ms = 0x01F4 → lo=0xF4, hi=0x01
+        dsl.playTone(1000, 500);
+
+        final byte[] expected = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_PIEZO_BUZZER,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_TYPE_ID,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_WRITE_DIRECT_CMD,
+            (byte) 0xE8, (byte) 0x03,
+            (byte) 0xF4, (byte) 0x01
+        };
+        verifyMotorWrite(expected);
+    }
+
+    @Test
+    void playTone_zeroFrequencyAndDuration_sendsAllZeroPayloadBytes() {
+        dsl.playTone(0, 0);
+
+        final byte[] expected = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_PIEZO_BUZZER,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_TYPE_ID,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_WRITE_DIRECT_CMD,
+            (byte) 0x00, (byte) 0x00,
+            (byte) 0x00, (byte) 0x00
+        };
+        verifyMotorWrite(expected);
+    }
+
+    // =========================================================================
+    // stopTone
+    // =========================================================================
+
+    @Test
+    void stopTone_delegatesToPlayToneWithZeroFrequencyAndDuration() {
+        dsl.stopTone();
+
+        final byte[] expected = {
+            (byte) LegoProtocolConstants.WEDO2_PORT_PIEZO_BUZZER,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_TYPE_ID,
+            (byte) LegoProtocolConstants.WEDO2_PIEZO_WRITE_DIRECT_CMD,
+            (byte) 0x00, (byte) 0x00,
+            (byte) 0x00, (byte) 0x00
+        };
+        verifyMotorWrite(expected);
     }
 
     // =========================================================================
