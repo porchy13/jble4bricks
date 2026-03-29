@@ -2,6 +2,12 @@
 
 A Java library for connecting to and controlling BLE (Bluetooth Low Energy) devices.
 
+## Disclaimers
+
+- LEGO® is a trademark of the LEGO Group of companies which does not sponsor, authorize or endorse this content.
+- SBrick is a trademark of Vengit Kft. which does not sponsor, authorize or endorse this content.
+- Circuit Cubes is a trademark of Tenka Inc. which does not sponsor, authorize or endorse this content.
+
 ## Overview
 
 > This library is in early development. The API is not yet stable and may change without deprecation. Use with caution
