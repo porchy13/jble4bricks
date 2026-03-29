@@ -7,15 +7,14 @@
 
     Reference: https://www.mojohaus.org/versions/versions-maven-plugin/version-rules.html
 -->
-<ruleset comparisonMethod="maven"
-         xmlns="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0"
+<ruleset xmlns="https://www.mojohaus.org/VERSIONS/RULE/3.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://mojo.codehaus.org/versions-maven-plugin/rule/2.0.0
-             https://www.mojohaus.org/versions/versions-maven-plugin/xsd/rule-2.0.0.xsd">
+         xsi:schemaLocation="https://www.mojohaus.org/VERSIONS/RULE/3.0.0 https://www.mojohaus.org/versions/versions-model/xsd/rule-3.0.0.xsd">
 
     <!-- Ignore milestone and release-candidate versions for all artifacts by default -->
     <ignoreVersions>
-        <ignoreVersion type="regex">.*[-_\.](alpha|Alpha|ALPHA|beta|Beta|BETA|rc|RC|cr|CR|milestone|M|m)[0-9]*.*</ignoreVersion>
+        <ignoreVersion type="regex">.*[-_\.](alpha|Alpha|ALPHA|beta|Beta|BETA|rc|RC|cr|CR|milestone|M|m)[0-9]*.*
+        </ignoreVersion>
         <ignoreVersion type="regex">.*\..*\..*\..*</ignoreVersion>
     </ignoreVersions>
 
